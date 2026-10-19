@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lock, User, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Lock, User, ArrowRight, ShieldCheck, AlertCircle, Server, Check } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore.js';
-import { api } from '../api/client.js';
+import { api, getApiBase, setApiBase } from '../api/client.js';
 
 export function Login() {
   const [username, setUsername] = useState('admin');
   const [password, setPassword] = useState('admin123');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [serverUrl, setServerUrl] = useState(getApiBase());
+  const [showServerConfig, setShowServerConfig] = useState(false);
+  const [savedUrlSuccess, setSavedUrlSuccess] = useState(false);
   const { setAuth } = useAuthStore();
   const navigate = useNavigate();
 
@@ -24,10 +27,21 @@ export function Login() {
         navigate('/');
       }
     } catch (err) {
-      setError(err.message || 'Login failed. Please check credentials.');
+      const msg = err.message || 'Login failed. Please check credentials.';
+      setError(msg);
+      if (msg.includes('fetch') || msg.includes('Network') || msg.includes('Failed')) {
+        setShowServerConfig(true);
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSaveServerUrl = (e) => {
+    e.preventDefault();
+    setApiBase(serverUrl);
+    setSavedUrlSuccess(true);
+    setTimeout(() => setSavedUrlSuccess(false), 2000);
   };
 
   const setDemoCredentials = (u, p) => {
@@ -179,6 +193,54 @@ export function Login() {
                 <div className="text-[10px] text-[#837561]">delivery / delivery123</div>
               </button>
             </div>
+          </div>
+
+          {/* Backend Connection / Tunnel Indicator */}
+          <div className="mt-4 pt-3 border-t border-[#EADBC8]/60 text-center">
+            {!showServerConfig ? (
+              <button
+                type="button"
+                onClick={() => setShowServerConfig(true)}
+                className="text-[11px] text-[#837561] hover:text-[#D9580B] inline-flex items-center gap-1.5 transition-colors"
+              >
+                <Server className="w-3 h-3 text-[#D9580B]" />
+                <span>API Endpoint: <strong className="font-mono">{serverUrl || 'Current Host (Auto)'}</strong></span>
+                <span className="text-[10px] underline ml-1">Change</span>
+              </button>
+            ) : (
+              <form onSubmit={handleSaveServerUrl} className="mt-2 p-3 bg-[#FFF8EC] border border-[#EADBC8] rounded-xl text-left">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[11px] font-semibold text-[#2B1B12] flex items-center gap-1">
+                    <Server className="w-3 h-3 text-[#D9580B]" /> Backend Tunnel / API URL
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowServerConfig(false)}
+                    className="text-[10px] text-[#837561] hover:text-[#2B1B12]"
+                  >
+                    Close
+                  </button>
+                </div>
+                <div className="flex gap-1.5">
+                  <input
+                    type="url"
+                    value={serverUrl}
+                    onChange={(e) => setServerUrl(e.target.value)}
+                    placeholder="e.g. https://xxxx.trycloudflare.com"
+                    className="flex-1 px-2.5 py-1.5 text-xs font-mono rounded-lg border border-[#EADBC8] bg-white focus:outline-none focus:border-[#D9580B]"
+                  />
+                  <button
+                    type="submit"
+                    className="px-3 py-1.5 bg-[#D9580B] text-white text-xs font-semibold rounded-lg hover:bg-[#C04B06] flex items-center gap-1"
+                  >
+                    {savedUrlSuccess ? <Check className="w-3.5 h-3.5" /> : 'Save'}
+                  </button>
+                </div>
+                <p className="text-[10px] text-[#837561] mt-1.5">
+                  Pointing to local backend tunnel. Leave blank to use default origin.
+                </p>
+              </form>
+            )}
           </div>
         </div>
       </div>

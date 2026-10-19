@@ -1,4 +1,16 @@
-const API_BASE = import.meta.env.VITE_API_URL || '';
+export function getApiBase() {
+  const custom = localStorage.getItem('nagmani_api_url');
+  if (custom) return custom.replace(/\/$/, '');
+  return (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+}
+
+export function setApiBase(url) {
+  if (url && url.trim()) {
+    localStorage.setItem('nagmani_api_url', url.trim().replace(/\/$/, ''));
+  } else {
+    localStorage.removeItem('nagmani_api_url');
+  }
+}
 
 export async function apiRequest(endpoint, options = {}) {
   const token = localStorage.getItem('token');
@@ -8,7 +20,8 @@ export async function apiRequest(endpoint, options = {}) {
     ...options.headers
   };
 
-  const url = `${API_BASE}/api/v1${endpoint}`;
+  const base = getApiBase();
+  const url = `${base}/api/v1${endpoint}`;
   const response = await fetch(url, {
     ...options,
     headers
