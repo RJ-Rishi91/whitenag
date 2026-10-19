@@ -1,9 +1,9 @@
-import React from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { HashRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useAuthStore } from './store/useAuthStore.js';
 import { Layout } from './components/Layout.jsx';
 
-// Pages
+// Version 1.0 Classic Pages
 import { Login } from './pages/Login.jsx';
 import { Dashboard } from './pages/Dashboard.jsx';
 import { OrderList } from './pages/orders/OrderList.jsx';
@@ -32,6 +32,15 @@ import { SettingsHub } from './pages/settings/SettingsHub.jsx';
 import { Search } from './pages/Search.jsx';
 import { NotFound } from './pages/NotFound.jsx';
 
+// Version 2.0 Modern Executive Pages & Shell
+import { LayoutV2 } from './v2/components/LayoutV2.jsx';
+import { DashboardV2 } from './v2/pages/DashboardV2.jsx';
+import { OrdersKanbanV2 } from './v2/pages/OrdersKanbanV2.jsx';
+import { NewOrderV2 } from './v2/pages/NewOrderV2.jsx';
+import { DeliveryBoardV2 } from './v2/pages/DeliveryBoardV2.jsx';
+import { ProductionV2 } from './v2/pages/ProductionV2.jsx';
+import { InvoiceV2 } from './v2/pages/InvoiceV2.jsx';
+
 function ProtectedRoute({ children }) {
   const { user } = useAuthStore();
   if (!user) {
@@ -40,13 +49,53 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
+// Determines landing page based on user version preference (default v2)
+function RootResolver() {
+  const version = localStorage.getItem('erp_version') || 'v2';
+  if (version === 'v2') {
+    return <Navigate to="/v2" replace />;
+  }
+  return <Dashboard />;
+}
+
 export function App() {
+  const handleSwitchVersion = (targetVersion) => {
+    localStorage.setItem('erp_version', targetVersion);
+    if (targetVersion === 'v2') {
+      window.location.hash = '#/v2';
+    } else {
+      window.location.hash = '#/';
+    }
+  };
+
   return (
     <HashRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
 
-        {/* Protected App Screens inside Layout */}
+        {/* ============================================================ */}
+        {/* VERSION 2.0 EXECUTIVE (Faithful Stitch Design & Animations) */}
+        {/* ============================================================ */}
+        <Route
+          path="/v2"
+          element={
+            <ProtectedRoute>
+              <LayoutV2 onSwitchVersion={handleSwitchVersion} />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<DashboardV2 />} />
+          <Route path="orders" element={<OrdersKanbanV2 />} />
+          <Route path="orders/new" element={<NewOrderV2 />} />
+          <Route path="delivery" element={<DeliveryBoardV2 />} />
+          <Route path="manufacturing" element={<ProductionV2 />} />
+          <Route path="invoices" element={<InvoiceV2 />} />
+          <Route path="invoices/:id" element={<InvoiceV2 />} />
+        </Route>
+
+        {/* ============================================================ */}
+        {/* VERSION 1.0 CLASSIC (100% Intact and Preserved)              */}
+        {/* ============================================================ */}
         <Route
           path="/"
           element={
@@ -55,7 +104,8 @@ export function App() {
             </ProtectedRoute>
           }
         >
-          <Route index element={<Dashboard />} />
+          {/* Resolves to v2 or v1 dashboard based on preference */}
+          <Route index element={<RootResolver />} />
           <Route path="orders" element={<OrderList />} />
           <Route path="orders/new" element={<NewOrder />} />
           <Route path="orders/:id" element={<OrderDetail />} />

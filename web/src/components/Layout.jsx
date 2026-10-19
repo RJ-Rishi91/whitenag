@@ -212,8 +212,24 @@ export function Layout() {
             </div>
           </form>
 
-          {/* Right: Sync Status & User Profile */}
+          {/* Right: Sync Status & User Profile & Version Switcher */}
           <div className="flex items-center gap-3">
+            {/* Version Switcher Pill */}
+            <div className="flex items-center bg-[#FFF8EC] p-0.5 rounded-lg border border-[#EADBC8] text-[11px]">
+              <span className="px-2 py-0.5 font-bold text-white bg-[#03353A] rounded">v1.0</span>
+              <button
+                type="button"
+                onClick={() => {
+                  localStorage.setItem('erp_version', 'v2');
+                  navigate('/v2');
+                }}
+                className="px-2 py-0.5 font-bold text-[#D9580B] hover:text-[#BF4B07] rounded transition-colors"
+                title="Switch to modern v2.0 Executive view"
+              >
+                v2.0 ✨
+              </button>
+            </div>
+
             <SyncChip
               status={pendingCount > 0 ? 'pending' : 'synced'}
               count={pendingCount}

@@ -36,3 +36,68 @@
 .table-nums {
   font-variant-numeric: tabular-nums lining-nums;
 }
+
+/* Material Symbols Outlined Font Support */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: 400;
+  font-style: normal;
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-feature-settings: 'liga';
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  vertical-align: middle;
+}
+
+/* V2 Font Tokens */
+.font-outfit {
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.font-inter {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Pulse radar keyframe */
+@keyframes pulseRadar {
+  0% { transform: scale(0.95); opacity: 0.9; }
+  50% { transform: scale(1.15); opacity: 0.4; }
+  100% { transform: scale(0.95); opacity: 0.9; }
+}
+
+.animate-pulse-radar {
+  animation: pulseRadar 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Van float keyframe */
+@keyframes vanBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+.animate-van-bounce {
+  animation: vanBounce 1.4s ease-in-out infinite;
+}
+
+/* Gear spin keyframe */
+@keyframes spinGear {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spinGear 8s linear infinite;
+}
+
+.animate-spin-reverse {
+  animation: spinGear 8s linear infinite reverse;
+}
