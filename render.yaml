@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: nagmani-foods-erp
+    runtime: node
+    plan: starter
+    buildCommand: cd web && npm install && npm run build && cd ../api && npm install
+    startCommand: cd api && node src/server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: CORS_ORIGIN
+        value: "*"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CONNECTOR_API_KEY
+        value: nagfani_connector_api_key_secure_2026
+      - key: MONGODB_URI
+        sync: false

@@ -21,10 +21,12 @@ import { recordStockMovement } from '../services/stockService.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-async function runSeed() {
+export async function seedDatabase(shouldDisconnect = false) {
   try {
-    console.log('Connecting to MongoDB for seeding...');
-    await connectDB();
+    if (mongoose.connection.readyState !== 1) {
+      console.log('Connecting to MongoDB for seeding...');
+      await connectDB();
+    }
 
     console.log('Clearing existing collections...');
     await Promise.all([
@@ -373,12 +375,19 @@ async function runSeed() {
     }
 
     console.log('Database seeding successfully finished!');
-    await disconnectDB();
-    process.exit(0);
+    if (shouldDisconnect) {
+      await disconnectDB();
+      process.exit(0);
+    }
   } catch (err) {
     console.error('Seeding failed:', err);
-    process.exit(1);
+    if (shouldDisconnect) {
+      process.exit(1);
+    }
+    throw err;
   }
 }
 
-runSeed();
+if (process.argv[1] && process.argv[1].endsWith('seed.js')) {
+  seedDatabase(true);
+}

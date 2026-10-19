@@ -1,0 +1,33 @@
+services:
+  mongodb:
+    image: mongo:7.0
+    restart: always
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: mongosh --eval "try { rs.status().ok } catch(e) { rs.initiate().ok }" || exit 1
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  erp-app:
+    build: .
+    restart: always
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - MONGODB_URI=mongodb://mongodb:27017/nagmani_erp?replicaSet=rs0
+      - CORS_ORIGIN=*
+      - JWT_SECRET=nagfani_super_secret_jwt_key_2026_food_erp
+      - CONNECTOR_API_KEY=nagfani_connector_api_key_secure_2026
+
+volumes:
+  mongo_data:
