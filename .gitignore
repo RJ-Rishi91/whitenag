@@ -1,0 +1,11 @@
+node_modules/
+dist/
+build/
+.env
+.env.local
+*.log
+stitch_reference/
+*.zip
+.DS_Store
+__pycache__/
+*.pyc

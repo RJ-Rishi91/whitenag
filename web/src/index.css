@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --primary: #D9580B;
+    --primary-hover: #b54504;
+    --turmeric: #E8A317;
+    --secondary: #03353A;
+    --maroon: #7A1F2B;
+    --canvas: #FFF8EC;
+    --surface: #FFFFFF;
+    --border: #EADBC8;
+    --dark: #2B1B12;
+    --muted: #837561;
+  }
+
+  body {
+    background-color: var(--canvas);
+    color: var(--dark);
+    font-family: 'Inter', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Epilogue', sans-serif;
+  }
+}
+
+/* Custom utility classes */
+.card-surface {
+  background-color: #FFFFFF;
+  border: 1px solid #EADBC8;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(43, 27, 18, 0.05);
+}
+
+.table-nums {
+  font-variant-numeric: tabular-nums lining-nums;
+}
