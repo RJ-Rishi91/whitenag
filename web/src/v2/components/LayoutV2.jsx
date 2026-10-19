@@ -174,17 +174,17 @@ export function LayoutV2({ onSwitchVersion }) {
           <div className="flex items-center gap-3 p-2 rounded-xl bg-[#03353A] hover:bg-[#06484F] transition-colors">
             <div className="relative flex-shrink-0">
               <div className="w-9 h-9 rounded-full bg-[#D9580B] text-white flex items-center justify-center font-outfit font-bold text-sm shadow-sm">
-                {user?.fullName?.charAt(0) || 'R'}
+                {(user?.name || user?.fullName || 'Rushal').charAt(0)}
               </div>
               <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-[#03353A]"></span>
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center justify-between">
                 <span className="text-[13px] font-semibold text-white truncate">
-                  {user?.fullName || 'Rushal'}
+                  {user?.name || user?.fullName || 'Rushal'}
                 </span>
                 <span className="text-[11px] text-[#A3CED4] font-medium capitalize">
-                  {user?.role || 'Admin'}
+                  {user?.role?.name || user?.role?.code || (typeof user?.role === 'string' ? user?.role : 'Admin')}
                 </span>
               </div>
               <div className="text-[11px] text-[#A3CED4] truncate flex items-center gap-1">

@@ -113,7 +113,7 @@ export function DashboardV2() {
           <div className="space-y-1.5">
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="font-outfit text-2xl sm:text-3xl font-bold text-[#1E2B2D] tracking-tight">
-                Good morning, {user?.fullName || 'Rushal'}
+                Good morning, {user?.name || user?.fullName || 'Rushal'}
               </h1>
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8F6F9] text-[#03353A] text-xs font-semibold uppercase tracking-wider border border-[#BCE7ED]">
                 <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
