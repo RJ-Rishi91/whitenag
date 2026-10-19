@@ -7,7 +7,7 @@ export function getSocket() {
   if (!token) return null;
 
   if (!socket) {
-    const socketUrl = import.meta.env.VITE_SOCKET_URL || window.location.origin;
+    const socketUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL || window.location.origin;
     socket = io(socketUrl, {
       auth: { token },
       autoConnect: true,

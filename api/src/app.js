@@ -1,7 +1,13 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 import { config } from './config/env.js';
 import { errorHandler } from './middleware/errorHandler.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Route imports
 import authRoutes from './routes/authRoutes.js';
@@ -56,6 +62,18 @@ export function createApp() {
   app.use(`${apiPrefix}/reports`, reportRoutes);
   app.use(`${apiPrefix}/search`, searchRoutes);
   app.use(`${apiPrefix}/sync`, syncRoutes);
+
+  // Serve frontend static build if present
+  const staticPath = path.resolve(__dirname, '../../web/dist');
+  if (fs.existsSync(staticPath)) {
+    app.use(express.static(staticPath));
+    app.use((req, res, next) => {
+      if (req.method === 'GET' && !req.path.startsWith('/api') && !req.path.startsWith('/health')) {
+        return res.sendFile(path.join(staticPath, 'index.html'));
+      }
+      next();
+    });
+  }
 
   // Centralized Error Handler
   app.use(errorHandler);
