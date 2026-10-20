@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nagfani Foods ERP 3.0 — Executive Client Feature Sheet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #EA580C;
+      --primary-dark: #C2410C;
+      --slate-900: #0F172A;
+      --slate-800: #1E293B;
+      --slate-700: #334155;
+      --slate-600: #475569;
+      --slate-500: #64748B;
+      --slate-200: #E2E8F0;
+      --slate-100: #F1F5F9;
+      --slate-50: #F8FAFC;
+      --emerald-600: #059669;
+      --emerald-50: #ECFDF5;
+      --amber-600: #D97706;
+      --amber-50: #FFFBEB;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: var(--slate-800);
+      background-color: #FAFAFA;
+      line-height: 1.6;
+      font-size: 14px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 40px auto;
+      background: #FFFFFF;
+      border: 1px solid var(--slate-200);
+      border-radius: 16px;
+      padding: 48px;
+      box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+    }
+
+    /* Header styling */
+    .header {
+      border-bottom: 2px solid var(--slate-100);
+      padding-bottom: 24px;
+      margin-bottom: 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 24px;
+    }
+
+    .brand-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--slate-900);
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-badge {
+      display: inline-block;
+      background: #FFF7ED;
+      color: var(--primary);
+      border: 1px solid #FFEDD5;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .meta-box {
+      font-size: 12px;
+      color: var(--slate-500);
+      text-align: right;
+    }
+
+    .meta-box a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    /* Print action bar */
+    .no-print-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--slate-900);
+      color: #FFF;
+      padding: 12px 24px;
+      border-radius: 10px;
+      margin-bottom: 28px;
+    }
+
+    .btn-print {
+      background: var(--primary);
+      color: #FFF;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.2s;
+    }
+
+    .btn-print:hover {
+      background: var(--primary-dark);
+    }
+
+    /* Headings */
+    h2 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--slate-900);
+      margin-top: 36px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-left: 4px solid var(--primary);
+      padding-left: 12px;
+    }
+
+    h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--slate-900);
+      margin-top: 24px;
+      margin-bottom: 10px;
+    }
+
+    h4 {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--slate-500);
+      margin-top: 14px;
+      margin-bottom: 6px;
+    }
+
+    p {
+      color: var(--slate-700);
+      margin-bottom: 12px;
+    }
+
+    ul, ol {
+      margin-left: 20px;
+      margin-bottom: 16px;
+      color: var(--slate-700);
+    }
+
+    li {
+      margin-bottom: 6px;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0 24px;
+      font-size: 12px;
+    }
+
+    th, td {
+      padding: 10px 14px;
+      text-align: left;
+      border: 1px solid var(--slate-200);
+    }
+
+    th {
+      background-color: var(--slate-50);
+      color: var(--slate-700);
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+    }
+
+    tr:nth-child(even) {
+      background-color: #FCFDFE;
+    }
+
+    .role-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--slate-100);
+      font-weight: 600;
+      color: var(--slate-800);
+    }
+
+    /* Cards */
+    .module-card {
+      border: 1px solid var(--slate-200);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      background: #FFFFFF;
+    }
+
+    .module-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--slate-100);
+      padding-bottom: 10px;
+    }
+
+    .module-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--slate-900);
+    }
+
+    .module-route {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--slate-500);
+      background: var(--slate-100);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .instructions-box {
+      background: var(--slate-50);
+      border: 1px solid var(--slate-200);
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-top: 12px;
+    }
+
+    .instructions-box ol {
+      margin-bottom: 0;
+    }
+
+    .alert-box {
+      background: var(--emerald-50);
+      border: 1px solid #A7F3D0;
+      color: #065F46;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      margin: 16px 0;
+    }
+
+    /* Print styles */
+    @media print {
+      body {
+        background: #FFF;
+        font-size: 11px;
+      }
+
+      .container {
+        border: none;
+        padding: 0;
+        margin: 0;
+        box-shadow: none;
+        max-width: 100%;
+      }
+
+      .no-print-bar {
+        display: none !important;
+      }
+
+      .module-card {
+        page-break-inside: avoid;
+        border: 1px solid #CCC;
+        margin-bottom: 16px;
+        padding: 14px;
+      }
+
+      table {
+        page-break-inside: avoid;
+        font-size: 10px;
+      }
+
+      th, td {
+        padding: 6px 8px;
+      }
+
+      h2 {
+        font-size: 14px;
+        margin-top: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <div class="no-print-bar">
+      <div>
+        <strong style="font-size: 14px;">Nagfani Foods ERP 3.0 — Client Feature Presentation Sheet</strong>
+        <p style="margin: 2px 0 0; font-size: 12px; opacity: 0.85;">Optimized for sharing with clients, review meetings, and A4 print export.</p>
+      </div>
+      <button class="btn-print" onclick="window.print()">
+        <span>🖨️ Print / Save as PDF</span>
+      </button>
+    </div>
+
+    <!-- Header Section -->
+    <div class="header">
+      <div>
+        <div class="brand-title">
+          <span>NAGFANI FOODS ERP</span>
+          <span class="brand-badge">Version 3.0 Pro</span>
+        </div>
+        <p style="font-size: 13px; color: var(--slate-500); margin-top: 4px; font-weight: 500;">
+          Unified Enterprise Resource Planning, Multi-Godown Logistics &amp; Real-Time TallyPrime Synchronization
+        </p>
+      </div>
+      <div class="meta-box">
+        <div><strong>Client:</strong> Nagfani Foods Pvt. Ltd. (Udaipur, RJ)</div>
+        <div><strong>Live Web App:</strong> <a href="https://nagmani.onerishi.in" target="_blank">nagmani.onerishi.in</a></div>
+        <div><strong>Date:</strong> October 2026</div>
+      </div>
+    </div>
+
+    <div class="alert-box">
+      ✅ <strong>System Status: Live &amp; Operational.</strong> All 9 functional modules are running in Version 3.0 Clean Enterprise Pro styling with zero legacy fallbacks. 5 dedicated role stations have been verified for high-speed food manufacturing operations.
+    </div>
+
+    <!-- Section 1: Executive Summary -->
+    <h2>1. Executive Overview</h2>
+    <p>
+      <strong>Nagfani Foods ERP 3.0</strong> is custom-engineered for traditional Rajasthani food manufacturers (Papad, Khakhra, Loung Sev, Bhujia, Pickles) operating multi-tier wholesale and distribution channels. The system replaces fragmented paper records, manual ledger reconciliation, and telephone order miscommunication with a unified, high-density digital workstation.
+    </p>
+
+    <!-- Section 2: Complete Modules & How-To Guide -->
+    <h2>2. Complete Module Breakdown &amp; Operator How-To Guide</h2>
+
+    <!-- Module 1 -->
+    <div class="module-card">
+      <div class="module-card-header">
+        <span class="module-title">Module 1: Sales &amp; High-Speed Order Booking</span>
+        <span class="module-route">/v3/orders &bull; /v3/orders/new</span>
+      </div>
+      <h4>Key Capabilities Available Today:</h4>
+      <ul>
+        <li><strong>Rapid 2-Pane Order Entry:</strong> Designed for rapid booking during morning order rush hours.</li>
+        <li><strong>Customer Credit Intelligence:</strong> Real-time lookup of customer credit limits against current outstanding ledger balances with instant excess warnings.</li>
+        <li><strong>Quick-Add Favorites Catalog:</strong> 1-click addition of top sellers (<em>Urad Hari Mirch Papad, Rajasthani Loung Sev, Methi Khakhra, Ker Sangri Aachar</em>).</li>
+        <li><strong>Dynamic Quantity &amp; Rate Modifiers:</strong> Directly editable quantity input fields with stepper buttons and line-item tax calculations.</li>
+        <li><strong>Dual Operational Views:</strong> High-density data table and 4-stage Kanban Board (<em>Received &rarr; Packed &rarr; Shipped &rarr; Delivered</em>).</li>
+      </ul>
+      <div class="instructions-box">
+        <strong>How to Execute an Order:</strong>
+        <ol>
+          <li>Click <strong>"+ Create Order"</strong> or press <code>F2</code>.</li>
+          <li>Select the party (e.g. <em>Sharma General Store</em>); observe instant credit standing and ledger balance updates.</li>
+          <li>Assign delivery vehicle and delivery window (e.g. <em>Van 01 Mukesh &bull; Morning Run</em>).</li>
+          <li>Click items to add, type or step quantities; CGST, SGST, and consignment weight compute live.</li>
+          <li>Click <strong>"Book Order Now"</strong>; the order is queued for warehouse packing, and a Tally sales voucher is created automatically.</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Module 2 -->
+    <div class="module-card">
+      <div class="module-card-header">
+        <span class="module-title">Module 2: Fleet Dispatch &amp; Route Logistics</span>
+        <span class="module-route">/v3/delivery</span>
+      </div>
+      <h4>Key Capabilities Available Today:</h4>
+      <ul>
+        <li><strong>Active Van Fleet Telemetry:</strong> Live monitoring of 4 dedicated Udaipur delivery vans (<em>Van 01 Mukesh, Van 02 Sohan, Van 03 Ramesh, Van 04 Dinesh</em>).</li>
+        <li><strong>Payload Capacity Meters:</strong> Live weight tracking comparing consignment load (kg) against vehicle capacity to avoid overload fines.</li>
+        <li><strong>Driver Stop Checklist:</strong> Sequential delivery stop manifests with customer name, sector beat, cash-to-collect, and tap-to-call phone buttons.</li>
+        <li><strong>COD Cash Vault Tracking:</strong> Distinguishes cash physically inside van vaults from pending recoveries.</li>
+        <li><strong>One-Click Run Sheet Printing:</strong> Print-optimized dispatch sheets with customer signature blocks.</li>
+      </ul>
+      <div class="instructions-box">
+        <strong>How to Dispatch a Van:</strong>
+        <ol>
+          <li>Open <strong>"Dispatch &amp; Fleet"</strong> from the sidebar.</li>
+          <li>Select a vehicle to view its assigned orders and delivery route stops.</li>
+          <li>Click <strong>"Print Run Sheets"</strong> before drivers leave the godown.</li>
+          <li>When a driver completes a delivery, tap <strong>"Delivered"</strong>; the status turns green and the cash collected is credited to the driver's vault balance.</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Module 3 -->
+    <div class="module-card">
+      <div class="module-card-header">
+        <span class="module-title">Module 3: Food Manufacturing &amp; Recipe BOM Batching</span>
+        <span class="module-route">/v3/production</span>
+      </div>
+      <h4>Key Capabilities Available Today:</h4>
+      <ul>
+        <li><strong>Pre-Set Recipe Library:</strong> Standardized Bill of Materials (BOM) for Urad Masala Papad, Loung Sev, and Methi Vacuum Khakhra.</li>
+        <li><strong>Batch Multiplier Scaling:</strong> Scale batches by <code>1.0x</code>, <code>1.5x</code>, <code>2.0x</code>, or <code>3.0x</code> with automatic recalculation of ingredients (Urad dal, besan, Mathania chilli, Hing, oil, pouches).</li>
+        <li><strong>Shortfall Detection:</strong> Live cross-referencing against Godown A stock; highlights ingredient deficits in red before authorizing runs.</li>
+        <li><strong>Bay Allocation:</strong> Assigns batch runs to plant workshops (<em>Milling &amp; Kneading, Solar Polyhouse, Packaging</em>).</li>
+      </ul>
+      <div class="instructions-box">
+        <strong>How to Authorize a Production Batch:</strong>
+        <ol>
+          <li>Open <strong>"Production &amp; BOM"</strong>.</li>
+          <li>Select recipe on the left and choose batch multiplier (e.g. <code>2.0x</code> for a 200 kg run).</li>
+          <li>Verify raw material availability. Ensure no red "Shortfall" warnings appear.</li>
+          <li>Click <strong>"Authorize Batch &amp; Deduct Stock"</strong>; raw material inventory is reserved and the manufacturing order is issued.</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Module 4 -->
+    <div class="module-card">
+      <div class="module-card-header">
+        <span class="module-title">Module 4: Multi-Godown Stock Management</span>
+        <span class="module-route">/v3/stock</span>
+      </div>
+      <h4>Key Capabilities Available Today:</h4>
+      <ul>
+        <li><strong>Dual Facility Oversight:</strong> Real-time inventory tracking across <strong>Savina Main Mandi (Godown A)</strong> and <strong>Sukher Processing Plant</strong>.</li>
+        <li><strong>3-Tier Stock Visibility:</strong> Physical Stock on floor, Reserved Stock (committed to orders), and Free Available Stock.</li>
+        <li><strong>Reorder Point Alerts:</strong> Visual badge notifications when items fall below minimum safety levels.</li>
+        <li><strong>Inter-Godown Transfers:</strong> Stock movement dialogue with source, destination, item, and quantity tracking.</li>
+      </ul>
+    </div>
+
+    <!-- Module 5 -->
+    <div class="module-card">
+      <div class="module-card-header">
+        <span class="module-title">Module 5: Customer Accounts &amp; Sundry Debtors</span>
+        <span class="module-route">/v3/customers</span>
+      </div>
+      <h4>Key Capabilities Available Today:</h4>
+      <ul>
+        <li><strong>Customer Master Directory:</strong> Comprehensive list of retail stores, wholesale dealers, and HORECA partners.</li>
+        <li><strong>Beat Categorization:</strong> Filtered by Udaipur trade beats (<em>Savina Mandi, Hiran Magri, Krishi Mandi Hub, UIT Colony, Sukher</em>).</li>
+        <li><strong>High-Due Alerts:</strong> Color-coded indicators when a customer exceeds 80% of their credit limit.</li>
+        <li><strong>Direct Order Creation:</strong> Click <code>+ Order</code> on any customer row to open the order form pre-populated with that party.</li>
+        <li><strong>Add Party Modal:</strong> Add new customers mapped directly to TallyPrime's Sundry Debtors group.</li>
+      </ul>
+    </div>
+
+    <!-- Module 6 -->
+    <div class="module-card">
+      <div class="module-card-header">
+        <span class="module-title">Module 6: Vendor Procurement &amp; Inward GRN</span>
+        <span class="module-route">/v3/purchases</span>
+      </div>
+      <h4>Key Capabilities Available Today:</h4>
+      <ul>
+        <li><strong>Agricultural Supplier Directory:</strong> Regional mills and spice merchants (<em>Mewar Dal Mills, Hathras Hing Syndicate, Mathania Chilli Mandi</em>).</li>
+        <li><strong>Purchase Orders (PO):</strong> Issue formal procurement POs specifying target godown and credit payment terms.</li>
+        <li><strong>Goods Receipt Notes (GRN):</strong> Record incoming ingredient consignments; mark consignments as <em>Received at Dock</em> with physical weight intake logs.</li>
+      </ul>
+    </div>
+
+    <!-- Module 7 -->
+    <div class="module-card">
+      <div class="module-card-header">
+        <span class="module-title">Module 7: Payments, Cash Vaults &amp; Aging Analysis</span>
+        <span class="module-route">/v3/payments</span>
+      </div>
+      <h4>Key Capabilities Available Today:</h4>
+      <ul>
+        <li><strong>Multi-Channel Payment Register:</strong> Records collections from COD (Van Vault), RTGS/NEFT (ICICI Bank Chetak Circle), UPI, and Cheques.</li>
+        <li><strong>Ledger Aging Analysis:</strong> Visual breakdown into <code>0-7 Days</code> (current cycle), <code>8-15 Days</code> (driver follow-up), and <code>15+ Days</code> (overdue).</li>
+        <li><strong>Record Receipt Dialogue:</strong> Logs customer payment receipts and automatically pushes voucher entries to Tally.</li>
+      </ul>
+    </div>
+
+    <!-- Module 8 -->
+    <div class="module-card">
+      <div class="module-card-header">
+        <span class="module-title">Module 8: Statutory B2B GST Tax Invoicing</span>
+        <span class="module-route">/v3/invoices</span>
+      </div>
+      <h4>Key Capabilities Available Today:</h4>
+      <ul>
+        <li><strong>CGST Rule 46 Compliant Format:</strong> Professional, clean B2B tax invoice with clear tax breakdowns.</li>
+        <li><strong>Statutory Details:</strong> GSTIN <code>08AABCN9402M1Z4</code>, FSSAI <code>12219034000412</code>, HSN codes (<code>19059040</code> for Papad, <code>21069099</code> for Sev).</li>
+        <li><strong>Bank Remittance Details:</strong> ICICI Bank RTGS/NEFT details and payment terms printed directly on the invoice.</li>
+        <li><strong>One-Click Sharing:</strong> Browser print formatted for clean A4 printing, plus direct WhatsApp sharing to customer phone numbers.</li>
+      </ul>
+    </div>
+
+    <!-- Module 9 -->
+    <div class="module-card">
+      <div class="module-card-header">
+        <span class="module-title">Module 9: TallyPrime Live 2-Way Sync Station</span>
+        <span class="module-route">/v3/sync</span>
+      </div>
+      <h4>Key Capabilities Available Today:</h4>
+      <ul>
+        <li><strong>Live ODBC Telemetry:</strong> Real-time connection status on port <code>9000</code> with heartbeat monitoring.</li>
+        <li><strong>Bidirectional Sync:</strong> Pushes sales, receipts, and stock journals to Tally; pulls ledger balances and closing stock.</li>
+        <li><strong>Voucher Audit Log:</strong> Live XML transaction history with voucher numbers, payload byte sizes, and timestamps.</li>
+        <li><strong>Conflict Resolution:</strong> Tools to reconcile master data discrepancies (such as mismatched GSTINs).</li>
+        <li><strong>Manual Full Sync Trigger:</strong> On-demand sync execution for instant Day Book reconciliation.</li>
+      </ul>
+    </div>
+
+    <!-- Section 3: User Accounts Matrix -->
+    <h2>3. User Account Stations &amp; Credentials</h2>
+    <p>The system provides 5 role-based accounts pre-configured for each operational station:</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Role / Station</th>
+          <th>Username</th>
+          <th>Mobile</th>
+          <th>Password</th>
+          <th>Primary Screen &amp; Permissions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Administrator</strong></td>
+          <td><span class="role-badge">admin</span></td>
+          <td>9829012345</td>
+          <td><code>admin123</code></td>
+          <td><strong>Full System Control (<code>*</code>):</strong> Executive Dashboard, Settings, P&amp;L Reports, User Roles.</td>
+        </tr>
+        <tr>
+          <td><strong>Order Desk</strong></td>
+          <td><span class="role-badge">order</span></td>
+          <td>9829012346</td>
+          <td><code>order123</code></td>
+          <td><strong>Sales &amp; Booking:</strong> Orders Table, Stage Board, New Order Entry, Customer Directory.</td>
+        </tr>
+        <tr>
+          <td><strong>Packing Supervisor</strong></td>
+          <td><span class="role-badge">packing</span></td>
+          <td>9829012347</td>
+          <td><code>pack123</code></td>
+          <td><strong>Warehouse Floor:</strong> Order Packing Queue, Recipe BOM Batching, Stock Levels.</td>
+        </tr>
+        <tr>
+          <td><strong>Delivery Driver</strong></td>
+          <td><span class="role-badge">delivery</span></td>
+          <td>9829012348</td>
+          <td><code>delivery123</code></td>
+          <td><strong>Fleet Logistics:</strong> Van Dispatches, Stop Checklist, Cash Vaults, Run Sheet Printing.</td>
+        </tr>
+        <tr>
+          <td><strong>Accounts &amp; Tally</strong></td>
+          <td><span class="role-badge">accounts</span></td>
+          <td>9829012349</td>
+          <td><code>accounts123</code></td>
+          <td><strong>Finance &amp; Billing:</strong> GST Tax Invoices, Payment Register, Aging Analysis, Tally Sync Station.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p style="font-size: 12px; color: var(--slate-500);">
+      * Note: Universal password <code>admin123</code> or <code>nagmani123</code> works across all 5 accounts for testing convenience.
+    </p>
+
+    <!-- Section 4: Design Version Switcher -->
+    <h2>4. 3-Way Interface Switcher</h2>
+    <p>
+      Clients can toggle between design versions at any time using the persistent switcher in the top navigation bar:
+    </p>
+    <ul>
+      <li><strong><code>[ v1.0 ]</code> Classic Layout:</strong> Traditional data-entry layout.</li>
+      <li><strong><code>[ v2.0 ]</code> Stitch Motion:</strong> Expressive, animated design with rich visual flair.</li>
+      <li><strong><code>[ v3.0 Pro ✨ ]</code> Clean Enterprise (Default):</strong> High-density, high-contrast operational layout without visual clutter or AI-slop.</li>
+    </ul>
+
+    <!-- Section 5: Future Roadmap -->
+    <h2>5. Future Possibilities &amp; Expansion Roadmap</h2>
+    <p>
+      Nagfani Foods ERP is built on a scalable Node.js + MongoDB + React architecture that readily supports the following upcoming features:
+    </p>
+    <ul>
+      <li><strong>Bluetooth Thermal Receipt Printers:</strong> Drivers carry portable 3-inch thermal printers to print instant COD receipts right at the customer's shop.</li>
+      <li><strong>Barcode / QR Code Pallet Scanners:</strong> Packers scan carton barcodes to advance orders from <em>Packed</em> to <em>Shipped</em> without manual typing.</li>
+      <li><strong>Automated WhatsApp Business Bot:</strong> Automatically send order confirmations, dispatch alerts, and official PDF invoices to store owners via WhatsApp.</li>
+      <li><strong>Dynamic UPI QR Codes on Every Invoice:</strong> Generate dynamic NPCI UPI QR codes on invoices for instant bank settlement.</li>
+      <li><strong>Multi-Branch &amp; Interstate Expansion:</strong> Add secondary godowns in Jodhpur, Jaipur, or Ahmedabad with automated central Tally consolidation.</li>
+    </ul>
+
+    <!-- Section 6: Live Access -->
+    <h2>6. Live Access Details</h2>
+    <div class="instructions-box" style="font-size: 13px;">
+      <div><strong>🌐 Public Web URL:</strong> <a href="https://nagmani.onerishi.in" target="_blank" style="color: var(--primary); font-weight: 700;">https://nagmani.onerishi.in</a></div>
+      <div style="margin-top: 4px;"><strong>⚡ Local Tally Gateway:</strong> Cloudflare Tunnel (Port 5000 &rarr; Port 9000)</div>
+      <div style="margin-top: 4px;"><strong>📱 Responsive Support:</strong> Works smoothly across Desktop, Tablets, and Mobile phones.</div>
+    </div>
+
+  </div>
+
+</body>
+</html>
