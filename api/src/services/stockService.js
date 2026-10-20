@@ -178,26 +178,26 @@ export async function transferGodownStock({
 }
 
 export async function checkStockAvailability(items, godownId) {
-  const itemIds = items.map(i => i.itemId);
-  const levels = await StockLevel.find({
+  const itemIds = items.map(i => i.itemId).filter(Boolean);
+  const levels = itemIds.length > 0 ? await StockLevel.find({
     godownId,
     itemId: { $in: itemIds }
-  });
+  }) : [];
 
   const levelMap = new Map();
   levels.forEach(l => levelMap.set(l.itemId.toString(), l.available));
 
   const warnings = [];
   for (const item of items) {
-    const available = levelMap.get(item.itemId.toString()) || 0;
-    if (available < item.qty) {
+    const available = item.itemId ? (levelMap.get(item.itemId.toString()) || 0) : 0;
+    if (available < (item.qty || item.quantity || 1)) {
       warnings.push({
         itemId: item.itemId,
         sku: item.sku,
-        name: item.name,
-        requested: item.qty,
+        name: item.name || item.productName,
+        requested: item.qty || item.quantity || 1,
         available,
-        shortfall: item.qty - available
+        shortfall: (item.qty || item.quantity || 1) - available
       });
     }
   }

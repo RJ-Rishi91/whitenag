@@ -120,6 +120,20 @@ router.post('/', requirePermission('order.create'), async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Missing party, godown or items' });
     }
 
+    // Auto-resolve itemIds from SKU if missing
+    const missingSkus = items.filter(i => !i.itemId && i.sku).map(i => i.sku);
+    if (missingSkus.length > 0) {
+      const dbBySku = await Item.find({ sku: { $in: missingSkus } }).session(session);
+      const skuMap = {};
+      dbBySku.forEach(d => { skuMap[d.sku] = d; });
+      items.forEach(i => {
+        if (!i.itemId && i.sku && skuMap[i.sku]) {
+          i.itemId = skuMap[i.sku]._id;
+          if (!i.name && !i.productName) i.name = skuMap[i.sku].name;
+        }
+      });
+    }
+
     // Check stock availability
     const stockCheck = await checkStockAvailability(items, godownId);
     if (!stockCheck.isAvailable && !allowStockOverride) {
