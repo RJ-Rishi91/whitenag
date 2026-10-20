@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../../api/client.js';
 
 export function NewOrderV3() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const [catalogItems, setCatalogItems] = useState([]);
 
   // Parties state
   const [parties, setParties] = useState([
@@ -110,7 +113,7 @@ export function NewOrderV3() {
     paymentTerms: '7 Days Credit (Weekly Cycle)',
     deliverySlot: 'Morning Dispatch (09:00 AM - 01:00 PM)',
     channel: 'B2B Wholesale',
-    notes: 'Deliver to back shutter. Collect overdue ₹5,000 cheque along with signed LR copy.'
+    notes: 'Deliver to back shutter. Collect overdue cheque along with signed LR copy.'
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -125,16 +128,36 @@ export function NewOrderV3() {
           api.get('/items').catch(() => null)
         ]);
 
+        if (itemsRes?.success && Array.isArray(itemsRes.data)) {
+          setCatalogItems(itemsRes.data);
+        }
+
         if (partiesRes?.success && Array.isArray(partiesRes.data) && partiesRes.data.length > 0) {
-          setParties(partiesRes.data);
-          setSelectedPartyId(partiesRes.data[0]._id);
+          const mappedParties = partiesRes.data.map(p => ({
+            _id: p._id,
+            businessName: p.name || p.businessName,
+            contactPerson: p.contactPerson || 'Proprietor',
+            phone: p.mobile || p.phone || '+91 98290 12345',
+            gstin: p.gstin || '08AAACS1421K1ZB',
+            city: p.city || 'Udaipur',
+            address: p.address || 'Udaipur',
+            creditLimit: p.creditLimit || 50000,
+            outstanding: p.balance !== undefined ? p.balance : (p.outstanding || 0),
+            route: p.areaId?.name ? `${p.areaId.name} Sector` : (p.route || `${p.city || 'Udaipur'} Beat`)
+          }));
+          setParties(mappedParties);
+          if (location.state?.partyId && mappedParties.some(p => p._id === location.state.partyId)) {
+            setSelectedPartyId(location.state.partyId);
+          } else {
+            setSelectedPartyId(mappedParties[0]._id);
+          }
         }
       } catch {
         // preserve defaults
       }
     }
     loadData();
-  }, []);
+  }, [location.state]);
 
   // Update item quantity
   const handleUpdateQty = (id, delta) => {
@@ -146,6 +169,13 @@ export function NewOrderV3() {
         }
         return i;
       })
+    );
+  };
+
+  const handleSetQty = (id, val) => {
+    const q = parseInt(val, 10);
+    setItems(prev =>
+      prev.map(i => (i.id === id ? { ...i, quantity: isNaN(q) || q < 1 ? 1 : q } : i))
     );
   };
 
@@ -162,15 +192,17 @@ export function NewOrderV3() {
 
   // Add catalog item
   const handleAddProduct = (name, sku, rate, gst, pack, weightPerUnit) => {
+    const matched = catalogItems.find(ci => ci.sku === sku || (ci.name && ci.name.toLowerCase().includes(name.toLowerCase())));
     const newItem = {
       id: Date.now(),
-      sku,
-      productName: name,
+      itemId: matched?._id || undefined,
+      sku: matched?.sku || sku,
+      productName: matched?.name || name,
       packSize: pack,
       stockAvailable: 'In Stock (Savina)',
       quantity: 10,
       unit: 'pkts',
-      rate,
+      rate: rate,
       gstPercent: gst,
       weightKg: weightPerUnit * 10
     };
@@ -205,6 +237,11 @@ export function NewOrderV3() {
     };
   }, [items]);
 
+  // Projected credit check
+  const projectedOutstanding = (selectedParty?.outstanding || 0) + totals.grandTotal;
+  const isCreditExceeded = (selectedParty?.creditLimit || 0) > 0 && projectedOutstanding > (selectedParty?.creditLimit || 0);
+  const creditExcess = Math.max(0, projectedOutstanding - (selectedParty?.creditLimit || 0));
+
   // Submit order to API
   const handleSubmitOrder = async (e) => {
     e.preventDefault();
@@ -218,7 +255,7 @@ export function NewOrderV3() {
       // Fetch Godown ID
       const godownsRes = await api.get('/godowns').catch(() => null);
       const godownId = godownsRes?.data?.[0]?._id;
-      const partyId = selectedParty._id?.length === 24 ? selectedParty._id : (parties[0]?._id);
+      const partyId = selectedParty._id?.length === 24 ? selectedParty._id : (parties.find(p => p._id?.length === 24)?._id);
 
       if (partyId && godownId) {
         await api.post('/orders', {
@@ -366,9 +403,22 @@ export function NewOrderV3() {
                       <div className="font-mono font-bold text-slate-900 mt-0.5">₹{(selectedParty.creditLimit || 50000).toLocaleString('en-IN')}</div>
                     </div>
                     <div className="p-2 bg-white rounded border border-slate-200">
-                      <div className="text-[10px] text-amber-600 uppercase font-bold">Outstanding</div>
-                      <div className="font-mono font-bold text-amber-700 mt-0.5">₹{(selectedParty.outstanding || 18200).toLocaleString('en-IN')}</div>
+                      <div className="text-[10px] text-amber-600 uppercase font-bold">Current Outstanding</div>
+                      <div className="font-mono font-bold text-amber-700 mt-0.5">₹{(selectedParty.outstanding || 0).toLocaleString('en-IN')}</div>
                     </div>
+                  </div>
+
+                  {/* Projected Credit Utilization & Breached Warning */}
+                  <div className={`p-2.5 rounded-lg border text-xs flex items-center justify-between ${isCreditExceeded ? 'bg-rose-50 border-rose-300 text-rose-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800'}`}>
+                    <div className="flex items-center gap-1.5 font-medium">
+                      <span className="material-symbols-outlined text-[16px]">
+                        {isCreditExceeded ? 'warning' : 'verified_user'}
+                      </span>
+                      <span>{isCreditExceeded ? `Credit Exceeded (+₹${creditExcess.toLocaleString('en-IN')})` : 'Credit Standing Healthy'}</span>
+                    </div>
+                    <span className="font-mono font-bold text-[11px]">
+                      Proj. Due: ₹{projectedOutstanding.toLocaleString('en-IN')}
+                    </span>
                   </div>
                 </div>
               )}
@@ -518,21 +568,27 @@ export function NewOrderV3() {
                             </span>
                           </td>
                           <td className="py-3 px-3 text-center">
-                            <div className="inline-flex items-center border border-slate-200 rounded-md bg-white">
+                            <div className="inline-flex items-center border border-slate-200 rounded-md bg-white overflow-hidden shadow-2xs">
                               <button
                                 type="button"
-                                onClick={() => handleUpdateQty(item.id, -5)}
-                                className="px-2 py-0.5 text-slate-500 hover:bg-slate-100 font-bold"
+                                onClick={() => handleUpdateQty(item.id, -1)}
+                                className="px-2 py-0.5 text-slate-500 hover:bg-slate-100 font-bold text-xs"
+                                title="Decrease by 1"
                               >
                                 -
                               </button>
-                              <span className="px-2.5 py-0.5 font-mono font-bold text-slate-900 text-xs">
-                                {item.quantity}
-                              </span>
+                              <input
+                                type="number"
+                                min="1"
+                                value={item.quantity}
+                                onChange={(e) => handleSetQty(item.id, e.target.value)}
+                                className="w-12 h-6 text-center font-mono font-bold text-slate-900 text-xs border-x border-slate-200 focus:outline-none focus:bg-amber-50"
+                              />
                               <button
                                 type="button"
-                                onClick={() => handleUpdateQty(item.id, 5)}
-                                className="px-2 py-0.5 text-slate-500 hover:bg-slate-100 font-bold"
+                                onClick={() => handleUpdateQty(item.id, 1)}
+                                className="px-2 py-0.5 text-slate-500 hover:bg-slate-100 font-bold text-xs"
+                                title="Increase by 1"
                               >
                                 +
                               </button>

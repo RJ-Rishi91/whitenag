@@ -93,18 +93,33 @@ export function DashboardV3() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [dashRes, ordersRes] = await Promise.all([
-          api.get('/reports/dashboard').catch(() => null),
-          api.get('/orders?limit=15').catch(() => null)
+        const [dashRes, ordersRes, syncRes] = await Promise.all([
+          api.get('/dashboard').catch(() => api.get('/reports/dashboard')).catch(() => null),
+          api.get('/orders?limit=15').catch(() => null),
+          api.get('/sync/overview').catch(() => null)
         ]);
 
         if (dashRes?.success && dashRes.data) {
           const d = dashRes.data;
+          const m = d.metrics || d;
           setMetrics(prev => ({
             ...prev,
-            todaySales: d.todaySales || prev.todaySales,
-            invoicesCount: d.invoicesCount || prev.invoicesCount,
-            outstanding: d.totalOutstanding || prev.outstanding
+            todaySales: m.todaySales ?? prev.todaySales,
+            monthSales: m.monthSales ?? prev.monthSales,
+            invoicesCount: d.invoicesCount || (m.statusCounts ? Object.values(m.statusCounts).reduce((a, b) => a + b, 0) : prev.invoicesCount),
+            outstanding: m.outstandingTotal || d.totalOutstanding || prev.outstanding,
+            cashInHand: m.cashBalance !== undefined ? Math.abs(m.cashBalance) : prev.cashInHand,
+            hdfcBank: m.bankBalance !== undefined ? Math.abs(m.bankBalance) : prev.hdfcBank,
+            upiToday: m.upiCollection !== undefined ? m.upiCollection : prev.upiToday
+          }));
+        }
+
+        if (syncRes?.success && syncRes.counts) {
+          setSyncState(s => ({
+            ...s,
+            synced: syncRes.counts.synced ?? s.synced,
+            queue: syncRes.counts.pending ?? s.queue,
+            conflict: syncRes.counts.conflict ?? s.conflict
           }));
         }
 
@@ -118,7 +133,7 @@ export function DashboardV3() {
             amount: o.grandTotal || o.totalAmount || 12000,
             weightKg: 45.0,
             status: o.status || 'received',
-            time: 'Today'
+            time: o.createdAt ? new Date(o.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Today'
           }));
           setOrders(mapped);
         }
@@ -129,25 +144,38 @@ export function DashboardV3() {
     loadData();
   }, []);
 
-  const handleAdvanceStatus = (orderId, current) => {
+  const handleAdvanceStatus = async (orderId, current) => {
     const nextMap = { received: 'packed', packed: 'shipped', shipped: 'delivered', delivered: 'received' };
     const next = nextMap[current];
     setOrders(prev => prev.map(o => (o._id === orderId ? { ...o, status: next } : o)));
-    api.patch(`/orders/${orderId}/status`, { status: next }).catch(() => null);
+    try {
+      await api.post(`/orders/${orderId}/status`, { status: next });
+    } catch {
+      // fallback
+    }
   };
 
   const handleSyncNow = async () => {
     setSyncState(s => ({ ...s, isSyncing: true }));
     try {
-      await api.post('/sync/trigger', {}).catch(() => null);
-      setTimeout(() => {
+      const res = await api.post('/sync/trigger', { scope: 'all' }).catch(() => null);
+      if (res?.success && res.counts) {
         setSyncState(s => ({
           ...s,
           isSyncing: false,
-          synced: s.synced + s.queue,
-          queue: 0
+          synced: res.counts.synced,
+          queue: res.counts.pending
         }));
-      }, 1000);
+      } else {
+        setTimeout(() => {
+          setSyncState(s => ({
+            ...s,
+            isSyncing: false,
+            synced: s.synced + s.queue,
+            queue: 0
+          }));
+        }, 1000);
+      }
     } catch {
       setSyncState(s => ({ ...s, isSyncing: false }));
     }

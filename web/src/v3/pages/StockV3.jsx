@@ -179,24 +179,34 @@ export function StockV3() {
   useEffect(() => {
     async function fetchStock() {
       try {
-        const res = await api.get('/items').catch(() => null);
+        const res = await api.get('/stock/levels').catch(() => null);
         if (res?.success && Array.isArray(res.data) && res.data.length > 0) {
-          // Map real DB items
-          const mapped = res.data.map(item => ({
-            _id: item._id,
-            sku: item.sku || `SKU-${item._id.slice(-4)}`,
-            name: item.name,
-            category: item.category || 'Finished Goods',
-            godown: 'Savina Main Mandi (Godown A)',
-            inStock: item.currentStock || item.stock || 120,
-            reserved: item.reservedStock || 20,
-            available: (item.currentStock || 120) - (item.reservedStock || 20),
-            minLevel: item.reorderLevel || 50,
-            unit: item.unit?.code || item.unit || 'Kg',
-            rate: item.standardRate || item.rate || 100,
-            valuation: (item.currentStock || 120) * (item.standardRate || 100),
-            status: (item.currentStock || 120) < (item.reorderLevel || 50) ? 'low' : 'healthy'
-          }));
+          // Map real DB stock levels
+          const mapped = res.data.map(sl => {
+            const rawCat = sl.itemId?.category;
+            const categoryName = rawCat === 'raw' ? 'Raw Materials' : rawCat === 'packaging' ? 'Packaging' : 'Finished Goods';
+            const phys = Number(sl.physical ?? 0);
+            const resv = Number(sl.reserved ?? 0);
+            const avail = Number(sl.available ?? (phys - resv));
+            const minStock = Number(sl.itemId?.minStock || 50);
+            const cost = Number(sl.itemId?.standardCost || sl.itemId?.mrp || 100);
+
+            return {
+              _id: sl._id,
+              sku: sl.itemId?.sku || `SKU-${sl._id.slice(-4)}`,
+              name: sl.itemId?.name || 'Item',
+              category: categoryName,
+              godown: sl.godownId?.name || 'Savina Main Mandi (Godown A)',
+              inStock: phys,
+              reserved: resv,
+              available: avail,
+              minLevel: minStock,
+              unit: sl.itemId?.unitSymbol || 'Kg',
+              rate: cost,
+              valuation: Math.max(0, phys) * cost,
+              status: avail < 0 ? 'critical' : (avail < minStock ? 'low' : 'healthy')
+            };
+          });
           setItems(mapped);
         }
       } catch {

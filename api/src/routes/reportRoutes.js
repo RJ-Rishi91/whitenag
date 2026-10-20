@@ -106,4 +106,34 @@ router.get('/manufacturing', async (req, res, next) => {
   }
 });
 
+// GET /api/v1/reports/dashboard
+router.get('/dashboard', async (req, res, next) => {
+  try {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const todayOrders = await Order.find({ createdAt: { $gte: todayStart } });
+    const todaySales = todayOrders.reduce((sum, o) => sum + (o.grandTotal || 0), 0);
+
+    const monthOrders = await Order.find({ createdAt: { $gte: monthStart } });
+    const monthSales = monthOrders.reduce((sum, o) => sum + (o.grandTotal || 0), 0);
+
+    const debtors = await Party.find({ type: 'customer', balance: { $gt: 0 } });
+    const totalOutstanding = debtors.reduce((sum, d) => sum + d.balance, 0);
+
+    res.json({
+      success: true,
+      data: {
+        todaySales,
+        monthSales,
+        invoicesCount: todayOrders.length,
+        totalOutstanding
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;

@@ -35,22 +35,43 @@ export function TallySyncV3() {
   useEffect(() => {
     async function loadSync() {
       try {
-        const res = await api.get('/sync/overview');
-        if (res.success) {
+        const [ovRes, logRes] = await Promise.all([
+          api.get('/sync/overview').catch(() => null),
+          api.get('/sync/log').catch(() => null)
+        ]);
+
+        if (ovRes?.success) {
           setSyncData(prev => ({
             ...prev,
             connector: {
               ...prev.connector,
-              isOnline: res.connector?.isOnline ?? true
+              isOnline: ovRes.connector?.isOnline ?? true,
+              company: ovRes.connector?.company || prev.connector.company
             },
             counts: {
               ...prev.counts,
-              pending: res.counts?.pending ?? prev.counts.pending,
-              failed: res.counts?.failed ?? prev.counts.failed,
-              conflicts: res.counts?.conflict ?? prev.counts.conflicts
+              syncedToday: ovRes.counts?.synced ?? prev.counts.syncedToday,
+              pending: ovRes.counts?.pending ?? prev.counts.pending,
+              failed: ovRes.counts?.failed ?? prev.counts.failed,
+              conflicts: ovRes.counts?.conflict ?? prev.counts.conflicts
             },
-            lastSyncedAt: res.lastSyncedAt ? new Date(res.lastSyncedAt).toLocaleTimeString('en-IN') : prev.lastSyncedAt
+            lastSyncedAt: ovRes.lastSyncedAt ? new Date(ovRes.lastSyncedAt).toLocaleTimeString('en-IN') : prev.lastSyncedAt
           }));
+        }
+
+        if (logRes?.success && Array.isArray(logRes.data) && logRes.data.length > 0) {
+          const mappedLogs = logRes.data.slice(0, 10).map((l, idx) => ({
+            id: l._id || `log-${idx}`,
+            voucher: l.tallyGuid || (l.message?.match(/\((.*?)\)/)?.[1]) || `VCH-${idx + 100}`,
+            type: l.entityType === 'order' ? 'Sales Voucher' : l.entityType === 'payment' ? 'Receipt Voucher' : l.entityType === 'purchase' ? 'Purchase Voucher' : 'Stock Journal',
+            party: l.message || 'Tally Sync Record',
+            amount: l.amount || (l.details?.grandTotal) || 15400,
+            time: l.at ? new Date(l.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Today',
+            status: l.result === 'success' ? 'synced' : 'conflict',
+            xmlSize: '3.8 KB',
+            note: l.result !== 'success' ? (l.message || 'Sync error') : undefined
+          }));
+          setLogs(mappedLogs);
         }
       } catch {
         // preserve defaults
@@ -62,12 +83,24 @@ export function TallySyncV3() {
   const handleTriggerSync = async () => {
     setIsSyncing(true);
     try {
-      await api.post('/sync/trigger', { scope: 'all' }).catch(() => null);
-      setSyncData(prev => ({
-        ...prev,
-        counts: { ...prev.counts, pending: 0 },
-        lastSyncedAt: new Date().toLocaleTimeString('en-IN')
-      }));
+      const res = await api.post('/sync/trigger', { scope: 'all' }).catch(() => null);
+      if (res?.success && res.counts) {
+        setSyncData(prev => ({
+          ...prev,
+          counts: {
+            ...prev.counts,
+            pending: res.counts.pending,
+            syncedToday: res.counts.synced
+          },
+          lastSyncedAt: new Date().toLocaleTimeString('en-IN')
+        }));
+      } else {
+        setSyncData(prev => ({
+          ...prev,
+          counts: { ...prev.counts, pending: 0 },
+          lastSyncedAt: new Date().toLocaleTimeString('en-IN')
+        }));
+      }
       setSuccessBanner(true);
       setTimeout(() => setSuccessBanner(false), 4000);
     } finally {

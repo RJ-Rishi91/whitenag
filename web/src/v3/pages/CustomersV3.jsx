@@ -111,14 +111,14 @@ export function CustomersV3() {
         if (res?.success && Array.isArray(res.data) && res.data.length > 0) {
           const mapped = res.data.map(p => ({
             _id: p._id,
-            businessName: p.businessName || p.name,
+            businessName: p.name || p.businessName,
             contactPerson: p.contactPerson || 'Proprietor',
-            phone: p.phone || '+91 98290 12345',
+            phone: p.mobile || p.phone || '+91 98290 12345',
             gstin: p.gstin || '08AAACS1421K1ZB',
-            route: p.route || (p.city ? `${p.city} Sector` : 'Savina Beat'),
+            route: p.areaId?.name ? `${p.areaId.name} Sector` : (p.route || (p.city ? `${p.city} Sector` : 'Savina Beat')),
             address: p.address || 'Udaipur, Rajasthan',
             creditLimit: p.creditLimit || 50000,
-            outstanding: p.outstanding || 0,
+            outstanding: p.balance !== undefined ? p.balance : (p.outstanding || 0),
             totalOrders: p.ordersCount || 12,
             lastOrderDate: 'Active'
           }));
@@ -145,39 +145,57 @@ export function CustomersV3() {
 
   const totalOutstanding = parties.reduce((sum, p) => sum + p.outstanding, 0);
 
-  const handleAddPartySubmit = (e) => {
+  const handleAddPartySubmit = async (e) => {
     e.preventDefault();
     if (!newParty.businessName.trim()) return;
 
-    const added = {
-      _id: `cust-${Date.now()}`,
-      businessName: newParty.businessName,
-      contactPerson: newParty.contactPerson || 'Proprietor',
-      phone: newParty.phone || '+91 98000 00000',
-      gstin: newParty.gstin || 'Unregistered',
-      route: newParty.route,
-      address: newParty.address || 'Udaipur',
-      creditLimit: +newParty.creditLimit || 50000,
-      outstanding: 0,
-      totalOrders: 0,
-      lastOrderDate: 'Just Added'
-    };
+    try {
+      const payload = {
+        name: newParty.businessName.trim(),
+        mobile: newParty.phone.trim() || '9829000000',
+        gstin: newParty.gstin.trim(),
+        address: newParty.address.trim() || 'Udaipur',
+        city: 'Udaipur',
+        creditLimit: Number(newParty.creditLimit) || 50000,
+        segment: 'b2b',
+        b2bType: 'retailer'
+      };
 
-    setParties(prev => [added, ...prev]);
-    setAddSuccess(true);
-    setTimeout(() => {
-      setAddSuccess(false);
-      setShowAddModal(false);
-      setNewParty({
-        businessName: '',
-        contactPerson: '',
-        phone: '',
-        gstin: '',
-        route: 'Savina Main Mandi',
-        creditLimit: 50000,
-        address: ''
-      });
-    }, 1000);
+      const res = await api.post('/parties', payload);
+      const savedParty = res.success ? res.data : null;
+
+      const added = {
+        _id: savedParty?._id || `cust-${Date.now()}`,
+        businessName: savedParty?.name || newParty.businessName,
+        contactPerson: newParty.contactPerson || 'Proprietor',
+        phone: savedParty?.mobile || newParty.phone || '+91 98000 00000',
+        gstin: savedParty?.gstin || newParty.gstin || 'Unregistered',
+        route: newParty.route,
+        address: savedParty?.address || newParty.address || 'Udaipur',
+        creditLimit: savedParty?.creditLimit || +newParty.creditLimit || 50000,
+        outstanding: 0,
+        totalOrders: 0,
+        lastOrderDate: 'Just Added'
+      };
+
+      setParties(prev => [added, ...prev]);
+      setAddSuccess(true);
+      setTimeout(() => {
+        setAddSuccess(false);
+        setShowAddModal(false);
+        setNewParty({
+          businessName: '',
+          contactPerson: '',
+          phone: '',
+          gstin: '',
+          route: 'Savina Main Mandi',
+          creditLimit: 50000,
+          address: ''
+        });
+      }, 1000);
+    } catch (err) {
+      alert('Error saving party: ' + err.message);
+    }
   };
 
   return (
@@ -361,7 +379,7 @@ export function CustomersV3() {
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             type="button"
-                            onClick={() => navigate('/v3/orders/new')}
+                            onClick={() => navigate('/v3/orders/new', { state: { partyId: party._id } })}
                             className="px-2.5 py-1 rounded bg-[#EA580C] hover:bg-[#C2410C] text-white font-semibold text-[11px] transition-colors"
                             title="Create Order for this Party"
                           >

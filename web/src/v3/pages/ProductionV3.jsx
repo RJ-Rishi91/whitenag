@@ -179,8 +179,8 @@ export function ProductionV3() {
                 <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">
                   Target Batch Multiplier
                 </label>
-                <div className="grid grid-cols-4 gap-2">
-                  {[1.0, 1.5, 2.0, 3.0].map((m) => (
+                <div className="grid grid-cols-5 gap-1.5">
+                  {[1.0, 1.5, 2.0, 3.0, 5.0].map((m) => (
                     <button
                       key={m}
                       type="button"
@@ -197,6 +197,28 @@ export function ProductionV3() {
                       {m}x
                     </button>
                   ))}
+                </div>
+
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-[11px] text-slate-500 font-medium">Custom scale factor:</span>
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      step="0.5"
+                      min="0.1"
+                      max="50"
+                      value={multiplier}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value);
+                        if (!isNaN(val) && val > 0) {
+                          setMultiplier(val);
+                          setBatchConfirmed(false);
+                        }
+                      }}
+                      className="w-20 h-7 px-2 text-right bg-slate-50 border border-slate-200 rounded text-xs font-mono font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#EA580C]"
+                    />
+                    <span className="text-[11px] font-mono text-slate-500 font-bold">x</span>
+                  </div>
                 </div>
 
                 <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs space-y-1.5">

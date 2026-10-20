@@ -1,9 +1,16 @@
 import express from 'express';
+import { exec } from 'child_process';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 import { SyncOutbox } from '../models/SyncOutbox.js';
 import { SyncInbox } from '../models/SyncInbox.js';
 import { SyncLog } from '../models/SyncLog.js';
 import { authenticateToken, authenticateConnector } from '../middleware/auth.js';
 import { emitEvent } from '../services/socketService.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
@@ -219,6 +226,44 @@ router.post('/retry/:id', authenticateToken, async (req, res, next) => {
     await item.save();
 
     res.json({ success: true, message: 'Item queued for retry' });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/v1/sync/trigger
+router.post('/trigger', authenticateToken, async (req, res, next) => {
+  try {
+    const { scope = 'all' } = req.body;
+    emitEvent('sync:trigger', { scope, triggeredBy: req.user?.userId || req.user?._id, at: new Date() });
+
+    // Execute connector cycle if available
+    try {
+      const connectorPath = path.resolve(__dirname, '../../../connector');
+      if (fs.existsSync(path.join(connectorPath, 'connector.py'))) {
+        exec('python3 connector.py --run-once', { cwd: connectorPath }, (err, stdout) => {
+          if (!err && stdout) {
+            console.log('[TallySync] Triggered cycle completed:', stdout.trim().split('\n').pop());
+          }
+        });
+      }
+    } catch {
+      // ignore
+    }
+
+    const pendingCount = await SyncOutbox.countDocuments({ status: { $in: ['pending', 'failed'] } });
+    const syncedCount = await SyncOutbox.countDocuments({ status: 'synced' });
+
+    res.json({
+      success: true,
+      message: 'Tally synchronization cycle triggered successfully',
+      scope,
+      counts: {
+        pending: pendingCount,
+        synced: syncedCount
+      },
+      triggeredAt: new Date()
+    });
   } catch (err) {
     next(err);
   }

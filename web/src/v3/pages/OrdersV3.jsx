@@ -128,21 +128,30 @@ export function OrdersV3() {
       try {
         const res = await api.get('/orders?limit=50');
         if (res.success && Array.isArray(res.data) && res.data.length > 0) {
-          const mapped = res.data.map(o => ({
-            _id: o._id,
-            orderNumber: o.orderNumber || `SO-${o._id.slice(-4).toUpperCase()}`,
-            customerName: o.customer?.businessName || o.customerName || 'Udaipur Retailer',
-            sector: o.customer?.city ? `${o.customer.city} Sector` : 'Savina Mandi',
-            channel: o.channel || 'B2B Wholesale',
-            paymentStatus: o.paymentStatus || 'unpaid',
-            grandTotal: o.grandTotal || 0,
-            totalWeightKg: o.totalWeightKg || 45.0,
-            itemsSummary: o.items?.map(i => `${i.productName || i.name} (${i.quantity || i.qty})`).join(', ') || 'Custom Papad & Sev Pack',
-            status: o.status || 'received',
-            tallySynced: o.tallySynced ?? true,
-            van: 'Van 01 (Mukesh)',
-            time: 'Live'
-          }));
+          const mapped = res.data.map(o => {
+            const partyName = o.partyId?.name || o.party?.name || o.customer?.businessName || o.customerName || 'Udaipur Retailer';
+            const sectorName = o.areaId?.name ? `${o.areaId.name} Sector` : (o.partyId?.areaId?.name ? `${o.partyId.areaId.name} Sector` : (o.partyId?.city ? `${o.partyId.city} Sector` : 'Savina Mandi'));
+            const calcWeight = o.items ? o.items.reduce((sum, it) => sum + (Number(it.qty || it.quantity || 1) * 0.5), 0) : 45.0;
+            const itemsText = o.items?.map(i => `${i.productName || i.name} (${i.quantity || i.qty})`).join(', ') || 'Custom Papad & Sev Pack';
+            const isSynced = o.sync?.status === 'synced' || o.tallySynced === true;
+            const orderTime = o.createdAt ? new Date(o.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Live';
+
+            return {
+              _id: o._id,
+              orderNumber: o.orderNo || o.orderNumber || `SO-${o._id.slice(-4).toUpperCase()}`,
+              customerName: partyName,
+              sector: sectorName,
+              channel: o.channel || (o.segment === 'b2c' ? 'B2C Retail' : 'B2B Wholesale'),
+              paymentStatus: o.paymentStatus || 'unpaid',
+              grandTotal: o.grandTotal || 0,
+              totalWeightKg: o.totalWeightKg || calcWeight,
+              itemsSummary: itemsText,
+              status: o.status || 'received',
+              tallySynced: isSynced,
+              van: o.deliveryDetails || 'Van 01 (Mukesh)',
+              time: orderTime
+            };
+          });
           setOrders(mapped);
         }
       } catch {
@@ -153,17 +162,31 @@ export function OrdersV3() {
   }, []);
 
   // Advance workflow state
-  const handleAdvanceStatus = (orderId, currentStatus) => {
+  const handleAdvanceStatus = async (orderId, currentStatus) => {
     const nextMap = {
       received: 'packed',
       packed: 'shipped',
-      shipped: 'delivered',
-      delivered: 'received'
+      shipped: 'delivered'
     };
-    const nextStatus = nextMap[currentStatus] || 'received';
+    const nextStatus = nextMap[currentStatus];
+    if (!nextStatus) return; // Order is already completed / delivered
+
+    // Optimistic UI update
     setOrders(prev =>
       prev.map(o => (o._id === orderId ? { ...o, status: nextStatus } : o))
     );
+
+    // Call backend API if real MongoDB order ID
+    if (orderId && orderId.length === 24) {
+      try {
+        await api.post(`/orders/${orderId}/status`, {
+          status: nextStatus,
+          note: `Workflow transitioned to ${nextStatus} via Order Desk`
+        });
+      } catch (err) {
+        console.warn('Status update API error:', err);
+      }
+    }
   };
 
   // Sync to Tally prime action
@@ -186,7 +209,10 @@ export function OrdersV3() {
       order.sector.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.itemsSummary.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesSector = selectedSector === 'all' || order.sector.toLowerCase().includes(selectedSector.toLowerCase());
+    const matchesSector =
+      selectedSector === 'all' ||
+      order.sector.toLowerCase().includes(selectedSector.toLowerCase()) ||
+      (selectedSector === 'hiran magri' && (order.sector.toLowerCase().includes('sec') || order.sector.toLowerCase().includes('hiran')));
     const matchesStatus = selectedStatus === 'all' || order.status === selectedStatus;
     const matchesChannel = selectedChannel === 'all' || order.channel.toLowerCase().includes(selectedChannel.toLowerCase());
 
@@ -345,6 +371,7 @@ export function OrdersV3() {
               <option value="krishi mandi">Krishi Mandi Hub</option>
               <option value="uit colony">UIT Colony</option>
               <option value="sukher">Sukher Industrial</option>
+              <option value="surajpol">Surajpol Market</option>
             </select>
 
             {/* Status Dropdown */}
@@ -483,14 +510,27 @@ export function OrdersV3() {
                           </td>
                           <td className="py-3.5 px-4 text-right">
                             <div className="flex items-center justify-end gap-1.5">
-                              <button
-                                type="button"
-                                onClick={() => handleAdvanceStatus(order._id, order.status)}
-                                className="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-[11px] transition-colors"
-                                title="Advance to Next Stage"
-                              >
-                                Advance
-                              </button>
+                              {order.status !== 'delivered' ? (
+                                <button
+                                  type="button"
+                                  onClick={() => handleAdvanceStatus(order._id, order.status)}
+                                  className={`px-2.5 py-1 rounded font-semibold text-[11px] transition-colors shadow-xs ${
+                                    order.status === 'received'
+                                      ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                                      : order.status === 'packed'
+                                      ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                                      : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                                  }`}
+                                  title={`Advance to ${order.status === 'received' ? 'Packed' : order.status === 'packed' ? 'Shipped' : 'Delivered'}`}
+                                >
+                                  {order.status === 'received' ? 'Pack' : order.status === 'packed' ? 'Ship on Van' : 'Deliver'}
+                                </button>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-semibold text-[11px] border border-emerald-200 inline-flex items-center gap-1">
+                                  <span className="material-symbols-outlined text-[13px]">check_circle</span>
+                                  Done
+                                </span>
+                              )}
                               <button
                                 type="button"
                                 onClick={() => navigate(`/v3/invoices`)}
@@ -569,13 +609,26 @@ export function OrdersV3() {
                           </div>
 
                           <div className="pt-2 flex items-center justify-between gap-2">
-                            <button
-                              type="button"
-                              onClick={() => handleAdvanceStatus(ord._id, ord.status)}
-                              className="flex-1 py-1 px-2 rounded bg-slate-900 hover:bg-slate-800 text-white font-semibold text-[11px] text-center transition-colors"
-                            >
-                              Move Next →
-                            </button>
+                            {ord.status !== 'delivered' ? (
+                              <button
+                                type="button"
+                                onClick={() => handleAdvanceStatus(ord._id, ord.status)}
+                                className={`flex-1 py-1 px-2 rounded font-semibold text-[11px] text-center transition-colors shadow-xs ${
+                                  ord.status === 'received'
+                                    ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                                    : ord.status === 'packed'
+                                    ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                                    : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                                }`}
+                              >
+                                {ord.status === 'received' ? 'Mark Packed ✓' : ord.status === 'packed' ? 'Dispatch to Van →' : 'Mark Delivered ✓'}
+                              </button>
+                            ) : (
+                              <span className="flex-1 py-1 px-2 rounded bg-emerald-50 text-emerald-700 font-semibold text-[11px] text-center border border-emerald-200 inline-flex items-center justify-center gap-1">
+                                <span className="material-symbols-outlined text-[13px]">check_circle</span>
+                                Delivered &amp; Closed
+                              </span>
+                            )}
                             <button
                               type="button"
                               onClick={() => navigate('/v3/invoices')}

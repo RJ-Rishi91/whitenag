@@ -150,9 +150,13 @@ router.post('/', requirePermission('order.create'), async (req, res, next) => {
 
     // Fetch items details for any missing name/sku
     const itemIds = items.map(i => i.itemId).filter(Boolean);
+    const skus = items.map(i => i.sku).filter(Boolean);
     const dbItems = itemIds.length > 0 ? await Item.find({ _id: { $in: itemIds } }).session(session) : [];
+    const dbItemsBySku = skus.length > 0 ? await Item.find({ sku: { $in: skus } }).session(session) : [];
     const dbItemMap = {};
     dbItems.forEach(di => { dbItemMap[di._id.toString()] = di; });
+    const dbSkuMap = {};
+    dbItemsBySku.forEach(di => { dbSkuMap[di.sku] = di; });
 
     // Calculate totals
     let subtotal = 0;
@@ -160,7 +164,7 @@ router.post('/', requirePermission('order.create'), async (req, res, next) => {
     let taxTotal = 0;
 
     const processedItems = items.map(item => {
-      const dbItem = item.itemId ? dbItemMap[item.itemId.toString()] : null;
+      const dbItem = (item.itemId ? dbItemMap[item.itemId.toString()] : null) || (item.sku ? dbSkuMap[item.sku] : null);
       const qty = Number(item.qty ?? item.quantity ?? 1);
       const rate = Number(item.rate ?? item.unitPrice ?? dbItem?.standardCost ?? 100);
       const lineSubtotal = qty * rate;
@@ -259,8 +263,8 @@ router.post('/', requirePermission('order.create'), async (req, res, next) => {
   }
 });
 
-// POST /api/v1/orders/:id/status (Workflow transitions)
-router.post('/:id/status', async (req, res, next) => {
+// POST & PATCH /api/v1/orders/:id/status (Workflow transitions)
+const updateOrderStatus = async (req, res, next) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -334,7 +338,9 @@ router.post('/:id/status', async (req, res, next) => {
     session.endSession();
     next(err);
   }
-});
+};
+router.post('/:id/status', updateOrderStatus);
+router.patch('/:id/status', updateOrderStatus);
 
 // POST /api/v1/orders/:id/payment (Record payment against order)
 router.post('/:id/payment', async (req, res, next) => {

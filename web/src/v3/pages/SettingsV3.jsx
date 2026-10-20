@@ -1,41 +1,87 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { api } from '../../api/client.js';
 
 export function SettingsV3() {
-  const [tallyConfig, setTallyConfig] = useState({
-    host: 'localhost',
-    port: 9000,
-    company: 'Nagfani Foods Pvt Ltd (FY 2024-25)',
-    autoSyncIntervalSec: 15,
-    enableAutoExport: true
+  const [tallyConfig, setTallyConfig] = useState(() => {
+    try {
+      const saved = localStorage.getItem('erp_tally_config');
+      return saved ? JSON.parse(saved) : {
+        host: 'localhost',
+        port: 9000,
+        company: 'Nagfani Foods Pvt Ltd (FY 2024-25)',
+        autoSyncIntervalSec: 15,
+        enableAutoExport: true
+      };
+    } catch {
+      return {
+        host: 'localhost',
+        port: 9000,
+        company: 'Nagfani Foods Pvt Ltd (FY 2024-25)',
+        autoSyncIntervalSec: 15,
+        enableAutoExport: true
+      };
+    }
   });
 
-  const [companyProfile, setCompanyProfile] = useState({
-    name: 'NAGFANI FOODS PVT. LTD.',
-    gstin: '08AABCN9402M1Z4',
-    fssai: '12219034000412',
-    address: 'Plot No. 14-16, Krishi Upaj Mandi, Savina, Udaipur - 313002',
-    phone: '+91 294 2489001',
-    email: 'sales@nagfanifoods.com'
+  const [companyProfile, setCompanyProfile] = useState(() => {
+    try {
+      const saved = localStorage.getItem('erp_company_profile');
+      return saved ? JSON.parse(saved) : {
+        name: 'NAGFANI FOODS PVT. LTD.',
+        gstin: '08AABCN9402M1Z4',
+        fssai: '12219034000412',
+        address: 'Plot No. 14-16, Krishi Upaj Mandi, Savina, Udaipur - 313002',
+        phone: '+91 294 2489001',
+        email: 'sales@nagfanifoods.com'
+      };
+    } catch {
+      return {
+        name: 'NAGFANI FOODS PVT. LTD.',
+        gstin: '08AABCN9402M1Z4',
+        fssai: '12219034000412',
+        address: 'Plot No. 14-16, Krishi Upaj Mandi, Savina, Udaipur - 313002',
+        phone: '+91 294 2489001',
+        email: 'sales@nagfanifoods.com'
+      };
+    }
   });
 
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [testResult, setTestResult] = useState('');
-
-  const users = [
+  const [users, setUsers] = useState([
     { username: 'admin', name: 'Managing Director', role: 'ADMIN', mobile: '9829012345', status: 'Active' },
     { username: 'order', name: 'Suresh Meena', role: 'ORDER', mobile: '9829012346', status: 'Active' },
     { username: 'packing', name: 'Ramesh Patel', role: 'PACKING', mobile: '9829012347', status: 'Active' },
     { username: 'delivery', name: 'Dinesh Gurjar', role: 'DELIVERY', mobile: '9829012348', status: 'Active' },
     { username: 'accounts', name: 'Pooja Jain', role: 'ACCOUNTS', mobile: '9829012349', status: 'Active' }
-  ];
+  ]);
+
+  useEffect(() => {
+    async function fetchUsers() {
+      try {
+        const res = await api.get('/users');
+        if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+          setUsers(res.data.map(u => ({
+            username: u.username,
+            name: u.name,
+            role: typeof u.roleId === 'object' && u.roleId?.code ? u.roleId.code : (u.role || 'USER'),
+            mobile: u.mobile,
+            status: u.active ? 'Active' : 'Inactive'
+          })));
+        }
+      } catch {
+        // preserve fallback
+      }
+    }
+    fetchUsers();
+  }, []);
 
   const handleTestTally = async () => {
     setTestResult('Pinging TallyPrime Gateway at port 9000...');
     try {
       const res = await api.get('/sync/overview');
       if (res.success && res.connector?.isOnline) {
-        setTestResult('Success: 200 OK connected to TallyPrime ODBC server on port 9000.');
+        setTestResult(`Success: 200 OK connected to TallyPrime ODBC server on port ${tallyConfig.port} (${res.connector.company || tallyConfig.company}).`);
       } else {
         setTestResult('Connected: Mock Tally server responding.');
       }
@@ -45,7 +91,13 @@ export function SettingsV3() {
   };
 
   const handleSaveAll = (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
+    try {
+      localStorage.setItem('erp_tally_config', JSON.stringify(tallyConfig));
+      localStorage.setItem('erp_company_profile', JSON.stringify(companyProfile));
+    } catch {
+      // ignore
+    }
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 3000);
   };
