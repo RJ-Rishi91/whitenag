@@ -123,18 +123,27 @@ export function LayoutV2({ onSwitchVersion }) {
 
           {/* Version 2.0 Banner Pill */}
           <div className="px-3 pt-3">
-            <div className="flex items-center justify-between p-2 rounded-xl bg-[#06484F]/80 border border-[#A3CED4]/20 text-[12px]">
+            <div className="flex items-center justify-between p-2 rounded-xl bg-[#06484F]/80 border border-[#A3CED4]/20 text-[11px]">
               <span className="inline-flex items-center gap-1.5 font-semibold text-[#FFF7EE]">
                 <span className="w-2 h-2 rounded-full bg-[#E8A317] animate-pulse"></span>
-                v2.0 Executive
+                v2.0 Active
               </span>
-              <button
-                onClick={() => onSwitchVersion('v1')}
-                className="text-[11px] font-semibold text-[#BFEAF0] hover:text-white bg-[#02272B] px-2 py-0.5 rounded-lg transition-colors border border-white/10"
-                title="Switch back to Classic v1.0 interface"
-              >
-                Switch v1.0
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => onSwitchVersion('v1')}
+                  className="text-[10px] font-semibold text-[#BFEAF0] hover:text-white bg-[#02272B] px-1.5 py-0.5 rounded transition-colors border border-white/10"
+                  title="Switch to Classic v1.0"
+                >
+                  v1
+                </button>
+                <button
+                  onClick={() => onSwitchVersion('v3')}
+                  className="text-[10px] font-bold text-white bg-[#EA580C] hover:bg-[#C2410C] px-1.5 py-0.5 rounded transition-colors shadow-xs"
+                  title="Switch to Clean Enterprise v3.0 Pro"
+                >
+                  v3 ✨
+                </button>
+              </div>
             </div>
           </div>
 
@@ -250,19 +259,26 @@ export function LayoutV2({ onSwitchVersion }) {
             </div>
 
             {/* Switch Version Toggle Button */}
-            <div className="flex items-center bg-[#FFF7EE] p-1 rounded-xl border border-[#EADBC8]">
+            <div className="flex items-center bg-[#FFF7EE] p-1 rounded-xl border border-[#EADBC8] text-[11px] font-semibold">
               <button
                 onClick={() => onSwitchVersion('v1')}
-                className="px-2.5 py-1 text-[11px] font-semibold text-[#8C7166] hover:text-[#1E2B2D] rounded-lg transition-colors"
+                className="px-2 py-1 text-[#8C7166] hover:text-[#1E2B2D] rounded-lg transition-colors"
                 title="Switch to Classic v1.0"
               >
                 v1.0
               </button>
               <button
                 onClick={() => onSwitchVersion('v2')}
-                className="px-2.5 py-1 text-[11px] font-bold text-white bg-[#03353A] rounded-lg shadow-xs"
+                className="px-2 py-1 font-bold text-white bg-[#03353A] rounded-lg shadow-xs"
               >
-                v2.0 ✨
+                v2.0
+              </button>
+              <button
+                onClick={() => onSwitchVersion('v3')}
+                className="px-2.5 py-1 font-bold text-white bg-[#EA580C] hover:bg-[#C2410C] rounded-lg shadow-xs transition-colors ml-0.5"
+                title="Switch to Clean Enterprise v3.0 Pro"
+              >
+                v3.0 Pro ✨
               </button>
             </div>
 

@@ -41,6 +41,16 @@ import { DeliveryBoardV2 } from './v2/pages/DeliveryBoardV2.jsx';
 import { ProductionV2 } from './v2/pages/ProductionV2.jsx';
 import { InvoiceV2 } from './v2/pages/InvoiceV2.jsx';
 
+// Version 3.0 Clean Enterprise Pro Pages & Shell
+import { LayoutV3 } from './v3/components/LayoutV3.jsx';
+import { DashboardV3 } from './v3/pages/DashboardV3.jsx';
+import { OrdersV3 } from './v3/pages/OrdersV3.jsx';
+import { NewOrderV3 } from './v3/pages/NewOrderV3.jsx';
+import { DeliveryV3 } from './v3/pages/DeliveryV3.jsx';
+import { ProductionV3 } from './v3/pages/ProductionV3.jsx';
+import { InvoicesV3 } from './v3/pages/InvoicesV3.jsx';
+import { TallySyncV3 } from './v3/pages/TallySyncV3.jsx';
+
 function ProtectedRoute({ children }) {
   const { user } = useAuthStore();
   if (!user) {
@@ -49,9 +59,12 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
-// Determines landing page based on user version preference (default v2)
+// Determines landing page based on user version preference (default v3)
 function RootResolver() {
-  const version = localStorage.getItem('erp_version') || 'v2';
+  const version = localStorage.getItem('erp_version') || 'v3';
+  if (version === 'v3') {
+    return <Navigate to="/v3" replace />;
+  }
   if (version === 'v2') {
     return <Navigate to="/v2" replace />;
   }
@@ -61,7 +74,9 @@ function RootResolver() {
 export function App() {
   const handleSwitchVersion = (targetVersion) => {
     localStorage.setItem('erp_version', targetVersion);
-    if (targetVersion === 'v2') {
+    if (targetVersion === 'v3') {
+      window.location.hash = '#/v3';
+    } else if (targetVersion === 'v2') {
       window.location.hash = '#/v2';
     } else {
       window.location.hash = '#/';
@@ -74,7 +89,28 @@ export function App() {
         <Route path="/login" element={<Login />} />
 
         {/* ============================================================ */}
-        {/* VERSION 2.0 EXECUTIVE (Faithful Stitch Design & Animations) */}
+        {/* VERSION 3.0 ENTERPRISE PRO (Clean, High-Density, Anti-AI-Slop)*/}
+        {/* ============================================================ */}
+        <Route
+          path="/v3"
+          element={
+            <ProtectedRoute>
+              <LayoutV3 onSwitchVersion={handleSwitchVersion} />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<DashboardV3 />} />
+          <Route path="orders" element={<OrdersV3 />} />
+          <Route path="orders/new" element={<NewOrderV3 />} />
+          <Route path="delivery" element={<DeliveryV3 />} />
+          <Route path="production" element={<ProductionV3 />} />
+          <Route path="invoices" element={<InvoicesV3 />} />
+          <Route path="invoices/:id" element={<InvoicesV3 />} />
+          <Route path="sync" element={<TallySyncV3 />} />
+        </Route>
+
+        {/* ============================================================ */}
+        {/* VERSION 2.0 EXECUTIVE (Stitch Design & Motion)               */}
         {/* ============================================================ */}
         <Route
           path="/v2"
@@ -104,7 +140,7 @@ export function App() {
             </ProtectedRoute>
           }
         >
-          {/* Resolves to v2 or v1 dashboard based on preference */}
+          {/* Resolves to v3, v2, or v1 dashboard based on preference */}
           <Route index element={<RootResolver />} />
           <Route path="orders" element={<OrderList />} />
           <Route path="orders/new" element={<NewOrder />} />
