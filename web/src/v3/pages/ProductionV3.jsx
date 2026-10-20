@@ -107,14 +107,14 @@ export function ProductionV3() {
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => navigate('/stock')}
+              onClick={() => navigate('/v3/stock')}
               className="px-3.5 py-2 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-xs transition-colors"
             >
               Raw Material Stock
             </button>
             <button
               type="button"
-              onClick={() => navigate('/boms')}
+              onClick={() => navigate('/v3/production')}
               className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold shadow-xs transition-colors"
             >
               Manage Recipe Formulas

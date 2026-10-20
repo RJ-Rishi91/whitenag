@@ -40,7 +40,7 @@ export function LayoutV3({ onSwitchVersion }) {
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      navigate(`/v3/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
@@ -57,20 +57,20 @@ export function LayoutV3({ onSwitchVersion }) {
     {
       group: 'Operations',
       items: [
-        { to: '/stock', label: 'Stock & Godowns', icon: 'inventory_2' },
+        { to: '/v3/stock', label: 'Stock & Godowns', icon: 'inventory_2' },
         { to: '/v3/production', label: 'Production & BOM', icon: 'precision_manufacturing' },
-        { to: '/purchases', label: 'Raw Purchases', icon: 'shopping_cart' },
-        { to: '/customers', label: 'Party Ledgers', icon: 'storefront' }
+        { to: '/v3/purchases', label: 'Raw Purchases', icon: 'shopping_cart' },
+        { to: '/v3/customers', label: 'Party Ledgers', icon: 'storefront' }
       ]
     },
     {
       group: 'Finance & Integration',
       items: [
         { to: '/v3/invoices', label: 'Invoices & Billing', icon: 'receipt_long' },
-        { to: '/payments', label: 'Payments & Cash', icon: 'payments' },
-        { to: '/reports', label: 'Reports & P&L', icon: 'insights' },
+        { to: '/v3/payments', label: 'Payments & Cash', icon: 'payments' },
+        { to: '/v3/reports', label: 'Reports & P&L', icon: 'insights' },
         { to: '/v3/sync', label: 'TallyPrime Hub', icon: 'sync_alt' },
-        { to: '/settings', label: 'Settings', icon: 'tune' }
+        { to: '/v3/settings', label: 'Settings', icon: 'tune' }
       ]
     }
   ];

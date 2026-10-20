@@ -50,6 +50,13 @@ import { DeliveryV3 } from './v3/pages/DeliveryV3.jsx';
 import { ProductionV3 } from './v3/pages/ProductionV3.jsx';
 import { InvoicesV3 } from './v3/pages/InvoicesV3.jsx';
 import { TallySyncV3 } from './v3/pages/TallySyncV3.jsx';
+import { StockV3 } from './v3/pages/StockV3.jsx';
+import { CustomersV3 } from './v3/pages/CustomersV3.jsx';
+import { PurchasesV3 } from './v3/pages/PurchasesV3.jsx';
+import { PaymentsV3 } from './v3/pages/PaymentsV3.jsx';
+import { ReportsV3 } from './v3/pages/ReportsV3.jsx';
+import { SettingsV3 } from './v3/pages/SettingsV3.jsx';
+import { SearchV3 } from './v3/pages/SearchV3.jsx';
 
 function ProtectedRoute({ children }) {
   const { user } = useAuthStore();
@@ -107,6 +114,13 @@ export function App() {
           <Route path="invoices" element={<InvoicesV3 />} />
           <Route path="invoices/:id" element={<InvoicesV3 />} />
           <Route path="sync" element={<TallySyncV3 />} />
+          <Route path="stock" element={<StockV3 />} />
+          <Route path="customers" element={<CustomersV3 />} />
+          <Route path="purchases" element={<PurchasesV3 />} />
+          <Route path="payments" element={<PaymentsV3 />} />
+          <Route path="reports" element={<ReportsV3 />} />
+          <Route path="settings" element={<SettingsV3 />} />
+          <Route path="search" element={<SearchV3 />} />
         </Route>
 
         {/* ============================================================ */}

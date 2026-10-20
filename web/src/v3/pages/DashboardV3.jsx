@@ -195,7 +195,7 @@ export function DashboardV3() {
             <span>New Order (F2)</span>
           </button>
           <button
-            onClick={() => navigate('/purchases/new')}
+            onClick={() => navigate('/v3/purchases')}
             className="flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium rounded-lg border border-slate-200 transition-colors shadow-xs"
           >
             <span className="material-symbols-outlined text-[17px] text-slate-500">add</span>
@@ -286,7 +286,7 @@ export function DashboardV3() {
           <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
             <span className="text-rose-600 font-medium">₹1.12L Overdue (9 parties)</span>
             <button
-              onClick={() => navigate('/outstanding')}
+              onClick={() => navigate('/v3/payments')}
               className="text-[#EA580C] hover:underline font-semibold"
             >
               Ledger →
@@ -566,7 +566,7 @@ export function DashboardV3() {
               <div className="text-slate-500 text-[11px]">Current: <strong className="text-rose-600">180 kg</strong> (Min: 250 kg)</div>
             </div>
             <button
-              onClick={() => navigate('/purchases/new')}
+              onClick={() => navigate('/v3/purchases')}
               className="px-2.5 py-1 bg-white border border-slate-300 rounded text-[11px] font-semibold text-slate-700 hover:bg-slate-100"
             >
               Reorder
@@ -579,7 +579,7 @@ export function DashboardV3() {
               <div className="text-slate-500 text-[11px]">Current: <strong className="text-rose-600">420 pcs</strong> (Min: 1000 pcs)</div>
             </div>
             <button
-              onClick={() => navigate('/purchases/new')}
+              onClick={() => navigate('/v3/purchases')}
               className="px-2.5 py-1 bg-white border border-slate-300 rounded text-[11px] font-semibold text-slate-700 hover:bg-slate-100"
             >
               Reorder
@@ -592,7 +592,7 @@ export function DashboardV3() {
               <div className="text-slate-500 text-[11px]">Current: <strong className="text-rose-600">8 kg</strong> (Min: 15 kg)</div>
             </div>
             <button
-              onClick={() => navigate('/purchases/new')}
+              onClick={() => navigate('/v3/purchases')}
               className="px-2.5 py-1 bg-white border border-slate-300 rounded text-[11px] font-semibold text-slate-700 hover:bg-slate-100"
             >
               Reorder
