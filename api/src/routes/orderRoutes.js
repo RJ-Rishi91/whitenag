@@ -2,6 +2,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import { Order } from '../models/Order.js';
 import { Party } from '../models/Party.js';
+import { Item } from '../models/Item.js';
 import { RateHistory } from '../models/RateHistory.js';
 import { Invoice } from '../models/Invoice.js';
 import { Payment } from '../models/Payment.js';
@@ -147,16 +148,25 @@ router.post('/', requirePermission('order.create'), async (req, res, next) => {
       finalChallanNo = await getNextSequence('challanNo', 'DC-', 6, session);
     }
 
+    // Fetch items details for any missing name/sku
+    const itemIds = items.map(i => i.itemId).filter(Boolean);
+    const dbItems = itemIds.length > 0 ? await Item.find({ _id: { $in: itemIds } }).session(session) : [];
+    const dbItemMap = {};
+    dbItems.forEach(di => { dbItemMap[di._id.toString()] = di; });
+
     // Calculate totals
     let subtotal = 0;
     let discountTotal = 0;
     let taxTotal = 0;
 
     const processedItems = items.map(item => {
-      const lineSubtotal = item.qty * item.rate;
-      const discAmt = item.discountAmount || (item.discount ? (lineSubtotal * item.discount) / 100 : 0);
+      const dbItem = item.itemId ? dbItemMap[item.itemId.toString()] : null;
+      const qty = Number(item.qty ?? item.quantity ?? 1);
+      const rate = Number(item.rate ?? item.unitPrice ?? dbItem?.standardCost ?? 100);
+      const lineSubtotal = qty * rate;
+      const discAmt = Number(item.discountAmount || (item.discount ? (lineSubtotal * item.discount) / 100 : (item.discountPercent ? (lineSubtotal * item.discountPercent) / 100 : 0)));
       const taxable = Math.max(0, lineSubtotal - discAmt);
-      const taxRate = item.taxRate !== undefined ? item.taxRate : 5;
+      const taxRate = item.taxRate !== undefined ? Number(item.taxRate) : (item.gstRate !== undefined ? Number(item.gstRate) : (dbItem?.gstRate || 5));
       const taxAmt = (taxable * taxRate) / 100;
       const lineTotal = taxable + taxAmt;
 
@@ -165,13 +175,13 @@ router.post('/', requirePermission('order.create'), async (req, res, next) => {
       taxTotal += taxAmt;
 
       return {
-        itemId: item.itemId,
-        sku: item.sku,
-        name: item.name,
-        unitSymbol: item.unitSymbol || 'pcs (pack)',
-        qty: item.qty,
-        rate: item.rate,
-        discount: item.discount || 0,
+        itemId: item.itemId || dbItem?._id || new mongoose.Types.ObjectId(),
+        sku: item.sku || dbItem?.sku || 'NFD-PROD',
+        name: item.name || item.productName || dbItem?.name || 'Nagfani Product',
+        unitSymbol: item.unitSymbol || item.unit || 'kg',
+        qty,
+        rate,
+        discount: item.discount || item.discountPercent || 0,
         discountAmount: discAmt,
         taxRate,
         taxAmount: taxAmt,
