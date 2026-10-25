@@ -20,61 +20,34 @@ echo.
 echo Sending test entry to TallyPrime...
 echo.
 
-powershell -ExecutionPolicy Bypass -Command ^
-"$xml = @'^
-<ENVELOPE>^
-  <HEADER>^
-    <TALLYREQUEST>Import Data</TALLYREQUEST>^
-  </HEADER>^
-  <BODY>^
-    <IMPORTDATA>^
-      <REQUESTDESC>^
-        <REPORTNAME>All Masters</REPORTNAME>^
-        <STATICVARIABLES>^
-          <SVCURRENTCOMPANY>NAGFANI FOODS</SVCURRENTCOMPANY>^
-        </STATICVARIABLES>^
-      </REQUESTDESC>^
-      <REQUESTDATA>^
-        <TALLYMESSAGE xmlns:UDF='TallyUDF'>^
-          <LEDGER NAME='TEST - Nagfani App Connect' ACTION='Create'>^
-            <NAME>TEST - Nagfani App Connect</NAME>^
-            <PARENT>Sundry Debtors</PARENT>^
-            <OPENINGBALANCE>0</OPENINGBALANCE>^
-            <ISBILLWISEON>No</ISBILLWISEON>^
-            <AFFECTSSTOCK>No</AFFECTSSTOCK>^
-            <DESCRIPTION>Temporary verification test by Nagfani ERP connector</DESCRIPTION>^
-          </LEDGER>^
-        </TALLYMESSAGE>^
-      </REQUESTDATA>^
-    </IMPORTDATA>^
-  </BODY>^
-</ENVELOPE>^
-'@; ^
-try {^
-  $resp = Invoke-WebRequest -Uri 'http://localhost:9000' -Method POST -Body $xml -ContentType 'text/xml; charset=utf-8' -TimeoutSec 5;^
-  $content = $resp.Content;^
-  if ($content -match '<CREATED>1</CREATED>' -or $content -match '<ALTERED>1</ALTERED>' -or $content -match '<STATUS>1</STATUS>') {^
-    Write-Host '================================================================' -ForegroundColor Green;^
-    Write-Host '  [SUCCESS] TEST ENTRY SUCCESSFULLY CREATED IN TALLYPRIME!' -ForegroundColor Green;^
-    Write-Host '================================================================' -ForegroundColor Green;^
-    Write-Host 'Tally acknowledged the entry with 0 errors.';^
-    Write-Host '';^
-    Write-Host 'VERIFY IN TALLY RIGHT NOW ON YOUR SCREEN:';^
-    Write-Host '1. Press Escape back to Gateway of Tally.';^
-    Write-Host '2. Go to: Alter -> Ledger.';^
-    Write-Host '3. Look for: TEST - Nagfani App Connect.';^
-    Write-Host '4. To remove it: Open it, press [Alt + D], and select Yes.';^
-    Write-Host '';^
-  } else {^
-    Write-Host '[RESPONSE FROM TALLY]' -ForegroundColor Yellow;^
-    Write-Host $content;^
-  }^
-} catch {^
-  Write-Host '================================================================' -ForegroundColor Red;^
-  Write-Host '  [FAILED] Could not send test entry to Tally on port 9000.' -ForegroundColor Red;^
-  Write-Host '================================================================' -ForegroundColor Red;^
-  Write-Host $_.Exception.Message;^
-}"
+:: Generate XML into temp file to avoid cmd parser issues
+(
+echo ^<ENVELOPE^>
+echo   ^<HEADER^>^<TALLYREQUEST^>Import Data^</TALLYREQUEST^>^</HEADER^>
+echo   ^<BODY^>
+echo     ^<IMPORTDATA^>
+echo       ^<REQUESTDESC^>
+echo         ^<REPORTNAME^>All Masters^</REPORTNAME^>
+echo         ^<STATICVARIABLES^>^<SVCURRENTCOMPANY^>NAGFANI FOODS^</SVCURRENTCOMPANY^>^</STATICVARIABLES^>
+echo       ^</REQUESTDESC^>
+echo       ^<REQUESTDATA^>
+echo         ^<TALLYMESSAGE xmlns:UDF="TallyUDF"^>
+echo           ^<LEDGER NAME="TEST - Nagfani App Connect" ACTION="Create"^>
+echo             ^<NAME^>TEST - Nagfani App Connect^</NAME^>
+echo             ^<PARENT^>Sundry Debtors^</PARENT^>
+echo             ^<OPENINGBALANCE^>0^</OPENINGBALANCE^>
+echo             ^<ISBILLWISEON^>No^</ISBILLWISEON^>
+echo             ^<AFFECTSSTOCK^>No^</AFFECTSSTOCK^>
+echo           ^</LEDGER^>
+echo         ^</TALLYMESSAGE^>
+echo       ^</REQUESTDATA^>
+echo     ^</IMPORTDATA^>
+echo   ^</BODY^>
+echo ^</ENVELOPE^>
+) > "%TEMP%\nagfani_tally_test.xml"
 
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$xmlFile = Join-Path $env:TEMP 'nagfani_tally_test.xml'; try { $resp = Invoke-WebRequest -Uri 'http://localhost:9000' -Method POST -InFile $xmlFile -ContentType 'text/xml; charset=utf-8' -UseBasicParsing -TimeoutSec 5; $c = $resp.Content; if ($c -match 'CREATED>1' -or $c -match 'STATUS>1' -or $c -match 'ALTERED>1') { Write-Host '================================================================' -ForegroundColor Green; Write-Host '  [SUCCESS] TEST ENTRY SUCCESSFULLY CREATED IN TALLYPRIME!' -ForegroundColor Green; Write-Host '================================================================' -ForegroundColor Green; Write-Host 'Tally acknowledged the entry with 0 errors.'; Write-Host ''; Write-Host 'CHECK TALLY ON-SCREEN NOW:' -ForegroundColor Yellow; Write-Host '1. Press Escape back to Gateway of Tally.'; Write-Host '2. Go to: Alter -> Ledger.'; Write-Host '3. Look for: TEST - Nagfani App Connect'; Write-Host '4. To delete: Select it, press [Alt + D], then Yes.'; Write-Host ''; } else { Write-Host '[RESPONSE FROM TALLY]' -ForegroundColor Yellow; Write-Host $c; } } catch { Write-Host '[FAILED] Error connecting to Tally on port 9000:' -ForegroundColor Red; Write-Host $_.Exception.Message -ForegroundColor Red; }"
+
+del "%TEMP%\nagfani_tally_test.xml" >nul 2>&1
 echo.
 pause
