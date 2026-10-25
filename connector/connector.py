@@ -229,21 +229,23 @@ class TallyConnector:
 
         if not tally_reachable:
             logger.warning(f"Tally server at {self.tally_url} is unreachable or company '{self.company}' is not active. Waiting...")
-            return
+            return False
 
         pending_items = self.fetch_pending_outbox()
         if not pending_items:
             logger.debug("No pending items in outbox queue.")
-            return
+            return False
 
-        logger.info(f"Found {len(pending_items)} pending items to sync to Tally.")
+        logger.info(f"Found {len(pending_items)} pending items in cloud queue. Pushing to Tally...")
         for item in pending_items:
             if not self.running:
                 break
             self.process_item(item)
 
+        return len(pending_items) > 0
+
     def start(self, run_once=False):
-        logger.info("Starting Nagfani Foods Tally Connector...")
+        logger.info(f"Starting Nagfani Foods Tally Connector (Livekeeping mode: poll={self.poll_interval}s)...")
         if run_once:
             self.run_cycle()
             logger.info("Single cycle completed.")
@@ -251,7 +253,10 @@ class TallyConnector:
 
         while self.running:
             try:
-                self.run_cycle()
+                has_more = self.run_cycle()
+                # If we just drained a batch, immediately pull the next batch without waiting!
+                if has_more:
+                    continue
             except Exception as e:
                 logger.error(f"Unexpected error in sync cycle: {e}", exc_info=True)
 
