@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import { SyncOutbox } from '../models/SyncOutbox.js';
 import { SyncInbox } from '../models/SyncInbox.js';
 import { SyncLog } from '../models/SyncLog.js';
+import { Party, Item, Unit, Godown, StockLevel } from '../models/index.js';
 import { authenticateToken, authenticateConnector } from '../middleware/auth.js';
 import { emitEvent } from '../services/socketService.js';
 
@@ -135,6 +136,132 @@ router.post('/inbound', authenticateConnector, async (req, res, next) => {
 
     await inboxItem.save();
     res.status(201).json({ success: true, data: inboxItem });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/v1/sync/inbound-bulk (Bulk Masters import from TallyPrime)
+router.post('/inbound-bulk', authenticateConnector, async (req, res, next) => {
+  try {
+    const { parties = [], items = [] } = req.body;
+    let partiesCreated = 0;
+    let partiesUpdated = 0;
+    let itemsCreated = 0;
+    let itemsUpdated = 0;
+
+    // Process parties (Debtors & Creditors)
+    for (const p of parties) {
+      if (!p.name) continue;
+      const cleanName = p.name.trim();
+      const existing = await Party.findOne({
+        $or: [
+          ...(p.tallyGuid ? [{ tallyGuid: p.tallyGuid }] : []),
+          { name: cleanName }
+        ]
+      });
+
+      const partyData = {
+        name: cleanName,
+        type: p.type || (p.parent?.toLowerCase().includes('creditor') ? 'supplier' : 'customer'),
+        mobile: p.mobile || p.phone || existing?.mobile || '—',
+        address: p.address || existing?.address || '',
+        gstin: (p.gstin || existing?.gstin || '').toUpperCase().trim(),
+        pincode: p.pincode || existing?.pincode || '313001',
+        balance: typeof p.balance === 'number' ? p.balance : (existing?.balance || 0),
+        creditDays: p.creditDays || existing?.creditDays || 0,
+        tallyGuid: p.tallyGuid || existing?.tallyGuid || null,
+        active: true
+      };
+
+      if (existing) {
+        await Party.updateOne({ _id: existing._id }, { $set: partyData });
+        partiesUpdated++;
+      } else {
+        await Party.create(partyData);
+        partiesCreated++;
+      }
+    }
+
+    // Process items (Stock Items)
+    const defaultUnit = await Unit.findOne() || { _id: null, symbol: 'PCS' };
+    const defaultGodown = await Godown.findOne({ isPrimary: true }) || await Godown.findOne();
+
+    for (const item of items) {
+      if (!item.name) continue;
+      const cleanName = item.name.trim();
+      const existing = await Item.findOne({
+        $or: [
+          ...(item.tallyGuid ? [{ tallyGuid: item.tallyGuid }] : []),
+          { name: cleanName }
+        ]
+      });
+
+      const sku = item.sku || `NFD-${cleanName.replace(/[^a-zA-Z0-9]/g, '').slice(0, 4).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`;
+
+      if (existing) {
+        await Item.updateOne({ _id: existing._id }, {
+          $set: {
+            tallyGuid: item.tallyGuid || existing.tallyGuid,
+            standardCost: item.rate || existing.standardCost
+          }
+        });
+        itemsUpdated++;
+
+        if (typeof item.closingQty === 'number' && defaultGodown?._id) {
+          await StockLevel.findOneAndUpdate(
+            { itemId: existing._id, godownId: defaultGodown._id },
+            { $set: { physical: item.closingQty, available: item.closingQty } },
+            { upsert: true }
+          );
+        }
+      } else {
+        const newItem = await Item.create({
+          name: cleanName,
+          sku,
+          category: item.category || 'finished',
+          unitId: defaultUnit._id,
+          unitSymbol: item.unit || defaultUnit.symbol || 'PCS',
+          standardCost: item.rate || 0,
+          tallyGuid: item.tallyGuid || null,
+          active: true
+        });
+        itemsCreated++;
+
+        if (typeof item.closingQty === 'number' && defaultGodown?._id) {
+          await StockLevel.create({
+            itemId: newItem._id,
+            godownId: defaultGodown._id,
+            physical: item.closingQty,
+            available: item.closingQty,
+            reserved: 0
+          });
+        }
+      }
+    }
+
+    // Log the import
+    await SyncLog.create({
+      direction: 'inbound',
+      entityType: 'master_import',
+      result: 'success',
+      message: `Tally Master Import: ${partiesCreated + partiesUpdated} parties (${partiesCreated} new), ${itemsCreated + itemsUpdated} items (${itemsCreated} new)`,
+      at: new Date()
+    });
+
+    emitEvent('sync:inbound_masters', {
+      parties: { created: partiesCreated, updated: partiesUpdated },
+      items: { created: itemsCreated, updated: itemsUpdated }
+    });
+
+    res.json({
+      success: true,
+      message: 'Tally masters imported successfully',
+      stats: {
+        parties: { created: partiesCreated, updated: partiesUpdated },
+        items: { created: itemsCreated, updated: itemsUpdated }
+      }
+    });
   } catch (err) {
     next(err);
   }

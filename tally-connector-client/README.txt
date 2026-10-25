@@ -1,39 +1,35 @@
 ================================================================
-   NAGFANI FOODS ERP - TALLYPRIME LIVE CONNECTOR SETUP
+   NAGFANI FOODS ERP - TALLYPRIME LIVE CONNECTOR & SYNC
 ================================================================
 
-QUICK 3-STEP SETUP ON CLIENT'S PC:
+QUICK SETUP ON CLIENT'S PC (OVER ANYDESK):
 
-STEP 1: CONFIGURE TALLYPRIME
------------------------------
-1. Open TallyPrime on this computer.
-2. Load your company (e.g. Nagfani Foods).
-3. Press [F1: Help] on top right -> [Settings] -> [Connectivity].
-4. Set Client/Server Configuration:
-   - TallyPrime acts as: BOTH
-   - Enable ODBC: YES
-   - Port: 9000
-5. Press [Ctrl + A] to save.
-6. Click YES to restart TallyPrime.
-7. Open your company again.
-8. Double-click "test_tally.bat" in this folder. It should say "[SUCCESS] TallyPrime is responding on port 9000!".
+STEP 1: TEST TALLY CONNECTIVITY
+-------------------------------
+1. In TallyPrime, make sure "NAGFANI FOODS" is open.
+2. Double-click "test_tally.bat".
+   It will check port 9000 and say:
+   "[SUCCESS] TallyPrime is responding on port 9000!"
+   (Since Livekeeping is already installed on this PC, Tally is already configured!)
 
-STEP 2: CHECK COMPANY NAME IN CONFIG.INI
------------------------------------------
-1. Open "config.ini" in Notepad.
-2. Check the line:
-   company = Nagfani Foods
-   Make sure this matches the EXACT company name shown in TallyPrime.
-   If different (e.g., "Nagfani Foods Pvt Ltd"), change it and Save.
+STEP 2: ONE-CLICK IMPORT REAL CLIENTS & STOCK (LIVEKEEPING STYLE)
+-----------------------------------------------------------------
+1. Double-click "sync_from_tally.bat".
+2. It will automatically pull:
+   - All Customer & Supplier Ledgers (Sundry Debtors & Creditors)
+   - Real Tally Closing Balances & Outstandings
+   - Phone Numbers, GSTINs, and Addresses
+   - Real Stock Items and Closing Quantities
+3. All your real Tally data will instantly appear in the Nagfani ERP web portal!
 
-STEP 3: RUN THE CONNECTOR
---------------------------
+STEP 3: RUN THE CONTINUOUS TWO-WAY CONNECTOR
+--------------------------------------------
 1. Double-click "run_connector.bat".
-   (It will check Python, install requests, and connect to Tally & Cloud ERP).
-2. You will see:
-   [INFO] [TallyConnector] Starting Nagfani Foods Tally Connector...
-   [INFO] [TallyConnector] Heartbeat posted: Tally online, company='Nagfani Foods'
+2. It will continuously poll for new orders, invoices, and payment receipts
+   created on mobile/web and post them directly into Tally.
+3. Check the cloud ERP dashboard at:
+   https://nagmani.onerishi.in/#/v3/sync
+   Indicator will turn GREEN!
 
-Done! Check the ERP dashboard at:
-https://nagmani.onerishi.in/#/v3/sync
-The indicator will turn GREEN!
+Need Help?
+Contact Developer / Administrator.
