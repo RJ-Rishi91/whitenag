@@ -12,14 +12,14 @@ export function DeliveryBoardV2() {
       driver: 'Mukesh Sharma',
       phone: '+91 98291 44552',
       route: 'Sec 3 & Mewar Industrial Belt',
-      status: 'On Route',
-      completedStops: 5,
-      totalStops: 8,
-      cashToCollect: 32500,
-      loadWeightKg: 420,
+      status: 'Ready / Standby',
+      completedStops: 0,
+      totalStops: 0,
+      cashToCollect: 0,
+      loadWeightKg: 0,
       capacityKg: 650,
-      currentStop: 'Sharma General Store (Plot 42, Sec 3)',
-      eta: '10 mins'
+      currentStop: 'Savina Main Depot',
+      eta: 'Standby'
     },
     {
       id: 'van-02',
@@ -27,14 +27,14 @@ export function DeliveryBoardV2() {
       driver: 'Sohan Lal Gurjar',
       phone: '+91 94142 88910',
       route: 'Savina Krishi Mandi Wholesale',
-      status: 'Loading at Bay 2',
+      status: 'Ready / Standby',
       completedStops: 0,
-      totalStops: 9,
-      cashToCollect: 44200,
-      loadWeightKg: 580,
+      totalStops: 0,
+      cashToCollect: 0,
+      loadWeightKg: 0,
       capacityKg: 700,
-      currentStop: 'Main Godown Savina (Staging)',
-      eta: 'Departing 11:30 AM'
+      currentStop: 'Savina Main Depot',
+      eta: 'Standby'
     },
     {
       id: 'van-03',
@@ -42,29 +42,29 @@ export function DeliveryBoardV2() {
       driver: 'Ramesh Suthar',
       phone: '+91 98298 12093',
       route: 'UIT Colony & Chetak Circle',
-      status: 'On Route',
-      completedStops: 4,
-      totalStops: 6,
-      cashToCollect: 18400,
-      loadWeightKg: 280,
+      status: 'Ready / Standby',
+      completedStops: 0,
+      totalStops: 0,
+      cashToCollect: 0,
+      loadWeightKg: 0,
       capacityKg: 500,
-      currentStop: 'Fatehpura Main Market',
-      eta: 'Arrived'
+      currentStop: 'Savina Main Depot',
+      eta: 'Standby'
     },
     {
       id: 'van-04',
       plate: 'RJ-27-GD-9012',
-      driver: 'Dinesh Menaria',
+      driver: 'Dinesh Gurjar',
       phone: '+91 97841 00293',
       route: 'Hiran Magri (Sec 4 to 11)',
-      status: 'On Route',
-      completedStops: 2,
-      totalStops: 7,
-      cashToCollect: 28900,
-      loadWeightKg: 390,
+      status: 'Ready / Standby',
+      completedStops: 0,
+      totalStops: 0,
+      cashToCollect: 0,
+      loadWeightKg: 0,
       capacityKg: 600,
-      currentStop: 'Sector 6 Commercial Complex',
-      eta: '15 mins'
+      currentStop: 'Savina Main Depot',
+      eta: 'Standby'
     }
   ]);
 
@@ -136,9 +136,11 @@ export function DeliveryBoardV2() {
               <span className="material-symbols-outlined text-[#03353A] text-[22px]">pin_drop</span>
             </div>
             <div className="mt-4 flex items-baseline justify-between">
-              <span className="font-outfit text-3xl font-extrabold text-[#111E20]">38</span>
+              <span className="font-outfit text-3xl font-extrabold text-[#111E20]">
+                {vans.reduce((s, v) => s + v.totalStops, 0)}
+              </span>
               <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#E8F6F9] text-[#03353A]">
-                8 sectors
+                All sectors
               </span>
             </div>
           </div>
@@ -149,9 +151,11 @@ export function DeliveryBoardV2() {
               <span className="material-symbols-outlined text-[#D9580B] text-[22px]">local_shipping</span>
             </div>
             <div className="mt-4 flex items-baseline justify-between">
-              <span className="font-outfit text-3xl font-extrabold text-[#D9580B]">19</span>
+              <span className="font-outfit text-3xl font-extrabold text-[#D9580B]">
+                {vans.reduce((s, v) => s + (v.totalStops - v.completedStops), 0)}
+              </span>
               <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#FFDBCD] text-[#9F3C00]">
-                50% Dispatched
+                {vans.filter(v => v.status === 'On Route').length} Dispatched
               </span>
             </div>
           </div>
@@ -162,8 +166,8 @@ export function DeliveryBoardV2() {
               <span className="material-symbols-outlined text-[#3B656A] text-[22px]">badge</span>
             </div>
             <div className="mt-4 flex items-baseline justify-between">
-              <span className="font-outfit text-3xl font-extrabold text-[#111E20]">5</span>
-              <span className="text-[11px] font-bold text-emerald-700">100% Present</span>
+              <span className="font-outfit text-3xl font-extrabold text-[#111E20]">{vans.length}</span>
+              <span className="text-[11px] font-bold text-emerald-700">Ready at Depot</span>
             </div>
           </div>
 
@@ -173,19 +177,21 @@ export function DeliveryBoardV2() {
               <span className="material-symbols-outlined text-amber-600 text-[22px]">payments</span>
             </div>
             <div className="mt-4 flex items-baseline justify-between">
-              <span className="font-outfit text-2xl font-extrabold text-[#111E20]">₹1.14L</span>
-              <span className="text-[11px] font-bold text-amber-800">Pending</span>
+              <span className="font-outfit text-2xl font-extrabold text-[#111E20]">
+                ₹{vans.reduce((s, v) => s + v.cashToCollect, 0).toLocaleString('en-IN')}
+              </span>
+              <span className="text-[11px] font-bold text-amber-800">Reconciled</span>
             </div>
           </div>
 
           <div className="p-5 rounded-2xl bg-white shadow-sm border border-[#EADBC8]/60 flex flex-col justify-between">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#625B4F]">On-Time Rate</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#625B4F]">Fleet Readiness</span>
               <span className="material-symbols-outlined text-emerald-600 text-[22px]">verified</span>
             </div>
             <div className="mt-4 flex items-baseline justify-between">
-              <span className="font-outfit text-3xl font-extrabold text-emerald-700">94.8%</span>
-              <span className="text-[11px] font-bold text-emerald-800">+2.4% today</span>
+              <span className="font-outfit text-3xl font-extrabold text-emerald-700">100%</span>
+              <span className="text-[11px] font-bold text-emerald-800">Operational</span>
             </div>
           </div>
         </div>
@@ -193,16 +199,24 @@ export function DeliveryBoardV2() {
         {/* Animated Van Visualizer Strip */}
         <div className="bg-white rounded-2xl p-6 border border-[#EADBC8]/60 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-1">
-            <h3 className="font-outfit font-bold text-lg text-[#111E20]">Live Dispatch Route in Motion</h3>
+            <h3 className="font-outfit font-bold text-lg text-[#111E20]">
+              {vans.some(v => v.totalStops > 0) ? 'Live Dispatch Route in Motion' : 'Delivery Fleet on Standby'}
+            </h3>
             <p className="text-xs text-[#625B4F]">
-              Savina Mandi Godown → Sec 3 → Hiran Magri → Chetak Circle Express Run
+              {vans.some(v => v.totalStops > 0)
+                ? 'Savina Mandi Godown → City Express Dispatch Runs'
+                : 'All delivery vans stationed at Savina Mandi Central Godown ready for dispatch.'}
             </p>
           </div>
           <div className="flex items-center gap-6">
             <DeliveryVanMotion width={160} height={80} />
             <div className="text-right">
-              <div className="font-outfit font-bold text-base text-[#D9580B]">Mukesh Sharma</div>
-              <div className="text-xs text-[#625B4F]">RJ-27-GA-4890 · Speed: 32 km/h</div>
+              <div className="font-outfit font-bold text-base text-[#D9580B]">
+                {vans.some(v => v.totalStops > 0) ? 'Mukesh Sharma' : 'Savina Depot Standby'}
+              </div>
+              <div className="text-xs text-[#625B4F]">
+                {vans.some(v => v.totalStops > 0) ? 'RJ-27-GA-4890 · Fleet Vehicle 01' : '4 Fleet Vehicles Available'}
+              </div>
             </div>
           </div>
         </div>
@@ -210,7 +224,7 @@ export function DeliveryBoardV2() {
         {/* Active Van Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {vans.map(van => {
-            const percent = Math.round((van.completedStops / van.totalStops) * 100);
+            const percent = van.totalStops > 0 ? Math.round((van.completedStops / van.totalStops) * 100) : 0;
             return (
               <div
                 key={van.id}

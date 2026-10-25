@@ -10,34 +10,34 @@ export function DashboardV2() {
   const navigate = useNavigate();
 
   const [metrics, setMetrics] = useState({
-    todaySales: 48250,
-    invoicesCount: 38,
-    avgInvoice: 1270,
-    monthSales: 982000,
+    todaySales: 0,
+    invoicesCount: 0,
+    avgInvoice: 0,
+    monthSales: 0,
     monthTarget: 1200000,
-    monthPace: 81.8,
-    outstanding: 324600,
-    overdue: 112000,
-    overdueParties: 9,
-    treasuryTotal: 296250,
-    cashInHand: 18400,
-    hdfcBank: 245000,
-    upiToday: 32850
+    monthPace: 0,
+    outstanding: 0,
+    overdue: 0,
+    overdueParties: 0,
+    treasuryTotal: 0,
+    cashInHand: 0,
+    hdfcBank: 0,
+    upiToday: 0
   });
 
   const [funnel, setFunnel] = useState({
-    received: { count: 14, amount: 41200 },
-    packed: { count: 9, label: 'In staging bay' },
-    shipped: { count: 6, label: '3 Tempo vans' },
-    delivered: { count: 22, label: 'Receipt signed' }
+    received: { count: 0, amount: 0 },
+    packed: { count: 0, label: 'In staging bay' },
+    shipped: { count: 0, label: 'Vans active' },
+    delivered: { count: 0, label: 'Receipt signed' }
   });
 
   const [syncStatus, setSyncStatus] = useState({
     isSyncing: false,
-    synced: 148,
-    inQueue: 7,
-    conflicts: 1,
-    lastHandshake: '42 seconds ago'
+    synced: 0,
+    inQueue: 0,
+    conflicts: 0,
+    lastHandshake: 'Just now'
   });
 
   const [segment, setSegment] = useState('b2b'); // 'b2b' | 'b2c'
@@ -55,9 +55,9 @@ export function DashboardV2() {
           const d = dashRes.data;
           setMetrics(prev => ({
             ...prev,
-            todaySales: d.todaySales || prev.todaySales,
-            invoicesCount: d.invoicesCount || prev.invoicesCount,
-            outstanding: d.totalOutstanding || prev.outstanding
+            todaySales: d.todaySales ?? 0,
+            invoicesCount: d.invoicesCount ?? 0,
+            outstanding: d.totalOutstanding ?? 0
           }));
         }
 
@@ -68,14 +68,12 @@ export function DashboardV2() {
           const shp = orders.filter(o => o.status === 'shipped' || o.status === 'dispatched');
           const del = orders.filter(o => o.status === 'delivered');
 
-          if (orders.length > 0) {
-            setFunnel({
-              received: { count: rec.length, amount: rec.reduce((s, o) => s + (o.grandTotal || 0), 0) },
-              packed: { count: pac.length, label: `${pac.length} In staging bay` },
-              shipped: { count: shp.length, label: `${shp.length} Vans active` },
-              delivered: { count: del.length, label: `${del.length} Receipts signed` }
-            });
-          }
+          setFunnel({
+            received: { count: rec.length, amount: rec.reduce((s, o) => s + (o.grandTotal || 0), 0) },
+            packed: { count: pac.length, label: `${pac.length} In staging bay` },
+            shipped: { count: shp.length, label: `${shp.length} Vans active` },
+            delivered: { count: del.length, label: `${del.length} Receipts signed` }
+          });
         }
       } catch (err) {
         // preserve defaults
@@ -460,19 +458,26 @@ export function DashboardV2() {
               </div>
 
               {/* Conflict banner */}
-              <div className="p-3 rounded-xl bg-[#FFF8EC] border border-[#E8A317]/50 flex items-start gap-3">
-                <span className="material-symbols-outlined text-[#D9580B] text-[20px] shrink-0 mt-0.5">rule</span>
-                <div className="min-w-0 flex-1">
-                  <span className="text-xs font-bold text-[#111E20] block">Ledger Name Discrepancy</span>
-                  <p className="text-[11px] text-[#625B4F] truncate">Party 'Mahalaxmi Kirana' GSTIN format conflict with Tally Master.</p>
+              {syncStatus.conflicts > 0 ? (
+                <div className="p-3 rounded-xl bg-[#FFF8EC] border border-[#E8A317]/50 flex items-start gap-3">
+                  <span className="material-symbols-outlined text-[#D9580B] text-[20px] shrink-0 mt-0.5">rule</span>
+                  <div className="min-w-0 flex-1">
+                    <span className="text-xs font-bold text-[#111E20] block">Sync Discrepancy</span>
+                    <p className="text-[11px] text-[#625B4F] truncate">{syncStatus.conflicts} voucher(s) require ledger reconciliation.</p>
+                  </div>
+                  <button
+                    onClick={() => navigate('/v2/sync')}
+                    className="px-2.5 py-1 bg-white text-[#D9580B] text-xs font-bold rounded-lg border border-[#EADBC8] hover:bg-[#FFF7EE] transition-colors shrink-0 shadow-xs"
+                  >
+                    Review
+                  </button>
                 </div>
-                <button
-                  onClick={() => navigate('/sync')}
-                  className="px-2.5 py-1 bg-white text-[#D9580B] text-xs font-bold rounded-lg border border-[#EADBC8] hover:bg-[#FFF7EE] transition-colors shrink-0 shadow-xs"
-                >
-                  Review
-                </button>
-              </div>
+              ) : (
+                <div className="p-3 rounded-xl bg-emerald-50/60 border border-emerald-200/60 flex items-center gap-2.5">
+                  <span className="material-symbols-outlined text-emerald-600 text-[18px]">check_circle</span>
+                  <span className="text-xs font-semibold text-emerald-800">All Tally vouchers in full reconciliation</span>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center justify-between pt-4 mt-3 border-t border-[#EADBC8]/40">
@@ -578,70 +583,25 @@ export function DashboardV2() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="font-outfit font-bold text-lg text-[#111E20]">Area Dispatches</h2>
-                <span className="text-xs text-[#625B4F]">38 drops mapped across Udaipur zones</span>
+                <span className="text-xs text-[#625B4F]">Delivery fleet operations</span>
               </div>
               <span className="px-2.5 py-1 rounded-full bg-[#E8F6F9] text-[#03353A] text-xs font-bold border border-[#CEDDDF]">
-                5 Active Vans
+                4 Fleet Vans
               </span>
             </div>
 
-            {/* Zone Delivery Bars */}
-            <div className="space-y-3.5">
-              <div className="space-y-1">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-[#111E20] font-semibold">Sec 3 &amp; Mewar Industrial</span>
-                  <span className="text-[#111E20] font-bold">12 drops <span className="text-[#625B4F] font-normal">· ₹38,200</span></span>
-                </div>
-                <div className="w-full h-2 rounded-full bg-[#E2F1F3] overflow-hidden">
-                  <div className="h-full bg-[#D9580B] rounded-full" style={{ width: '82%' }}></div>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-[#111E20] font-semibold">Savina Krishi Mandi</span>
-                  <span className="text-[#111E20] font-bold">9 drops <span className="text-[#625B4F] font-normal">· ₹24,500</span></span>
-                </div>
-                <div className="w-full h-2 rounded-full bg-[#E2F1F3] overflow-hidden">
-                  <div className="h-full bg-[#03353A] rounded-full" style={{ width: '65%' }}></div>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-[#111E20] font-semibold">UIT Colony &amp; Chetak Circle</span>
-                  <span className="text-[#111E20] font-bold">7 drops <span className="text-[#625B4F] font-normal">· ₹16,400</span></span>
-                </div>
-                <div className="w-full h-2 rounded-full bg-[#E2F1F3] overflow-hidden">
-                  <div className="h-full bg-[#3B656A] rounded-full" style={{ width: '48%' }}></div>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-[#111E20] font-semibold">Hiran Magri (Sec 4-11)</span>
-                  <span className="text-[#111E20] font-bold">6 drops <span className="text-[#625B4F] font-normal">· ₹14,900</span></span>
-                </div>
-                <div className="w-full h-2 rounded-full bg-[#E2F1F3] overflow-hidden">
-                  <div className="h-full bg-[#7C7466] rounded-full" style={{ width: '40%' }}></div>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-[#111E20] font-semibold">Titardi &amp; Balicha Bypass</span>
-                  <span className="text-[#111E20] font-bold">4 drops <span className="text-[#625B4F] font-normal">· ₹8,800</span></span>
-                </div>
-                <div className="w-full h-2 rounded-full bg-[#E2F1F3] overflow-hidden">
-                  <div className="h-full bg-[#E0C0B3] rounded-full" style={{ width: '25%' }}></div>
-                </div>
-              </div>
+            <div className="p-6 rounded-xl border border-dashed border-[#EADBC8] bg-[#FFF7EE]/50 text-center space-y-1">
+              <span className="material-symbols-outlined text-[#D9580B] text-3xl">local_shipping</span>
+              <p className="font-outfit font-bold text-sm text-[#111E20]">No Active Dispatches</p>
+              <p className="text-xs text-[#625B4F]">
+                Zone-wise delivery drops and collection tracking will display here as orders depart on delivery runs.
+              </p>
             </div>
 
             <div className="pt-4 flex items-center justify-between text-xs border-t border-[#EADBC8]/40">
-              <span className="text-[#03353A] font-semibold">Driver Manifest: 100% Assigned</span>
+              <span className="text-[#03353A] font-semibold">All vehicles ready at depot</span>
               <button onClick={() => navigate('/v2/delivery')} className="text-[#D9580B] font-bold hover:underline">
-                Route Sheet →
+                View Fleet →
               </button>
             </div>
           </div>

@@ -103,7 +103,7 @@ export function TallySyncV3() {
 
   const handleResolveConflict = (logId) => {
     setLogs(prev =>
-      prev.map(l => (l.id === logId ? { ...l, status: 'synced', note: 'Ledger mapped to 08AAACS1421K1ZB' } : l))
+      prev.map(l => (l.id === logId ? { ...l, status: 'synced', note: 'Ledger reconciled and mapped successfully' } : l))
     );
     setSyncData(prev => ({
       ...prev,

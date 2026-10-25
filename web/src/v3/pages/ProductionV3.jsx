@@ -12,12 +12,12 @@ export function ProductionV3() {
       baseOutputKg: 100,
       standardYieldPkt: 200,
       materials: [
-        { name: 'Urad Mogar Dal Flour (Double Filtered)', stockKg: 850, baseQty: 80, unit: 'kg' },
-        { name: 'Black Pepper (Kali Mirch Coarse Crush)', stockKg: 45, baseQty: 3.2, unit: 'kg' },
-        { name: 'Compounded Hing (Asafoetida - Hathras)', stockKg: 12, baseQty: 0.4, unit: 'kg' },
-        { name: 'Papad Khar / Pure Sajji Powder', stockKg: 60, baseQty: 1.6, unit: 'kg' },
-        { name: 'Edible Cottonseed Oil (Refined)', stockKg: 200, baseQty: 4.0, unit: 'L' },
-        { name: 'Iodized Salt (Fine Grain)', stockKg: 300, baseQty: 2.8, unit: 'kg' }
+        { name: 'Urad Mogar Dal Flour (Double Filtered)', stockKg: 0, baseQty: 80, unit: 'kg' },
+        { name: 'Black Pepper (Kali Mirch Coarse Crush)', stockKg: 0, baseQty: 3.2, unit: 'kg' },
+        { name: 'Compounded Hing (Asafoetida - Hathras)', stockKg: 0, baseQty: 0.4, unit: 'kg' },
+        { name: 'Papad Khar / Pure Sajji Powder', stockKg: 0, baseQty: 1.6, unit: 'kg' },
+        { name: 'Edible Cottonseed Oil (Refined)', stockKg: 0, baseQty: 4.0, unit: 'L' },
+        { name: 'Iodized Salt (Fine Grain)', stockKg: 0, baseQty: 2.8, unit: 'kg' }
       ]
     },
     {
@@ -27,11 +27,11 @@ export function ProductionV3() {
       baseOutputKg: 100,
       standardYieldPkt: 100,
       materials: [
-        { name: 'Pure Chana Dal Besan (Chana No. 1)', stockKg: 620, baseQty: 75, unit: 'kg' },
-        { name: 'Cloves / Loung Fine Powder', stockKg: 30, baseQty: 2.5, unit: 'kg' },
-        { name: 'Red Chilli Powder (Mathania Special)', stockKg: 50, baseQty: 3.0, unit: 'kg' },
-        { name: 'Refined Groundnut Oil', stockKg: 350, baseQty: 22, unit: 'L' },
-        { name: 'Ajwain & Hing Spice Blend', stockKg: 18, baseQty: 1.2, unit: 'kg' }
+        { name: 'Pure Chana Dal Besan (Chana No. 1)', stockKg: 0, baseQty: 75, unit: 'kg' },
+        { name: 'Cloves / Loung Fine Powder', stockKg: 0, baseQty: 2.5, unit: 'kg' },
+        { name: 'Red Chilli Powder (Mathania Special)', stockKg: 0, baseQty: 3.0, unit: 'kg' },
+        { name: 'Refined Groundnut Oil', stockKg: 0, baseQty: 22, unit: 'L' },
+        { name: 'Ajwain & Hing Spice Blend', stockKg: 0, baseQty: 1.2, unit: 'kg' }
       ]
     },
     {
@@ -41,10 +41,10 @@ export function ProductionV3() {
       baseOutputKg: 100,
       standardYieldPkt: 500,
       materials: [
-        { name: 'Sharbati Whole Wheat Flour (Atta)', stockKg: 950, baseQty: 82, unit: 'kg' },
-        { name: 'Kasuri Methi (Nagaur Shade Dried)', stockKg: 40, baseQty: 4.5, unit: 'kg' },
-        { name: 'Haldi & Ajwain Fresh Mix', stockKg: 25, baseQty: 2.0, unit: 'kg' },
-        { name: 'Pure Cow Ghee / Sesame Oil Blend', stockKg: 180, baseQty: 12, unit: 'L' }
+        { name: 'Sharbati Whole Wheat Flour (Atta)', stockKg: 0, baseQty: 82, unit: 'kg' },
+        { name: 'Kasuri Methi (Nagaur Shade Dried)', stockKg: 0, baseQty: 4.5, unit: 'kg' },
+        { name: 'Haldi & Ajwain Fresh Mix', stockKg: 0, baseQty: 2.0, unit: 'kg' },
+        { name: 'Pure Cow Ghee / Sesame Oil Blend', stockKg: 0, baseQty: 12, unit: 'L' }
       ]
     }
   ]);

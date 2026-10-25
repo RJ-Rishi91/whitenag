@@ -13,11 +13,11 @@ export function ProductionV2() {
       sku: 'NFD-PAP-001',
       baseOutputKg: 100,
       materials: [
-        { name: 'Urad Mogar Dal Flour', stockKg: 850, baseQty: 80, unit: 'kg' },
-        { name: 'Black Pepper (Kali Mirch Coarse)', stockKg: 45, baseQty: 3.2, unit: 'kg' },
-        { name: 'Compounded Hing (Asafoetida)', stockKg: 12, baseQty: 0.4, unit: 'kg' },
-        { name: 'Papad Khar / Sajji Powder', stockKg: 60, baseQty: 1.6, unit: 'kg' },
-        { name: 'Edible Cottonseed Oil', stockKg: 200, baseQty: 4.0, unit: 'L' }
+        { name: 'Urad Mogar Dal Flour', stockKg: 0, baseQty: 80, unit: 'kg' },
+        { name: 'Black Pepper (Kali Mirch Coarse)', stockKg: 0, baseQty: 3.2, unit: 'kg' },
+        { name: 'Compounded Hing (Asafoetida)', stockKg: 0, baseQty: 0.4, unit: 'kg' },
+        { name: 'Papad Khar / Sajji Powder', stockKg: 0, baseQty: 1.6, unit: 'kg' },
+        { name: 'Edible Cottonseed Oil', stockKg: 0, baseQty: 4.0, unit: 'L' }
       ]
     },
     {
@@ -26,10 +26,10 @@ export function ProductionV2() {
       sku: 'NFD-SEV-004',
       baseOutputKg: 100,
       materials: [
-        { name: 'Pure Chana Dal Besan', stockKg: 620, baseQty: 75, unit: 'kg' },
-        { name: 'Cloves / Loung Powder', stockKg: 30, baseQty: 2.5, unit: 'kg' },
-        { name: 'Red Chilli Powder (Mathania)', stockKg: 50, baseQty: 3.0, unit: 'kg' },
-        { name: 'Refined Groundnut Oil', stockKg: 350, baseQty: 22, unit: 'L' }
+        { name: 'Pure Chana Dal Besan', stockKg: 0, baseQty: 75, unit: 'kg' },
+        { name: 'Cloves / Loung Powder', stockKg: 0, baseQty: 2.5, unit: 'kg' },
+        { name: 'Red Chilli Powder (Mathania)', stockKg: 0, baseQty: 3.0, unit: 'kg' },
+        { name: 'Refined Groundnut Oil', stockKg: 0, baseQty: 22, unit: 'L' }
       ]
     },
     {
@@ -38,10 +38,10 @@ export function ProductionV2() {
       sku: 'NFD-KHK-008',
       baseOutputKg: 100,
       materials: [
-        { name: 'Sharbati Whole Wheat Flour', stockKg: 950, baseQty: 82, unit: 'kg' },
-        { name: 'Kasuri Methi (Nagaur Dried)', stockKg: 40, baseQty: 4.5, unit: 'kg' },
-        { name: 'Haldi & Ajwain Mix', stockKg: 25, baseQty: 2.0, unit: 'kg' },
-        { name: 'Pure Cow Ghee / Oil Blend', stockKg: 180, baseQty: 12, unit: 'L' }
+        { name: 'Sharbati Whole Wheat Flour', stockKg: 0, baseQty: 82, unit: 'kg' },
+        { name: 'Kasuri Methi (Nagaur Dried)', stockKg: 0, baseQty: 4.5, unit: 'kg' },
+        { name: 'Haldi & Ajwain Mix', stockKg: 0, baseQty: 2.0, unit: 'kg' },
+        { name: 'Pure Cow Ghee / Oil Blend', stockKg: 0, baseQty: 12, unit: 'L' }
       ]
     }
   ]);

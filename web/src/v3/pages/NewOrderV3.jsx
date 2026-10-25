@@ -50,13 +50,13 @@ export function NewOrderV3() {
             _id: p._id,
             businessName: p.name || p.businessName,
             contactPerson: p.contactPerson || 'Proprietor',
-            phone: p.mobile || p.phone || '+91 98290 12345',
-            gstin: p.gstin || '08AAACS1421K1ZB',
-            city: p.city || 'Udaipur',
-            address: p.address || 'Udaipur',
-            creditLimit: p.creditLimit || 50000,
+            phone: p.mobile || p.phone || '—',
+            gstin: p.gstin || 'Unregistered',
+            city: p.city || '—',
+            address: p.address || p.city || '—',
+            creditLimit: p.creditLimit || 0,
             outstanding: p.balance !== undefined ? p.balance : (p.outstanding || 0),
-            route: p.areaId?.name ? `${p.areaId.name} Sector` : (p.route || `${p.city || 'Udaipur'} Beat`)
+            route: p.areaId?.name ? `${p.areaId.name} Sector` : (p.route || (p.city ? `${p.city} Sector` : 'Direct Route'))
           }));
           setParties(mappedParties);
           if (location.state?.partyId && mappedParties.some(p => p._id === location.state.partyId)) {
@@ -317,11 +317,11 @@ export function NewOrderV3() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-slate-500">Phone:</span>
-                    <span className="font-mono text-slate-800 font-medium">{selectedParty.phone || '+91 98290 12345'}</span>
+                    <span className="font-mono text-slate-800 font-medium">{selectedParty.phone || '—'}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-slate-500">GSTIN:</span>
-                    <span className="font-mono text-slate-800 font-semibold">{selectedParty.gstin || '08AAACS1421K1ZB'}</span>
+                    <span className="font-mono text-slate-800 font-semibold">{selectedParty.gstin || 'Unregistered'}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-slate-500">Beat / Route:</span>

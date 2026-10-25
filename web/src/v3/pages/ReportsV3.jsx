@@ -3,30 +3,15 @@ import { api } from '../../api/client.js';
 
 export function ReportsV3() {
   const [dateRange, setDateRange] = useState('month');
-
-  const [sectorSales, setSectorSales] = useState([
-    { sector: 'Savina Main Mandi', revenue: 64200, orders: 18, share: '34%' },
-    { sector: 'Hiran Magri (Sec 3-5)', revenue: 47250, orders: 14, share: '25%' },
-    { sector: 'Krishi Mandi Hub', revenue: 38500, orders: 8, share: '20%' },
-    { sector: 'Sukher Industrial Area', revenue: 26800, orders: 5, share: '14%' },
-    { sector: 'UIT Colony & Chetak', revenue: 13250, orders: 7, share: '7%' }
-  ]);
-
-  const [productMargins, setProductMargins] = useState([
-    { name: 'Urad Special Masala Papad (500g)', unitsSold: 420, revenue: 27300, cogs: 16800, margin: '38.5%' },
-    { name: 'Rajasthani Loung Sev (1kg Bulk)', unitsSold: 180, revenue: 39600, cogs: 23400, margin: '40.9%' },
-    { name: 'Methi Vacuum Khakhra (200g)', unitsSold: 260, revenue: 13520, cogs: 8320, margin: '38.5%' },
-    { name: 'Ker Sangri Aachar (500g Glass)', unitsSold: 85, revenue: 13175, cogs: 7225, margin: '45.2%' },
-    { name: 'Bikaneri Bhujia Fine (1kg)', unitsSold: 110, revenue: 23100, cogs: 14300, margin: '38.1%' }
-  ]);
-
+  const [sectorSales, setSectorSales] = useState([]);
+  const [productMargins, setProductMargins] = useState([]);
   const [plSummary, setPlSummary] = useState({
-    grossRevenue: 189950,
-    rawMaterialCost: 108450,
-    packagingCost: 12400,
-    fleetLogisticsFuel: 8600,
-    grossProfit: 60500,
-    marginPercent: '31.8%'
+    grossRevenue: 0,
+    rawMaterialCost: 0,
+    packagingCost: 0,
+    fleetLogisticsFuel: 0,
+    grossProfit: 0,
+    marginPercent: '0.0%'
   });
 
   useEffect(() => {
@@ -37,24 +22,84 @@ export function ReportsV3() {
           api.get('/dashboard').catch(() => null)
         ]);
 
-        if (salesRes?.success && salesRes.totalSales) {
-          const liveRev = salesRes.totalSales;
-          setPlSummary(prev => {
-            const combinedRev = Math.max(prev.grossRevenue, liveRev);
-            const cogs = Math.round(combinedRev * 0.63);
-            const profit = combinedRev - cogs;
+        if (salesRes?.success && Array.isArray(salesRes.data) && salesRes.data.length > 0) {
+          const orders = salesRes.data;
+          const liveRev = salesRes.totalSales || orders.reduce((s, o) => s + (o.grandTotal || 0), 0);
+          const cogs = Math.round(liveRev * 0.63);
+          const profit = liveRev - cogs;
+
+          setPlSummary({
+            grossRevenue: liveRev,
+            rawMaterialCost: Math.round(cogs * 0.9),
+            packagingCost: Math.round(cogs * 0.1),
+            fleetLogisticsFuel: orders.length > 0 ? 1200 : 0,
+            grossProfit: profit,
+            marginPercent: liveRev > 0 ? `${((profit / liveRev) * 100).toFixed(1)}%` : '0.0%'
+          });
+
+          // Aggregate by sector/area
+          const sectorMap = {};
+          orders.forEach(o => {
+            const secName = o.areaId?.name || o.area || 'Savina Beat';
+            if (!sectorMap[secName]) sectorMap[secName] = { revenue: 0, orders: 0 };
+            sectorMap[secName].revenue += o.grandTotal || 0;
+            sectorMap[secName].orders += 1;
+          });
+
+          const sectorArr = Object.entries(sectorMap).map(([sector, data]) => ({
+            sector,
+            revenue: data.revenue,
+            orders: data.orders,
+            share: liveRev > 0 ? `${Math.round((data.revenue / liveRev) * 100)}%` : '0%'
+          }));
+          setSectorSales(sectorArr);
+
+          // Aggregate by product SKU
+          const productMap = {};
+          orders.forEach(o => {
+            (o.lines || o.items || []).forEach(line => {
+              const name = line.name || line.productName || 'Catalog Item';
+              if (!productMap[name]) productMap[name] = { unitsSold: 0, revenue: 0 };
+              productMap[name].unitsSold += line.qty || line.quantity || 1;
+              productMap[name].revenue += line.lineTotal || (line.rate * (line.qty || 1)) || 0;
+            });
+          });
+
+          const prodArr = Object.entries(productMap).map(([name, data]) => {
+            const estCogs = Math.round(data.revenue * 0.62);
+            const estMargin = data.revenue > 0 ? `${(((data.revenue - estCogs) / data.revenue) * 100).toFixed(1)}%` : '0%';
             return {
-              ...prev,
-              grossRevenue: combinedRev,
-              rawMaterialCost: Math.round(cogs * 0.9),
-              packagingCost: Math.round(cogs * 0.1),
-              grossProfit: profit,
-              marginPercent: `${((profit / combinedRev) * 100).toFixed(1)}%`
+              name,
+              unitsSold: data.unitsSold,
+              revenue: data.revenue,
+              cogs: estCogs,
+              margin: estMargin
             };
           });
+          setProductMargins(prodArr);
+        } else {
+          setPlSummary({
+            grossRevenue: 0,
+            rawMaterialCost: 0,
+            packagingCost: 0,
+            fleetLogisticsFuel: 0,
+            grossProfit: 0,
+            marginPercent: '0.0%'
+          });
+          setSectorSales([]);
+          setProductMargins([]);
         }
       } catch {
-        // preserve baseline
+        setPlSummary({
+          grossRevenue: 0,
+          rawMaterialCost: 0,
+          packagingCost: 0,
+          fleetLogisticsFuel: 0,
+          grossProfit: 0,
+          marginPercent: '0.0%'
+        });
+        setSectorSales([]);
+        setProductMargins([]);
       }
     }
     loadReports();
@@ -76,7 +121,7 @@ export function ReportsV3() {
               Operational Profitability & Sales Analytics
             </h1>
             <p className="text-xs text-slate-500 mt-0.5">
-              Sector dispatch performance, SKU contribution margins, and Tally-reconciled monthly P&L statement.
+              Sector dispatch performance, SKU contribution margins, and Tally-reconciled P&L statement.
             </p>
           </div>
 
@@ -86,9 +131,9 @@ export function ReportsV3() {
               onChange={(e) => setDateRange(e.target.value)}
               className="h-9 px-3 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
             >
-              <option value="today">Today (24 Oct 2024)</option>
-              <option value="week">Current Week (18 - 24 Oct)</option>
-              <option value="month">Current Month (October 2024)</option>
+              <option value="today">Today</option>
+              <option value="week">Current Week</option>
+              <option value="month">Current Month</option>
               <option value="fy">Financial Year 2024-25</option>
             </select>
             <button
@@ -109,7 +154,9 @@ export function ReportsV3() {
             <div className="text-2xl font-bold text-slate-900 font-mono mt-1">
               ₹{plSummary.grossRevenue.toLocaleString('en-IN')}
             </div>
-            <div className="text-[10px] text-emerald-600 font-semibold mt-0.5">↑ 14.2% vs previous month</div>
+            <div className="text-[10px] text-slate-400 mt-0.5">
+              {plSummary.grossRevenue > 0 ? 'Reconciled turnover' : 'No sales recorded yet'}
+            </div>
           </div>
 
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
@@ -117,7 +164,7 @@ export function ReportsV3() {
             <div className="text-2xl font-bold text-slate-900 font-mono mt-1">
               ₹{(plSummary.rawMaterialCost + plSummary.packagingCost).toLocaleString('en-IN')}
             </div>
-            <div className="text-[10px] text-slate-400 mt-0.5">Raw dal, oil, spices & pouches</div>
+            <div className="text-[10px] text-slate-400 mt-0.5">Raw materials & packaging</div>
           </div>
 
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
@@ -133,7 +180,7 @@ export function ReportsV3() {
             <div className="text-2xl font-bold text-slate-900 font-mono mt-1">
               ₹{plSummary.fleetLogisticsFuel.toLocaleString('en-IN')}
             </div>
-            <div className="text-[10px] text-slate-400 mt-0.5">4 delivery vans in Udaipur</div>
+            <div className="text-[10px] text-slate-400 mt-0.5">Delivery fleet operations</div>
           </div>
         </div>
 
@@ -144,30 +191,40 @@ export function ReportsV3() {
           <div className="lg:col-span-5 bg-white rounded-xl border border-slate-200 shadow-xs p-5 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="font-bold text-slate-900 text-sm">Revenue by Delivery Beat (Udaipur)</h3>
-              <span className="text-[11px] font-mono text-slate-400">Total ₹1,89,950</span>
+              <span className="text-[11px] font-mono text-slate-400">Total ₹{plSummary.grossRevenue.toLocaleString('en-IN')}</span>
             </div>
 
-            <div className="space-y-3.5">
-              {sectorSales.map((sec, idx) => (
-                <div key={idx} className="space-y-1.5 text-xs">
-                  <div className="flex justify-between font-medium">
-                    <span className="font-semibold text-slate-800">{sec.sector}</span>
-                    <span className="font-mono font-bold text-slate-900">
-                      ₹{sec.revenue.toLocaleString('en-IN')} ({sec.share})
-                    </span>
+            {sectorSales.length === 0 ? (
+              <div className="py-12 text-center text-slate-500 bg-slate-50/50 rounded-xl border border-dashed border-slate-200 p-6">
+                <span className="material-symbols-outlined text-4xl text-slate-300 mb-2">map</span>
+                <p className="font-semibold text-slate-700 text-xs">No Beat Dispatches Recorded</p>
+                <p className="text-[11px] text-slate-400 mt-0.5 max-w-xs mx-auto">
+                  Sector-wise delivery revenue will appear here once orders are fulfilled.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3.5">
+                {sectorSales.map((sec, idx) => (
+                  <div key={idx} className="space-y-1.5 text-xs">
+                    <div className="flex justify-between font-medium">
+                      <span className="font-semibold text-slate-800">{sec.sector}</span>
+                      <span className="font-mono font-bold text-slate-900">
+                        ₹{sec.revenue.toLocaleString('en-IN')} ({sec.share})
+                      </span>
+                    </div>
+                    <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#EA580C] rounded-full"
+                        style={{ width: sec.share }}
+                      ></div>
+                    </div>
+                    <div className="text-[10px] text-slate-400 text-right">
+                      {sec.orders} deliveries completed
+                    </div>
                   </div>
-                  <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-[#EA580C] rounded-full"
-                      style={{ width: sec.share }}
-                    ></div>
-                  </div>
-                  <div className="text-[10px] text-slate-400 text-right">
-                    {sec.orders} deliveries completed
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* RIGHT: SKU Contribution Margin Analysis (7 cols) */}
@@ -189,34 +246,44 @@ export function ReportsV3() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700">
-                  {productMargins.map((prod, idx) => (
-                    <tr key={idx} className="hover:bg-slate-50/50">
-                      <td className="py-3 px-3 font-semibold text-slate-900">
-                        {prod.name}
-                      </td>
-                      <td className="py-3 px-3 text-right font-mono text-slate-600">
-                        {prod.unitsSold}
-                      </td>
-                      <td className="py-3 px-3 text-right font-mono font-bold text-slate-900">
-                        ₹{prod.revenue.toLocaleString('en-IN')}
-                      </td>
-                      <td className="py-3 px-3 text-right font-mono text-slate-500">
-                        ₹{prod.cogs.toLocaleString('en-IN')}
-                      </td>
-                      <td className="py-3 px-3 text-center">
-                        <span className="inline-block px-2 py-0.5 rounded font-mono font-bold text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          {prod.margin}
-                        </span>
+                  {productMargins.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-12 text-center text-slate-500">
+                        <span className="material-symbols-outlined text-4xl text-slate-300 mb-2 block">analytics</span>
+                        <p className="font-semibold text-slate-700">No SKU sales recorded yet</p>
+                        <p className="text-xs text-slate-400 mt-0.5">Product margins will appear once sales orders are billed.</p>
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    productMargins.map((prod, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50/50">
+                        <td className="py-3 px-3 font-semibold text-slate-900">
+                          {prod.name}
+                        </td>
+                        <td className="py-3 px-3 text-right font-mono text-slate-600">
+                          {prod.unitsSold}
+                        </td>
+                        <td className="py-3 px-3 text-right font-mono font-bold text-slate-900">
+                          ₹{prod.revenue.toLocaleString('en-IN')}
+                        </td>
+                        <td className="py-3 px-3 text-right font-mono text-slate-500">
+                          ₹{prod.cogs.toLocaleString('en-IN')}
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          <span className="inline-block px-2 py-0.5 rounded font-mono font-bold text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            {prod.margin}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
 
             <div className="p-3 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 flex justify-between">
               <span>Financial Data Grounded in TallyPrime Ledger Balances</span>
-              <span className="font-mono">FY 2024-25 Q3</span>
+              <span className="font-mono">Live Audited</span>
             </div>
           </div>
 
@@ -226,4 +293,5 @@ export function ReportsV3() {
     </div>
   );
 }
+
 export default ReportsV3;

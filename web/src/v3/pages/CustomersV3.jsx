@@ -34,14 +34,14 @@ export function CustomersV3() {
             _id: p._id,
             businessName: p.name || p.businessName,
             contactPerson: p.contactPerson || 'Proprietor',
-            phone: p.mobile || p.phone || '+91 98290 12345',
-            gstin: p.gstin || '08AAACS1421K1ZB',
-            route: p.areaId?.name ? `${p.areaId.name} Sector` : (p.route || (p.city ? `${p.city} Sector` : 'Savina Beat')),
-            address: p.address || 'Udaipur, Rajasthan',
-            creditLimit: p.creditLimit || 50000,
+            phone: p.mobile || p.phone || '—',
+            gstin: p.gstin || 'Unregistered',
+            route: p.areaId?.name ? `${p.areaId.name} Sector` : (p.route || (p.city ? `${p.city} Sector` : 'Direct Route')),
+            address: p.address || p.city || '—',
+            creditLimit: p.creditLimit || 0,
             outstanding: p.balance !== undefined ? p.balance : (p.outstanding || 0),
             totalOrders: p.ordersCount || 0,
-            lastOrderDate: 'Active'
+            lastOrderDate: '—'
           }));
           setParties(mapped);
         } else {

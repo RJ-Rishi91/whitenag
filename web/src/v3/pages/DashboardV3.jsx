@@ -202,9 +202,15 @@ export function DashboardV3() {
           <div>
             <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
               <span>Today's Sales</span>
-              <span className="text-emerald-700 font-semibold bg-emerald-50 px-1.5 py-0.5 rounded text-[10px] border border-emerald-100">
-                +12% vs yest.
-              </span>
+              {metrics.todaySales > 0 ? (
+                <span className="text-emerald-700 font-semibold bg-emerald-50 px-1.5 py-0.5 rounded text-[10px] border border-emerald-100">
+                  Active billing
+                </span>
+              ) : (
+                <span className="text-slate-500 font-medium bg-slate-100 px-1.5 py-0.5 rounded text-[10px]">
+                  No sales today
+                </span>
+              )}
             </div>
             <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono tracking-tight">
               ₹{metrics.todaySales.toLocaleString('en-IN')}
@@ -221,7 +227,7 @@ export function DashboardV3() {
           <div>
             <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
               <span>Monthly Target Pace</span>
-              <span className="text-slate-600 font-mono text-[11px]">Day 24/31</span>
+              <span className="text-slate-600 font-mono text-[11px]">FY 2024-25</span>
             </div>
             <div className="mt-2 flex items-baseline gap-1.5">
               <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono tracking-tight">
@@ -238,8 +244,8 @@ export function DashboardV3() {
               ></div>
             </div>
             <div className="flex justify-between text-[11px] text-slate-500">
-              <span>Target: 81.8%</span>
-              <span className="text-emerald-700 font-semibold">On Track</span>
+              <span>Target: ₹{(metrics.monthTarget / 100000).toFixed(1)}L</span>
+              <span className="text-slate-600 font-medium">{metrics.monthSales > 0 ? 'In Progress' : 'Pending Orders'}</span>
             </div>
           </div>
         </div>
@@ -249,16 +255,22 @@ export function DashboardV3() {
           <div>
             <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
               <span>Market Outstanding</span>
-              <span className="text-rose-700 font-semibold bg-rose-50 px-1.5 py-0.5 rounded text-[10px] border border-rose-100">
-                Action Required
-              </span>
+              {metrics.outstanding > 0 ? (
+                <span className="text-rose-700 font-semibold bg-rose-50 px-1.5 py-0.5 rounded text-[10px] border border-rose-100">
+                  Outstanding
+                </span>
+              ) : (
+                <span className="text-emerald-700 font-semibold bg-emerald-50 px-1.5 py-0.5 rounded text-[10px] border border-emerald-100">
+                  All Clear
+                </span>
+              )}
             </div>
             <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono tracking-tight">
               ₹{metrics.outstanding.toLocaleString('en-IN')}
             </div>
           </div>
           <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
-            <span className="text-rose-600 font-medium">₹1.12L Overdue (9 parties)</span>
+            <span className="text-slate-500 font-medium">{metrics.outstanding > 0 ? 'Pending customer dues' : '0 overdue accounts'}</span>
             <button
               onClick={() => navigate('/v3/payments')}
               className="text-[#EA580C] hover:underline font-semibold"
@@ -471,8 +483,8 @@ export function DashboardV3() {
           <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-bold text-slate-900">Van Route Dispatches</h3>
-                <span className="text-xs text-slate-500">38 stops across 4 morning beats</span>
+                <h3 className="text-sm font-bold text-slate-900">Fleet Dispatch Status</h3>
+                <span className="text-xs text-slate-500">4 Delivery Vehicles at Savina Depot</span>
               </div>
               <button
                 onClick={() => navigate('/v3/delivery')}
@@ -482,40 +494,12 @@ export function DashboardV3() {
               </button>
             </div>
 
-            <div className="space-y-3 text-xs">
-              {/* Route 1 */}
-              <div className="p-3 rounded-lg border border-slate-100 bg-slate-50/60 space-y-2">
-                <div className="flex justify-between items-center">
-                  <div className="font-semibold text-slate-900">Van 01 · Mukesh Sharma</div>
-                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">
-                    5/8 Stops
-                  </span>
-                </div>
-                <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-[#EA580C] h-full rounded-full" style={{ width: '62%' }}></div>
-                </div>
-                <div className="flex justify-between text-[11px] text-slate-500">
-                  <span>Sec 3 &amp; Mewar Industrial</span>
-                  <span>₹32,500 Cash to collect</span>
-                </div>
-              </div>
-
-              {/* Route 2 */}
-              <div className="p-3 rounded-lg border border-slate-100 bg-slate-50/60 space-y-2">
-                <div className="flex justify-between items-center">
-                  <div className="font-semibold text-slate-900">Van 02 · Sohan Lal</div>
-                  <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
-                    Loading Bay 2
-                  </span>
-                </div>
-                <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-slate-400 h-full rounded-full" style={{ width: '15%' }}></div>
-                </div>
-                <div className="flex justify-between text-[11px] text-slate-500">
-                  <span>Savina Krishi Mandi Wholesale</span>
-                  <span>₹44,200 Cash to collect</span>
-                </div>
-              </div>
+            <div className="p-5 rounded-lg border border-dashed border-slate-200 bg-slate-50/50 text-center space-y-1">
+              <span className="material-symbols-outlined text-slate-300 text-3xl">local_shipping</span>
+              <p className="text-xs font-semibold text-slate-700">No active delivery routes on road</p>
+              <p className="text-[11px] text-slate-400">
+                Route manifests and live drop-off trackers will appear here as packing leads dispatch orders to delivery vans.
+              </p>
             </div>
           </div>
 

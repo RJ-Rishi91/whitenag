@@ -1,82 +1,26 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { api } from '../../api/client.js';
 
 export function InvoiceV2() {
   const navigate = useNavigate();
   const { id } = useParams();
 
-  const invoice = {
-    number: id ? `NF-INV-${id}` : 'NF-INV-2024-0891',
-    date: '24 Oct 2024',
-    dueDate: '31 Oct 2024',
-    eWayBill: 'EW-8491-0921',
-    tallyVoucher: 'Voucher #8821',
-    seller: {
-      name: 'NAGFANI FOODS PVT. LTD.',
-      tagline: 'Traditional Rajasthani Papad, Snacks & Condiments',
-      address: 'Plot No. 14-16, Krishi Upaj Mandi, Savina, Udaipur - 313002, Rajasthan',
-      gstin: '08AABCN9402M1Z4',
-      fssai: '12219034000412',
-      state: 'Rajasthan',
-      stateCode: '08',
-      email: 'sales@nagfanifoods.com',
-      phone: '+91 294 2489001'
-    },
-    buyer: {
-      name: 'Sharma General Store',
-      contactPerson: 'Mr. Ramesh Sharma',
-      address: 'Plot 42, Hiran Magri Sector 3, Near BSNL Tower, Udaipur - 313002, Rajasthan',
-      gstin: '08AAACS1421K1ZB',
-      state: 'Rajasthan',
-      stateCode: '08',
-      phone: '+91 98290 12345'
-    },
-    items: [
-      {
-        sn: 1,
-        desc: 'Urad Hari Mirch Papad (500g Poly Pouch)',
-        hsn: '19059040',
-        batch: 'BAT-2024-1014',
-        qty: 60,
-        unit: 'Pkt',
-        rate: 65.0,
-        amount: 3900.0,
-        gstRate: 5
-      },
-      {
-        sn: 2,
-        desc: 'Methi Vacuum Khakhra (200g Box)',
-        hsn: '19059090',
-        batch: 'BAT-2024-1018',
-        qty: 40,
-        unit: 'Box',
-        rate: 52.0,
-        amount: 2080.0,
-        gstRate: 5
-      },
-      {
-        sn: 3,
-        desc: 'Rajasthani Loung Sev (1kg Bulk Pouch)',
-        hsn: '21069099',
-        batch: 'BAT-2024-1021',
-        qty: 20,
-        unit: 'Kg',
-        rate: 220.0,
-        amount: 4400.0,
-        gstRate: 12
-      },
-      {
-        sn: 4,
-        desc: 'Ker Sangri Traditional Aachar (500g Glass)',
-        hsn: '20019000',
-        batch: 'BAT-2024-1009',
-        qty: 30,
-        unit: 'Jar',
-        rate: 155.0,
-        amount: 4650.0,
-        gstRate: 12
-      }
-    ],
+  const [invoices, setInvoices] = useState([]);
+  const [currentInvoice, setCurrentInvoice] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Seller details (Fixed Nagfani Foods Pvt Ltd profile)
+  const seller = {
+    name: 'NAGFANI FOODS PVT. LTD.',
+    tagline: 'Traditional Rajasthani Papad, Snacks & Condiments',
+    address: 'Plot No. 14-16, Krishi Upaj Mandi, Savina, Udaipur - 313002, Rajasthan',
+    gstin: '08AABCN9402M1Z4',
+    fssai: '12219034000412',
+    state: 'Rajasthan',
+    stateCode: '08',
+    email: 'sales@nagfanifoods.com',
+    phone: '+91 294 2489001',
     bank: {
       name: 'HDFC Bank Ltd.',
       branch: 'Savina Mandi Branch, Udaipur',
@@ -85,11 +29,103 @@ export function InvoiceV2() {
     }
   };
 
-  const taxableSubtotal = invoice.items.reduce((s, i) => s + i.amount, 0);
-  const gst5Amount = invoice.items.filter(i => i.gstRate === 5).reduce((s, i) => s + (i.amount * 0.05), 0);
-  const gst12Amount = invoice.items.filter(i => i.gstRate === 12).reduce((s, i) => s + (i.amount * 0.12), 0);
-  const totalTax = gst5Amount + gst12Amount;
-  const grandTotal = Math.round(taxableSubtotal + totalTax);
+  useEffect(() => {
+    async function loadData() {
+      setLoading(true);
+      try {
+        if (id) {
+          const res = await api.get(`/invoices/${id}`);
+          if (res?.success && res.data) {
+            setCurrentInvoice(res.data);
+          } else {
+            setCurrentInvoice(null);
+          }
+        } else {
+          const res = await api.get('/invoices');
+          if (res?.success && Array.isArray(res.data)) {
+            setInvoices(res.data);
+            if (res.data.length > 0) {
+              setCurrentInvoice(res.data[0]);
+            } else {
+              setCurrentInvoice(null);
+            }
+          } else {
+            setInvoices([]);
+            setCurrentInvoice(null);
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to load invoice:', err);
+        setCurrentInvoice(null);
+        setInvoices([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col w-full pb-20 items-center justify-center p-12">
+        <div className="w-8 h-8 border-3 border-[#D9580B] border-t-transparent rounded-full animate-spin mb-3"></div>
+        <p className="text-xs text-[#625B4F]">Loading Tax Invoices...</p>
+      </div>
+    );
+  }
+
+  // Clean empty state when no invoices exist
+  if (!currentInvoice) {
+    return (
+      <div className="flex flex-col w-full pb-20">
+        <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-12 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-[#FFF7EE] border border-[#EADBC8] text-[#D9580B] flex items-center justify-center mx-auto mb-4">
+            <span className="material-symbols-outlined text-3xl">receipt_long</span>
+          </div>
+          <h2 className="font-outfit text-2xl font-bold text-[#111E20]">
+            No Invoices Generated Yet
+          </h2>
+          <p className="text-xs text-[#625B4F] max-w-md mx-auto mt-2 mb-6">
+            Tax invoices and delivery challans generated from dispatched sales orders will appear here automatically with GST compliance.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <button
+              onClick={() => navigate('/v2/orders/new')}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#D9580B] text-white text-xs font-bold hover:bg-[#b54504] transition-all shadow-xs"
+            >
+              <span className="material-symbols-outlined text-[16px]">add_circle</span>
+              <span>Create New Order</span>
+            </button>
+            <button
+              onClick={() => navigate('/v2/orders')}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-[#03353A] border border-[#EADBC8] text-xs font-bold hover:bg-[#FFF7EE] transition-all"
+            >
+              <span className="material-symbols-outlined text-[16px]">view_kanban</span>
+              <span>View Orders Kanban</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const items = currentInvoice.items || [];
+  const taxableSubtotal = currentInvoice.subtotal || items.reduce((s, i) => s + (i.amount || (i.qty * i.rate) || 0), 0);
+  const totalTax = currentInvoice.taxTotal || 0;
+  const grandTotal = Math.round(currentInvoice.grandTotal || (taxableSubtotal + totalTax));
+  const buyerName = currentInvoice.partyId?.name || currentInvoice.partyId?.businessName || 'Cash Customer';
+  const buyerAddress = currentInvoice.partyId?.address || 'Udaipur, Rajasthan';
+  const buyerGstin = currentInvoice.partyId?.gstin || 'Unregistered Person';
+  const buyerPhone = currentInvoice.partyId?.mobile || currentInvoice.partyId?.phone || '';
+
+  const handleShareWhatsApp = () => {
+    const text = `*Tax Invoice: ${currentInvoice.invoiceNo}*\nParty: ${buyerName}\nAmount: ₹${grandTotal.toLocaleString('en-IN')}`;
+    const cleanPhone = buyerPhone.replace(/[^0-9]/g, '');
+    const url = cleanPhone
+      ? `https://wa.me/91${cleanPhone}?text=${encodeURIComponent(text)}`
+      : `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+  };
 
   return (
     <div className="flex flex-col w-full pb-20">
@@ -104,7 +140,7 @@ export function InvoiceV2() {
               <span className="text-[#D9580B] font-bold">Tax Invoice</span>
             </div>
             <h1 className="font-outfit text-xl sm:text-2xl font-bold text-[#111E20] mt-1">
-              {invoice.number}
+              {currentInvoice.invoiceNo || 'Tax Invoice'}
             </h1>
           </div>
 
@@ -117,7 +153,7 @@ export function InvoiceV2() {
               <span>Print A4</span>
             </button>
             <button
-              onClick={() => alert('Sending PDF invoice via WhatsApp to ' + invoice.buyer.phone)}
+              onClick={handleShareWhatsApp}
               className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-50 text-emerald-800 hover:bg-emerald-100 text-xs font-bold transition-all border border-emerald-200"
             >
               <span className="material-symbols-outlined text-[16px]">share</span>
@@ -145,18 +181,18 @@ export function InvoiceV2() {
                 </div>
                 <div>
                   <h2 className="font-outfit font-extrabold text-xl sm:text-2xl text-[#03353A] tracking-wide">
-                    {invoice.seller.name}
+                    {seller.name}
                   </h2>
-                  <p className="text-[11px] text-[#625B4F]">{invoice.seller.tagline}</p>
+                  <p className="text-[11px] text-[#625B4F]">{seller.tagline}</p>
                 </div>
               </div>
               <p className="text-[11px] text-[#625B4F] max-w-md mt-2">
-                {invoice.seller.address}
+                {seller.address}
               </p>
               <div className="text-[11px] text-[#03353A] font-semibold mt-1">
-                <span>GSTIN: <strong>{invoice.seller.gstin}</strong></span>
+                <span>GSTIN: <strong>{seller.gstin}</strong></span>
                 <span className="mx-2">•</span>
-                <span>FSSAI: <strong>{invoice.seller.fssai}</strong></span>
+                <span>FSSAI: <strong>{seller.fssai}</strong></span>
               </div>
             </div>
 
@@ -165,10 +201,10 @@ export function InvoiceV2() {
                 Tax Invoice (B2B)
               </span>
               <div className="text-[11px] text-[#625B4F] space-y-0.5">
-                <div>Invoice No: <strong className="text-[#111E20]">{invoice.number}</strong></div>
-                <div>Date: <strong className="text-[#111E20]">{invoice.date}</strong></div>
+                <div>Invoice No: <strong className="text-[#111E20]">{currentInvoice.invoiceNo}</strong></div>
+                <div>Date: <strong className="text-[#111E20]">{currentInvoice.date ? new Date(currentInvoice.date).toLocaleDateString('en-IN') : '-'}</strong></div>
                 <div>State Code: <strong className="text-[#111E20]">08 (Rajasthan)</strong></div>
-                <div>E-Way Bill: <strong className="text-[#111E20]">{invoice.eWayBill}</strong></div>
+                <div>E-Way Bill: <strong className="text-[#111E20]">{currentInvoice.eWayBill || '-'}</strong></div>
               </div>
             </div>
           </div>
@@ -180,11 +216,11 @@ export function InvoiceV2() {
                 Details of Receiver / Billed To:
               </span>
               <h3 className="font-outfit font-bold text-sm text-[#111E20]">
-                {invoice.buyer.name}
+                {buyerName}
               </h3>
-              <p className="text-[11px] text-[#625B4F]">{invoice.buyer.address}</p>
+              <p className="text-[11px] text-[#625B4F]">{buyerAddress}</p>
               <div className="text-[11px] text-[#03353A] font-semibold pt-1">
-                GSTIN: <strong>{invoice.buyer.gstin}</strong> · Phone: {invoice.buyer.phone}
+                GSTIN: <strong>{buyerGstin}</strong> {buyerPhone && `· Phone: ${buyerPhone}`}
               </div>
             </div>
 
@@ -199,7 +235,7 @@ export function InvoiceV2() {
                 Reverse Charge: <strong>No</strong>
               </div>
               <div className="text-[11px] text-emerald-700 font-bold">
-                Payment: 7 Days Credit
+                Payment: Standard Credit
               </div>
             </div>
           </div>
@@ -219,22 +255,30 @@ export function InvoiceV2() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EADBC8]/50">
-                {invoice.items.map(i => (
-                  <tr key={i.sn}>
-                    <td className="py-3 px-3 font-mono text-[#625B4F]">{i.sn}</td>
-                    <td className="py-3 px-3">
-                      <div className="font-semibold text-[#111E20]">{i.desc}</div>
-                      <div className="text-[10px] text-[#625B4F] font-mono">Batch: {i.batch}</div>
+                {items.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-6 text-center text-[#625B4F]">
+                      No items recorded on this invoice.
                     </td>
-                    <td className="py-3 px-3 font-mono text-[#625B4F]">{i.hsn}</td>
-                    <td className="py-3 px-3 text-right font-mono font-semibold">{i.qty} {i.unit}</td>
-                    <td className="py-3 px-3 text-right font-mono">{i.rate.toFixed(2)}</td>
-                    <td className="py-3 px-3 text-right font-mono font-bold text-[#111E20]">
-                      {i.amount.toFixed(2)}
-                    </td>
-                    <td className="py-3 px-3 text-center font-mono">{i.gstRate}%</td>
                   </tr>
-                ))}
+                ) : (
+                  items.map((i, idx) => (
+                    <tr key={i._id || idx}>
+                      <td className="py-3 px-3 font-mono text-[#625B4F]">{idx + 1}</td>
+                      <td className="py-3 px-3">
+                        <div className="font-semibold text-[#111E20]">{i.name || i.desc}</div>
+                        {i.batch && <div className="text-[10px] text-[#625B4F] font-mono">Batch: {i.batch}</div>}
+                      </td>
+                      <td className="py-3 px-3 font-mono text-[#625B4F]">{i.hsn || '-'}</td>
+                      <td className="py-3 px-3 text-right font-mono font-semibold">{i.qty} {i.unit || 'Units'}</td>
+                      <td className="py-3 px-3 text-right font-mono">{(i.rate || 0).toFixed(2)}</td>
+                      <td className="py-3 px-3 text-right font-mono font-bold text-[#111E20]">
+                        {(i.amount || (i.qty * i.rate) || 0).toFixed(2)}
+                      </td>
+                      <td className="py-3 px-3 text-center font-mono">{i.taxRate || i.gstRate || 0}%</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -245,15 +289,15 @@ export function InvoiceV2() {
               <div className="p-3.5 rounded-xl bg-[#E8F6F9] border border-[#CEDDDF] text-xs">
                 <span className="font-bold text-[#03353A] block mb-1">Company Bank Details:</span>
                 <div className="text-[11px] text-[#625B4F] space-y-0.5 font-mono">
-                  <div>Bank: <strong>{invoice.bank.name}</strong></div>
-                  <div>A/c No: <strong>{invoice.bank.accountNumber}</strong></div>
-                  <div>IFSC: <strong>{invoice.bank.ifsc}</strong></div>
-                  <div>Branch: {invoice.bank.branch}</div>
+                  <div>Bank: <strong>{seller.bank.name}</strong></div>
+                  <div>A/c No: <strong>{seller.bank.accountNumber}</strong></div>
+                  <div>IFSC: <strong>{seller.bank.ifsc}</strong></div>
+                  <div>Branch: {seller.bank.branch}</div>
                 </div>
               </div>
 
               <div className="text-[11px] text-[#625B4F] italic">
-                Terms: Subject to Udaipur jurisdiction. Payment due within 7 days from invoice date. Goods once sold will not be taken back.
+                Terms: Subject to Udaipur jurisdiction. Payment due as per agreed credit terms. Goods once sold will not be taken back.
               </div>
             </div>
 
@@ -276,9 +320,6 @@ export function InvoiceV2() {
                 <span className="font-outfit font-extrabold text-[#D9580B] text-lg">
                   ₹ {grandTotal.toLocaleString('en-IN')}.00
                 </span>
-              </div>
-              <div className="text-[10px] text-right text-[#625B4F]">
-                (Rupees Fifteen Thousand Thirty Only)
               </div>
             </div>
           </div>

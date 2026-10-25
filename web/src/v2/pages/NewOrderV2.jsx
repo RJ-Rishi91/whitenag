@@ -333,7 +333,7 @@ export function NewOrderV2() {
 
               {/* Frequent Items Chips */}
               <div className="flex flex-wrap items-center gap-2 text-xs">
-                <span className="text-[#625B4F] font-semibold">Sharma Store Frequent items:</span>
+                <span className="text-[#625B4F] font-semibold">Quick Add FMCG Items:</span>
                 <button
                   type="button"
                   onClick={() => handleAddQuickProduct('Urad Special Masala 500g', 'NFD-PAP-001', 145, 5, '500g Pouch')}
