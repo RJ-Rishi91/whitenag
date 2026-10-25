@@ -1,47 +1,61 @@
-import React, { useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { api } from '../../api/client.js';
 
 export function SearchV3() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const query = (searchParams.get('q') || '').trim();
 
-  // Simulated searchable corpus matching real Udaipur operations
-  const dataset = {
-    orders: [
-      { id: 'SO-2024-1026', party: 'Sharma General Store', amount: '₹14,850', status: 'Received', link: '/v3/orders' },
-      { id: 'SO-2024-1027', party: 'Mahalaxmi Kirana Mandir', amount: '₹22,400', status: 'Received', link: '/v3/orders' },
-      { id: 'SO-2024-1028', party: 'Jodhpur Sweets & Namkeen', amount: '₹38,500', status: 'Packed', link: '/v3/orders' },
-      { id: 'SO-2024-1029', party: 'Kailash Provision Store', amount: '₹4,650', status: 'Packed', link: '/v3/orders' },
-      { id: 'SO-2024-1030', party: 'Anoop Traders', amount: '₹54,200', status: 'Shipped', link: '/v3/orders' },
-      { id: 'SO-2024-1031', party: 'Shri Ram Bhojnalaya', amount: '₹18,600', status: 'Delivered', link: '/v3/orders' }
-    ],
-    parties: [
-      { name: 'Sharma General Store', contact: 'Mr. Ramesh Sharma', beat: 'Hiran Magri (Sec 3-5)', phone: '+91 98290 12345', link: '/v3/customers' },
-      { name: 'Mahalaxmi Kirana Mandir', contact: 'Prakash Chandra', beat: 'Savina Main Mandi', phone: '+91 94141 87654', link: '/v3/customers' },
-      { name: 'Jodhpur Sweets & Namkeen', contact: 'Bhawani Singh', beat: 'Krishi Mandi Hub', phone: '+91 98280 43210', link: '/v3/customers' },
-      { name: 'Kailash Provision Store', contact: 'Kailash Meena', beat: 'UIT Colony', phone: '+91 97840 55443', link: '/v3/customers' },
-      { name: 'Anoop Traders', contact: 'Anoop Agarwal', beat: 'Sukher Industrial', phone: '+91 98292 99881', link: '/v3/customers' }
-    ],
-    items: [
-      { name: 'Urad Special Masala Papad (500g)', sku: 'NFD-PAP-001', stock: '280 Pkt', rate: '₹65.00', link: '/v3/stock' },
-      { name: 'Urad Hari Mirch Papad (500g)', sku: 'NFD-PAP-014', stock: '110 Pkt', rate: '₹65.00', link: '/v3/stock' },
-      { name: 'Rajasthani Loung Sev (1kg Bulk)', sku: 'NFD-SEV-003', stock: '75 Kg', rate: '₹220.00', link: '/v3/stock' },
-      { name: 'Methi Vacuum Khakhra (200g)', sku: 'NFD-KHK-008', stock: '45 Box', rate: '₹52.00', link: '/v3/stock' },
-      { name: 'Ker Sangri Aachar (500g Glass)', sku: 'NFD-ACH-002', stock: '-12 Jar (Deficit)', rate: '₹155.00', link: '/v3/stock' }
-    ]
-  };
+  const [results, setResults] = useState({ orders: [], parties: [], items: [] });
+  const [loading, setLoading] = useState(false);
 
-  const results = useMemo(() => {
+  useEffect(() => {
     if (!query) {
-      return { orders: [], parties: [], items: [] };
+      setResults({ orders: [], parties: [], items: [] });
+      return;
     }
-    const q = query.toLowerCase();
-    return {
-      orders: dataset.orders.filter(o => o.id.toLowerCase().includes(q) || o.party.toLowerCase().includes(q)),
-      parties: dataset.parties.filter(p => p.name.toLowerCase().includes(q) || p.contact.toLowerCase().includes(q) || p.phone.includes(q) || p.beat.toLowerCase().includes(q)),
-      items: dataset.items.filter(i => i.name.toLowerCase().includes(q) || i.sku.toLowerCase().includes(q))
-    };
+
+    async function doSearch() {
+      setLoading(true);
+      try {
+        const res = await api.get(`/search?q=${encodeURIComponent(query)}`);
+        if (res?.success && res.results) {
+          const r = res.results;
+          setResults({
+            orders: (r.orders || []).map(o => ({
+              id: o.orderNo || o._id,
+              party: o.partyId?.name || 'Customer',
+              amount: `₹${(o.totalAmount || 0).toLocaleString('en-IN')}`,
+              status: o.status || 'Received',
+              link: '/v3/orders'
+            })),
+            parties: (r.customers || []).map(p => ({
+              name: p.businessName || p.name,
+              contact: p.contactPerson || p.mobile || 'Store Contact',
+              beat: p.city || 'Udaipur',
+              phone: p.mobile || '',
+              link: '/v3/customers'
+            })),
+            items: (r.items || []).map(i => ({
+              name: i.name,
+              sku: i.sku,
+              stock: i.productGroup || 'Finished Goods',
+              link: '/v3/stock'
+            }))
+          });
+        } else {
+          setResults({ orders: [], parties: [], items: [] });
+        }
+      } catch (err) {
+        console.warn('Search failed:', err);
+        setResults({ orders: [], parties: [], items: [] });
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    doSearch();
   }, [query]);
 
   const totalFound = results.orders.length + results.parties.length + results.items.length;
@@ -61,16 +75,21 @@ export function SearchV3() {
             Search Results for "{query}"
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Found {totalFound} matches across orders, party ledgers, and inventory SKUs.
+            {loading ? 'Searching enterprise database...' : `Found ${totalFound} matches across orders, party ledgers, and inventory SKUs.`}
           </p>
         </div>
 
-        {totalFound === 0 ? (
+        {loading ? (
+          <div className="bg-white p-12 rounded-xl border border-slate-200 text-center space-y-2">
+            <div className="inline-block w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+            <div className="text-xs text-slate-500">Searching records...</div>
+          </div>
+        ) : totalFound === 0 ? (
           <div className="bg-white p-12 rounded-xl border border-slate-200 text-center space-y-3">
             <span className="material-symbols-outlined text-4xl text-slate-300">search_off</span>
             <div className="font-bold text-slate-800 text-sm">No exact matches found</div>
             <p className="text-xs text-slate-500 max-w-sm mx-auto">
-              Try searching for party names (e.g. Sharma, Mahalaxmi), SKUs (e.g. PAP, SEV), or order numbers.
+              Try searching for customer names, product SKUs (e.g., PAP, SEV), or order numbers.
             </p>
           </div>
         ) : (
@@ -176,4 +195,5 @@ export function SearchV3() {
     </div>
   );
 }
+
 export default SearchV3;

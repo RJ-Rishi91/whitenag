@@ -8,88 +8,20 @@ export function NewOrderV2() {
 
   // Customer state
   const [customers, setCustomers] = useState([]);
-  const [selectedCustomer, setSelectedCustomer] = useState({
-    _id: 'cust-sharma',
-    businessName: 'Sharma General Store',
-    contactPerson: 'Ramesh Sharma',
-    phone: '+91 98290 12345',
-    gstin: '08AAACS1421K1ZB',
-    address: 'Plot 42, Hiran Magri Sector 3, Near BSNL Tower, Udaipur (313002)',
-    creditLimit: 50000,
-    outstanding: 18200,
-    route: 'SEC 3 / SAVINA BEAT 2',
-    tier: 'Tier A Wholesale'
-  });
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
 
   // Line items state
-  const [items, setItems] = useState([
-    {
-      id: 1,
-      sku: 'NFD-PAP-014',
-      productName: 'Urad Hari Mirch Papad',
-      packSize: '500g Poly Pouch',
-      stockAvailable: '140 kg',
-      quantity: 30,
-      unit: 'kg',
-      rate: 130,
-      mrp: 140,
-      discountPercent: 0,
-      gstPercent: 5,
-      weightKg: 30.0
-    },
-    {
-      id: 2,
-      sku: 'NFD-KHK-008',
-      productName: 'Methi Khakhra (Vacuum Crispy)',
-      packSize: '200g Box',
-      stockAvailable: '85 pkts',
-      quantity: 40,
-      unit: 'pkts',
-      rate: 52,
-      mrp: 60,
-      discountPercent: 3,
-      gstPercent: 5,
-      weightKg: 8.0
-    },
-    {
-      id: 3,
-      sku: 'NFD-SEV-003',
-      productName: 'Loung Sev (Special Rajasthani)',
-      packSize: '1kg Bulk Poly Pack',
-      stockAvailable: '95 kg',
-      quantity: 20,
-      unit: 'kg',
-      rate: 220,
-      mrp: 240,
-      discountPercent: 0,
-      gstPercent: 12,
-      weightKg: 20.0
-    },
-    {
-      id: 4,
-      sku: 'NFD-ACH-002',
-      productName: 'Ker Sangri Aachar (Traditional)',
-      packSize: '500g Glass Jar',
-      stockAvailable: '18 pkts (Deficit)',
-      quantity: 30,
-      unit: 'pkts',
-      rate: 155,
-      mrp: 175,
-      discountPercent: 0,
-      gstPercent: 12,
-      weightKg: 4.0
-    }
-  ]);
+  const [items, setItems] = useState([]);
 
   // Logistics state
   const [logistics, setLogistics] = useState({
-    beatZone: 'SEC 3 (Hiran Magri Sector 3-5)',
+    beatZone: 'Savina Main Mandi',
     van: 'Van RJ-27-GA-4890 (Mukesh - Morning Run)',
-    paymentTerms: '7 Days Credit (Due: 26 Oct)',
+    paymentTerms: '7 Days Credit',
     channel: 'WhatsApp',
     deliveryDate: new Date().toISOString().split('T')[0],
     deliverySlot: '03:00 PM - 07:00 PM',
-    notes: 'Deliver through back lane shutter. Collect overdue ₹5,000 cheque from Sharmaji along with fresh sign stamp on LR copy.'
+    notes: ''
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -107,14 +39,18 @@ export function NewOrderV2() {
         if (cRes?.success && Array.isArray(cRes.data) && cRes.data.length > 0) {
           setCustomers(cRes.data);
           const first = cRes.data[0];
-          setSelectedCustomer(prev => ({
-            ...prev,
+          setSelectedCustomer({
             _id: first._id,
-            businessName: first.name || prev.businessName,
-            phone: first.mobile || prev.phone,
-            gstin: first.gstin || prev.gstin,
-            address: first.address ? `${first.address.street || ''}, ${first.address.city || 'Udaipur'}` : prev.address
-          }));
+            businessName: first.name || first.businessName || 'Customer',
+            contactPerson: first.contactPerson || first.name || '',
+            phone: first.mobile || first.phone || '',
+            gstin: first.gstin || 'URP',
+            address: first.address ? (typeof first.address === 'string' ? first.address : `${first.address.street || ''}, ${first.address.city || 'Udaipur'}`) : 'Udaipur',
+            creditLimit: first.creditLimit || 50000,
+            outstanding: first.outstanding || 0,
+            route: first.city || 'Savina Beat',
+            tier: 'Wholesale'
+          });
         }
 
         if (iRes?.success && Array.isArray(iRes.data) && iRes.data.length > 0) {
@@ -324,48 +260,57 @@ export function NewOrderV2() {
               </div>
 
               {/* Selected Customer Card */}
-              <div className="mt-4 bg-[#FFF7EE] rounded-xl p-5 border border-[#EADBC8] flex flex-col md:flex-row gap-5 justify-between items-start md:items-center">
-                <div className="flex items-start gap-4 min-w-0">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-[#D9580B] to-[#E8A317] text-white flex items-center justify-center font-outfit font-extrabold text-xl flex-shrink-0 shadow-sm">
-                    {selectedCustomer.businessName.charAt(0)}
-                  </div>
-                  <div className="min-w-0 space-y-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="font-outfit font-bold text-base text-[#111E20] truncate">
-                        {selectedCustomer.businessName}
-                      </h3>
-                      <span className="px-2 py-0.5 rounded-full bg-[#FFDBCD] text-[#9F3C00] text-[10px] font-extrabold tracking-wide uppercase">
-                        {selectedCustomer.tier}
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#625B4F]">
-                      <span className="flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[14px] text-[#D9580B]">pin_drop</span>
-                        {selectedCustomer.address}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[14px] text-[#03353A]">call</span>
-                        {selectedCustomer.phone}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-[#03353A] pt-1">
-                      <span>GSTIN: <strong className="font-semibold">{selectedCustomer.gstin}</strong></span>
-                      <span>•</span>
-                      <span>Credit Limit: <strong className="font-semibold">₹{selectedCustomer.creditLimit.toLocaleString('en-IN')}</strong></span>
-                      <span>•</span>
-                      <span>Route: <strong>{selectedCustomer.route}</strong></span>
-                    </div>
-                  </div>
+              {!selectedCustomer ? (
+                <div className="mt-4 bg-[#FFF7EE] rounded-xl p-6 border border-dashed border-[#EADBC8] text-center">
+                  <span className="material-symbols-outlined text-3xl text-[#D9580B] mb-1">person_search</span>
+                  <p className="font-outfit font-bold text-sm text-[#111E20]">No Customer Selected</p>
+                  <p className="text-xs text-[#625B4F] mt-0.5">Please register a customer party first to create a sales order.</p>
                 </div>
+              ) : (
+                <div className="mt-4 bg-[#FFF7EE] rounded-xl p-5 border border-[#EADBC8] flex flex-col md:flex-row gap-5 justify-between items-start md:items-center">
+                  <div className="flex items-start gap-4 min-w-0">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-[#D9580B] to-[#E8A317] text-white flex items-center justify-center font-outfit font-extrabold text-xl flex-shrink-0 shadow-sm">
+                      {selectedCustomer.businessName?.charAt(0) || '?'}
+                    </div>
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-outfit font-bold text-base text-[#111E20] truncate">
+                          {selectedCustomer.businessName}
+                        </h3>
+                        <span className="px-2 py-0.5 rounded-full bg-[#FFDBCD] text-[#9F3C00] text-[10px] font-extrabold tracking-wide uppercase">
+                          {selectedCustomer.tier || 'Wholesale'}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#625B4F]">
+                        <span className="flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[14px] text-[#D9580B]">pin_drop</span>
+                          {selectedCustomer.address}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[14px] text-[#03353A]">call</span>
+                          {selectedCustomer.phone}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-[#03353A] pt-1">
+                        <span>GSTIN: <strong className="font-semibold">{selectedCustomer.gstin}</strong></span>
+                        <span>•</span>
+                        <span>Credit Limit: <strong className="font-semibold">₹{(selectedCustomer.creditLimit || 0).toLocaleString('en-IN')}</strong></span>
+                        <span>•</span>
+                        <span>Route: <strong>{selectedCustomer.route}</strong></span>
+                      </div>
+                    </div>
+                  </div>
 
-                {/* Overdue alert */}
-                <div className="flex flex-col sm:items-end gap-2 flex-shrink-0">
-                  <div className="px-3 py-1.5 rounded-lg bg-red-50 text-red-700 flex items-center gap-2 text-xs font-bold border border-red-200">
-                    <span className="material-symbols-outlined text-[18px] text-red-600 animate-pulse">warning</span>
-                    <span>Outstanding: ₹{selectedCustomer.outstanding.toLocaleString('en-IN')} (15 days overdue)</span>
-                  </div>
+                  {selectedCustomer.outstanding > 0 && (
+                    <div className="flex flex-col sm:items-end gap-2 flex-shrink-0">
+                      <div className="px-3 py-1.5 rounded-lg bg-red-50 text-red-700 flex items-center gap-2 text-xs font-bold border border-red-200">
+                        <span className="material-symbols-outlined text-[18px] text-red-600 animate-pulse">warning</span>
+                        <span>Outstanding: ₹{selectedCustomer.outstanding.toLocaleString('en-IN')}</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
+              )}
             </section>
 
             {/* STEP 2: Product Line Items */}
@@ -413,15 +358,17 @@ export function NewOrderV2() {
               </div>
 
               {/* Stock Warning Banner */}
-              <div className="rounded-xl bg-[#FFF8EC] border border-[#E8A317] p-3.5 flex items-start gap-3">
-                <span className="material-symbols-outlined text-[#D9580B] text-[20px] flex-shrink-0 mt-0.5">
-                  error_outline
-                </span>
-                <div className="flex-1 text-xs text-[#594238]">
-                  <span className="font-bold text-[#111E20]">Dispatch Warning for Line #4 (Ker Sangri Aachar): </span>
-                  Requested 30 packets exceeds available Savina unreserved stock (18 pkts). Shortfall will require automatic transfer from Sukher Unit 2 or partial backorder.
+              {items.some(i => i.productName?.includes('Ker Sangri') && i.quantity > 18) && (
+                <div className="rounded-xl bg-[#FFF8EC] border border-[#E8A317] p-3.5 flex items-start gap-3">
+                  <span className="material-symbols-outlined text-[#D9580B] text-[20px] flex-shrink-0 mt-0.5">
+                    error_outline
+                  </span>
+                  <div className="flex-1 text-xs text-[#594238]">
+                    <span className="font-bold text-[#111E20]">Dispatch Warning: </span>
+                    Requested quantity exceeds available unreserved stock. Shortfall will require automatic transfer or partial backorder.
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Line Items Table */}
               <div className="overflow-x-auto rounded-xl border border-[#EADBC8]">
@@ -439,7 +386,14 @@ export function NewOrderV2() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#EADBC8]/50 bg-white">
-                    {items.map((item, idx) => {
+                    {items.length === 0 ? (
+                      <tr>
+                        <td colSpan={8} className="py-8 text-center text-slate-400 italic">
+                          No products added yet. Click "+ Add Line Item" or quick product buttons above.
+                        </td>
+                      </tr>
+                    ) : (
+                      items.map((item, idx) => {
                       const lineTotal = (item.quantity * item.rate * (1 - (item.discountPercent || 0) / 100));
                       return (
                         <tr key={item.id} className="hover:bg-[#FFF7EE] transition-colors">
@@ -504,7 +458,8 @@ export function NewOrderV2() {
                           </td>
                         </tr>
                       );
-                    })}
+                    })
+                  )}
                   </tbody>
                 </table>
               </div>

@@ -11,122 +11,16 @@ export function OrdersKanbanV2() {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Sample seed / fallback orders matching Udaipur food distribution
-  const defaultOrders = [
-    {
-      _id: 'ord-1026',
-      orderNumber: 'SO-2024-1026',
-      customerName: 'Sharma General Store',
-      sector: 'SEC 3 (Hiran Magri)',
-      channel: 'b2b',
-      paymentStatus: 'paid',
-      grandTotal: 14850,
-      totalWeightKg: 62.0,
-      itemsSummary: 'Urad Papad 30kg, Khakhra 8kg, Loung Sev 20kg',
-      status: 'received',
-      tallySynced: true,
-      van: 'Van 01 (Mukesh)',
-      time: '12m ago'
-    },
-    {
-      _id: 'ord-1027',
-      orderNumber: 'SO-2024-1027',
-      customerName: 'Mahalaxmi Kirana Mandir',
-      sector: 'SAVINA (Main Mandi)',
-      channel: 'b2b',
-      paymentStatus: 'unpaid',
-      grandTotal: 22400,
-      totalWeightKg: 110.0,
-      itemsSummary: 'Chana Masala Papad 50kg, Bikaneri Bhujia 40kg',
-      status: 'received',
-      tallySynced: false,
-      van: 'Van 04 (Dinesh)',
-      time: '28m ago'
-    },
-    {
-      _id: 'ord-1028',
-      orderNumber: 'SO-2024-1028',
-      customerName: 'Jodhpur Sweets & Namkeen',
-      sector: 'KRISHI MANDI',
-      channel: 'b2b',
-      paymentStatus: 'paid',
-      grandTotal: 38500,
-      totalWeightKg: 165.0,
-      itemsSummary: 'Special Moong Papad 100kg, Ratlami Sev 50kg',
-      status: 'packed',
-      tallySynced: true,
-      van: 'Van 02 (Sohan)',
-      time: '45m ago'
-    },
-    {
-      _id: 'ord-1029',
-      orderNumber: 'SO-2024-1029',
-      customerName: 'Kailash provision Store',
-      sector: 'UIT COLONY',
-      channel: 'b2c',
-      paymentStatus: 'paid',
-      grandTotal: 4650,
-      totalWeightKg: 18.0,
-      itemsSummary: 'Methi Khakhra 5kg, Hing Pickle 3kg, Sev 10kg',
-      status: 'packed',
-      tallySynced: true,
-      van: 'Van 03 (Ramesh)',
-      time: '1h ago'
-    },
-    {
-      _id: 'ord-1030',
-      orderNumber: 'SO-2024-1030',
-      customerName: 'Anoop Traders',
-      sector: 'SUKHER IND.',
-      channel: 'b2b',
-      paymentStatus: 'part',
-      grandTotal: 54200,
-      totalWeightKg: 240.0,
-      itemsSummary: 'Export Grade Papad 180kg, Masala Sev 60kg',
-      status: 'shipped',
-      tallySynced: true,
-      van: 'Van 01 (Mukesh)',
-      time: '1.5h ago'
-    },
-    {
-      _id: 'ord-1031',
-      orderNumber: 'SO-2024-1031',
-      customerName: 'Shri Ram Bhojnalaya',
-      sector: 'SAVINA (Main Mandi)',
-      channel: 'b2b',
-      paymentStatus: 'paid',
-      grandTotal: 18600,
-      totalWeightKg: 85.0,
-      itemsSummary: 'Sindhi Jeera Papad 60kg, Aloo Bhujia 25kg',
-      status: 'delivered',
-      tallySynced: true,
-      van: 'Van 02 (Sohan)',
-      time: '2h ago'
-    },
-    {
-      _id: 'ord-1032',
-      orderNumber: 'SO-2024-1032',
-      customerName: 'Bapu Bazaar Wholesale Depot',
-      sector: 'UIT COLONY',
-      channel: 'b2b',
-      paymentStatus: 'paid',
-      grandTotal: 32900,
-      totalWeightKg: 145.0,
-      itemsSummary: 'Red Chilli Papad 80kg, Garlic Sev 50kg',
-      status: 'delivered',
-      tallySynced: true,
-      van: 'Van 03 (Ramesh)',
-      time: '3h ago'
-    }
-  ];
+  const defaultOrders = [];
 
-  const [orders, setOrders] = useState(defaultOrders);
+  const [orders, setOrders] = useState([]);
 
   // Fetch real orders from API if available
   useEffect(() => {
     async function fetchOrders() {
       try {
         const res = await api.get('/orders?limit=50');
-        if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+        if (res.success && Array.isArray(res.data)) {
           const mapped = res.data.map(o => ({
             _id: o._id,
             orderNumber: o.orderNumber || `SO-${o._id.slice(-4).toUpperCase()}`,
@@ -143,9 +37,11 @@ export function OrdersKanbanV2() {
             time: 'Live'
           }));
           setOrders(mapped);
+        } else {
+          setOrders([]);
         }
       } catch (err) {
-        // preserve defaults
+        setOrders([]);
       }
     }
     fetchOrders();

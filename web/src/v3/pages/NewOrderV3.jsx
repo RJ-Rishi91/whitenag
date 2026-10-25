@@ -9,103 +9,16 @@ export function NewOrderV3() {
   const [catalogItems, setCatalogItems] = useState([]);
 
   // Parties state
-  const [parties, setParties] = useState([
-    {
-      _id: 'cust-sharma',
-      businessName: 'Sharma General Store',
-      contactPerson: 'Ramesh Sharma',
-      phone: '+91 98290 12345',
-      gstin: '08AAACS1421K1ZB',
-      city: 'Udaipur',
-      address: 'Plot 42, Hiran Magri Sector 3, Near BSNL Tower, Udaipur (313002)',
-      creditLimit: 50000,
-      outstanding: 18200,
-      route: 'Hiran Magri (Sec 3-5)'
-    },
-    {
-      _id: 'cust-mahalaxmi',
-      businessName: 'Mahalaxmi Kirana Mandir',
-      contactPerson: 'Prakash Chandra',
-      phone: '+91 94141 87654',
-      gstin: '08ABCP8821M1Z1',
-      city: 'Udaipur',
-      address: 'Shop 12, Krishi Upaj Mandi, Savina, Udaipur',
-      creditLimit: 75000,
-      outstanding: 24500,
-      route: 'Savina Main Mandi'
-    },
-    {
-      _id: 'cust-jodhpur',
-      businessName: 'Jodhpur Sweets & Namkeen',
-      contactPerson: 'Bhawani Singh',
-      phone: '+91 98280 43210',
-      gstin: '08AAGFJ7712P1ZN',
-      city: 'Udaipur',
-      address: 'Opp. Town Hall, City Center, Udaipur',
-      creditLimit: 100000,
-      outstanding: 42000,
-      route: 'Krishi Mandi Hub'
-    },
-    {
-      _id: 'cust-kailash',
-      businessName: 'Kailash Provision Store',
-      contactPerson: 'Kailash Meena',
-      phone: '+91 97840 55443',
-      gstin: '08BCKPM3321L1Z9',
-      city: 'Udaipur',
-      address: 'Sector 14 Main Circle, UIT Colony, Udaipur',
-      creditLimit: 30000,
-      outstanding: 5600,
-      route: 'UIT Colony'
-    }
-  ]);
-
-  const [selectedPartyId, setSelectedPartyId] = useState('cust-sharma');
+  const [parties, setParties] = useState([]);
+  const [selectedPartyId, setSelectedPartyId] = useState('');
 
   // Selected party object
   const selectedParty = useMemo(() => {
-    return parties.find(p => p._id === selectedPartyId) || parties[0];
+    return parties.find(p => p._id === selectedPartyId) || null;
   }, [parties, selectedPartyId]);
 
-  // Line items state
-  const [items, setItems] = useState([
-    {
-      id: 1,
-      sku: 'NFD-PAP-014',
-      productName: 'Urad Hari Mirch Papad',
-      packSize: '500g Poly Pouch',
-      stockAvailable: '140 kg',
-      quantity: 30,
-      unit: 'kg',
-      rate: 130,
-      gstPercent: 5,
-      weightKg: 30.0
-    },
-    {
-      id: 2,
-      sku: 'NFD-KHK-008',
-      productName: 'Methi Khakhra (Vacuum Crispy)',
-      packSize: '200g Box',
-      stockAvailable: '85 pkts',
-      quantity: 40,
-      unit: 'pkts',
-      rate: 52,
-      gstPercent: 5,
-      weightKg: 8.0
-    },
-    {
-      id: 3,
-      sku: 'NFD-SEV-003',
-      productName: 'Loung Sev (Special Rajasthani)',
-      packSize: '1kg Bulk Poly Pack',
-      stockAvailable: '95 kg',
-      quantity: 20,
-      unit: 'kg',
-      rate: 220,
-      gstPercent: 12,
-      weightKg: 20.0
-    }
-  ]);
+  // Line items state (starts empty for real order intake)
+  const [items, setItems] = useState([]);
 
   // Dispatch / order settings
   const [orderDetails, setOrderDetails] = useState({
@@ -113,7 +26,7 @@ export function NewOrderV3() {
     paymentTerms: '7 Days Credit (Weekly Cycle)',
     deliverySlot: 'Morning Dispatch (09:00 AM - 01:00 PM)',
     channel: 'B2B Wholesale',
-    notes: 'Deliver to back shutter. Collect overdue cheque along with signed LR copy.'
+    notes: ''
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -132,7 +45,7 @@ export function NewOrderV3() {
           setCatalogItems(itemsRes.data);
         }
 
-        if (partiesRes?.success && Array.isArray(partiesRes.data) && partiesRes.data.length > 0) {
+        if (partiesRes?.success && Array.isArray(partiesRes.data)) {
           const mappedParties = partiesRes.data.map(p => ({
             _id: p._id,
             businessName: p.name || p.businessName,
@@ -148,12 +61,14 @@ export function NewOrderV3() {
           setParties(mappedParties);
           if (location.state?.partyId && mappedParties.some(p => p._id === location.state.partyId)) {
             setSelectedPartyId(location.state.partyId);
-          } else {
+          } else if (mappedParties.length > 0) {
             setSelectedPartyId(mappedParties[0]._id);
           }
+        } else {
+          setParties([]);
         }
       } catch {
-        // preserve defaults
+        setParties([]);
       }
     }
     loadData();
@@ -369,12 +284,28 @@ export function NewOrderV3() {
                   onChange={(e) => setSelectedPartyId(e.target.value)}
                   className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#EA580C] focus:bg-white transition-all"
                 >
-                  {parties.map(p => (
-                    <option key={p._id} value={p._id}>
-                      {p.businessName} — {p.route || p.city}
-                    </option>
-                  ))}
+                  {parties.length === 0 ? (
+                    <option value="">No customer accounts found</option>
+                  ) : (
+                    parties.map(p => (
+                      <option key={p._id} value={p._id}>
+                        {p.businessName} — {p.route || p.city}
+                      </option>
+                    ))
+                  )}
                 </select>
+                {parties.length === 0 && (
+                  <div className="pt-2 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => navigate('/v3/customers')}
+                      className="text-[#EA580C] hover:text-[#C2410C] font-semibold underline text-[11px] inline-flex items-center gap-1"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">person_add</span>
+                      <span>Click here to create your first customer ledger</span>
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Party Summary Details Box */}
@@ -552,75 +483,85 @@ export function NewOrderV3() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-slate-700">
-                    {items.map((item) => {
-                      const lineTotal = item.quantity * item.rate;
-                      return (
-                        <tr key={item.id} className="hover:bg-slate-50/50">
-                          <td className="py-3 px-3">
-                            <div className="font-bold text-slate-900">{item.productName}</div>
-                            <div className="text-[10px] text-slate-400 font-mono">
-                              {item.sku} • {item.packSize}
-                            </div>
-                          </td>
-                          <td className="py-3 px-3 text-center">
-                            <span className="inline-block text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
-                              {item.stockAvailable}
-                            </span>
-                          </td>
-                          <td className="py-3 px-3 text-center">
-                            <div className="inline-flex items-center border border-slate-200 rounded-md bg-white overflow-hidden shadow-2xs">
-                              <button
-                                type="button"
-                                onClick={() => handleUpdateQty(item.id, -1)}
-                                className="px-2 py-0.5 text-slate-500 hover:bg-slate-100 font-bold text-xs"
-                                title="Decrease by 1"
-                              >
-                                -
-                              </button>
+                    {items.length === 0 ? (
+                      <tr>
+                        <td colSpan="7" className="py-8 text-center text-slate-400">
+                          <span className="material-symbols-outlined text-[28px] text-slate-300 block mb-1">shopping_basket</span>
+                          <span className="font-medium text-slate-600 text-xs">No items added to this order yet</span>
+                          <p className="text-[11px] text-slate-400 mt-0.5">Use the Quick Add buttons above or catalog search to add items.</p>
+                        </td>
+                      </tr>
+                    ) : (
+                      items.map((item) => {
+                        const lineTotal = item.quantity * item.rate;
+                        return (
+                          <tr key={item.id} className="hover:bg-slate-50/50">
+                            <td className="py-3 px-3">
+                              <div className="font-bold text-slate-900">{item.productName}</div>
+                              <div className="text-[10px] text-slate-400 font-mono">
+                                {item.sku} • {item.packSize}
+                              </div>
+                            </td>
+                            <td className="py-3 px-3 text-center">
+                              <span className="inline-block text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                                {item.stockAvailable}
+                              </span>
+                            </td>
+                            <td className="py-3 px-3 text-center">
+                              <div className="inline-flex items-center border border-slate-200 rounded-md bg-white overflow-hidden shadow-2xs">
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateQty(item.id, -1)}
+                                  className="px-2 py-0.5 text-slate-500 hover:bg-slate-100 font-bold text-xs"
+                                  title="Decrease by 1"
+                                >
+                                  -
+                                </button>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  value={item.quantity}
+                                  onChange={(e) => handleSetQty(item.id, e.target.value)}
+                                  className="w-12 h-6 text-center font-mono font-bold text-slate-900 text-xs border-x border-slate-200 focus:outline-none focus:bg-amber-50"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateQty(item.id, 1)}
+                                  className="px-2 py-0.5 text-slate-500 hover:bg-slate-100 font-bold text-xs"
+                                  title="Increase by 1"
+                                >
+                                  +
+                                </button>
+                              </div>
+                            </td>
+                            <td className="py-3 px-3 text-right">
                               <input
                                 type="number"
-                                min="1"
-                                value={item.quantity}
-                                onChange={(e) => handleSetQty(item.id, e.target.value)}
-                                className="w-12 h-6 text-center font-mono font-bold text-slate-900 text-xs border-x border-slate-200 focus:outline-none focus:bg-amber-50"
+                                value={item.rate}
+                                onChange={(e) => handleUpdateRate(item.id, e.target.value)}
+                                className="w-16 h-7 text-right font-mono font-bold text-slate-800 bg-slate-50 border border-slate-200 rounded px-1 text-xs focus:bg-white"
                               />
+                            </td>
+                            <td className="py-3 px-3 text-center font-mono text-[11px] text-slate-500">
+                              {item.gstPercent}%
+                            </td>
+                            <td className="py-3 px-3 text-right font-mono font-bold text-slate-900">
+                              ₹{lineTotal.toLocaleString('en-IN')}
+                            </td>
+                            <td className="py-3 px-3 text-center">
                               <button
                                 type="button"
-                                onClick={() => handleUpdateQty(item.id, 1)}
-                                className="px-2 py-0.5 text-slate-500 hover:bg-slate-100 font-bold text-xs"
-                                title="Increase by 1"
+                                onClick={() => handleRemoveItem(item.id)}
+                                className="text-slate-400 hover:text-rose-600 transition-colors"
+                                title="Remove Line Item"
                               >
-                                +
+                                <span className="material-symbols-outlined text-[16px]">delete</span>
                               </button>
-                            </div>
-                          </td>
-                          <td className="py-3 px-3 text-right">
-                            <input
-                              type="number"
-                              value={item.rate}
-                              onChange={(e) => handleUpdateRate(item.id, e.target.value)}
-                              className="w-16 h-7 text-right font-mono font-bold text-slate-800 bg-slate-50 border border-slate-200 rounded px-1 text-xs focus:bg-white"
-                            />
-                          </td>
-                          <td className="py-3 px-3 text-center font-mono text-[11px] text-slate-500">
-                            {item.gstPercent}%
-                          </td>
-                          <td className="py-3 px-3 text-right font-mono font-bold text-slate-900">
-                            ₹{lineTotal.toLocaleString('en-IN')}
-                          </td>
-                          <td className="py-3 px-3 text-center">
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveItem(item.id)}
-                              className="text-slate-400 hover:text-rose-600 transition-colors"
-                              title="Remove Line Item"
-                            >
-                              <span className="material-symbols-outlined text-[16px]">delete</span>
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
                   </tbody>
                 </table>
               </div>

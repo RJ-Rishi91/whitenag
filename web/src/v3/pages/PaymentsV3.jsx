@@ -9,96 +9,54 @@ export function PaymentsV3() {
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [receiptSuccess, setReceiptSuccess] = useState(false);
 
-  // Default Payment Register
-  const defaultPayments = [
-    {
-      _id: 'pay-001',
-      receiptNumber: 'RCPT-2024-0491',
-      date: '24 Oct 2024',
-      customer: 'Jodhpur Sweets & Namkeen',
-      amount: 38500,
-      mode: 'RTGS / NEFT',
-      refNumber: 'ICICR5202410240981',
-      tallyVoucher: 'Receipt #4412',
-      status: 'synced'
-    },
-    {
-      _id: 'pay-002',
-      receiptNumber: 'RCPT-2024-0492',
-      date: '24 Oct 2024',
-      customer: 'Sharma General Store',
-      amount: 14850,
-      mode: 'Cash (Van 01 Vault)',
-      refNumber: 'COD-VAN-01',
-      tallyVoucher: 'Receipt #4413',
-      status: 'synced'
-    },
-    {
-      _id: 'pay-003',
-      receiptNumber: 'RCPT-2024-0493',
-      date: '24 Oct 2024',
-      customer: 'Kailash Provision Store',
-      amount: 4650,
-      mode: 'UPI (PhonePe QR)',
-      refNumber: 'UPI-394819201944',
-      tallyVoucher: 'Receipt #4414',
-      status: 'synced'
-    },
-    {
-      _id: 'pay-004',
-      receiptNumber: 'RCPT-2024-0494',
-      date: '23 Oct 2024',
-      customer: 'Shri Ram Bhojnalaya',
-      amount: 18600,
-      mode: 'Cheque (SBI)',
-      refNumber: 'CHQ-889102',
-      tallyVoucher: 'Receipt #4409',
-      status: 'cleared'
-    },
-    {
-      _id: 'pay-005',
-      receiptNumber: 'RCPT-2024-0495',
-      date: '23 Oct 2024',
-      customer: 'Bapu Bazaar Wholesale Depot',
-      amount: 25000,
-      mode: 'RTGS / NEFT',
-      refNumber: 'SBINR5202410231102',
-      tallyVoucher: 'Receipt #4410',
-      status: 'synced'
-    }
-  ];
+  // Default Payment Register (starts empty for real production receipts)
+  const defaultPayments = [];
 
-  const [payments, setPayments] = useState(defaultPayments);
+  const [payments, setPayments] = useState([]);
+  const [parties, setParties] = useState([]);
 
   // New Receipt State
   const [newReceipt, setNewReceipt] = useState({
-    customer: 'Sharma General Store',
+    customer: '',
     amount: 5000,
     mode: 'Cash (Van 01 Vault)',
     refNumber: 'CASH-REC',
-    remarks: 'Partial recovery against invoice #8821'
+    remarks: ''
   });
 
   useEffect(() => {
     async function loadPayments() {
       try {
-        const res = await api.get('/payments').catch(() => null);
-        if (res?.success && Array.isArray(res.data) && res.data.length > 0) {
+        const [res, pRes] = await Promise.all([
+          api.get('/payments').catch(() => null),
+          api.get('/parties').catch(() => null)
+        ]);
+
+        if (pRes?.data && Array.isArray(pRes.data)) {
+          setParties(pRes.data);
+          if (pRes.data.length > 0 && !newReceipt.customer) {
+            setNewReceipt(prev => ({ ...prev, customer: pRes.data[0].businessName || pRes.data[0].name }));
+          }
+        }
+
+        if (res?.success && Array.isArray(res.data)) {
           const mapped = res.data.map(p => ({
             _id: p._id,
             receiptNumber: p.receiptNumber || `RCPT-${p._id.slice(-4)}`,
-            date: p.paymentDate ? new Date(p.paymentDate).toLocaleDateString('en-IN') : '24 Oct 2024',
+            date: p.paymentDate ? new Date(p.paymentDate).toLocaleDateString('en-IN') : 'Today',
             customer: p.party?.businessName || p.partyName || 'Udaipur Retailer',
-            amount: p.amount || 10000,
+            amount: p.amount || 0,
             mode: p.paymentMode || 'Cash',
             refNumber: p.referenceNumber || 'REF-DIRECT',
             tallyVoucher: p.tallyVoucherNumber ? `Receipt #${p.tallyVoucherNumber}` : 'Pending Sync',
             status: p.tallySynced ? 'synced' : 'pending'
           }));
           setPayments(mapped);
+        } else {
+          setPayments([]);
         }
       } catch {
-        // preserve defaults
+        setPayments([]);
       }
     }
     loadPayments();
@@ -177,25 +135,25 @@ export function PaymentsV3() {
             <div className="text-2xl font-bold text-slate-900 font-mono mt-1">
               ₹{totalCollectedToday.toLocaleString('en-IN')}
             </div>
-            <div className="text-[10px] text-emerald-600 font-semibold mt-0.5">All 5 receipts reconciled</div>
+            <div className="text-[10px] text-emerald-600 font-semibold mt-0.5">{payments.length} receipts recorded</div>
           </div>
 
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
             <div className="text-[11px] font-semibold text-emerald-600 uppercase tracking-wider">0 - 7 Days (Current Due)</div>
-            <div className="text-2xl font-bold text-emerald-700 font-mono mt-1">₹42,800</div>
+            <div className="text-2xl font-bold text-emerald-700 font-mono mt-1">₹0</div>
             <div className="text-[10px] text-slate-400 mt-0.5">Normal credit billing cycle</div>
           </div>
 
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
             <div className="text-[11px] font-semibold text-amber-600 uppercase tracking-wider">8 - 15 Days (Follow-up)</div>
-            <div className="text-2xl font-bold text-amber-700 font-mono mt-1">₹34,500</div>
+            <div className="text-2xl font-bold text-amber-700 font-mono mt-1">₹0</div>
             <div className="text-[10px] text-slate-400 mt-0.5">Assigned to driver recovery</div>
           </div>
 
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
             <div className="text-[11px] font-semibold text-rose-600 uppercase tracking-wider">15+ Days Overdue</div>
-            <div className="text-2xl font-bold text-rose-700 font-mono mt-1">₹18,200</div>
-            <div className="text-[10px] text-slate-400 mt-0.5">Sharma General Store balance</div>
+            <div className="text-2xl font-bold text-rose-700 font-mono mt-1">₹0</div>
+            <div className="text-[10px] text-slate-400 mt-0.5">Zero overdue accounts</div>
           </div>
         </div>
 
@@ -266,37 +224,47 @@ export function PaymentsV3() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
-                {filteredPayments.map((p) => (
-                  <tr key={p._id} className="hover:bg-slate-50/50">
-                    <td className="py-3 px-4">
-                      <div className="font-bold font-mono text-slate-900">{p.receiptNumber}</div>
-                      <div className="text-[10px] text-slate-400 font-medium">{p.date}</div>
-                    </td>
-                    <td className="py-3 px-4 font-semibold text-slate-900">
-                      {p.customer}
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="inline-block px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium text-[11px]">
-                        {p.mode}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 font-mono text-slate-600">
-                      {p.refNumber}
-                    </td>
-                    <td className="py-3 px-4 text-right font-mono font-bold text-slate-900 text-[13px]">
-                      ₹{p.amount.toLocaleString('en-IN')}
-                    </td>
-                    <td className="py-3 px-4 font-mono text-[11px] text-slate-600">
-                      {p.tallyVoucher}
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                        <span className="material-symbols-outlined text-[13px]">check_circle</span>
-                        Reconciled
-                      </span>
+                {filteredPayments.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" className="py-12 text-center text-slate-400">
+                      <span className="material-symbols-outlined text-[36px] mb-2 block text-slate-300">payments</span>
+                      <p className="font-semibold text-slate-600">No payment receipts found</p>
+                      <p className="text-[11px] text-slate-400">Click '+ Record Receipt' to log cash, UPI, or bank collections.</p>
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filteredPayments.map((p) => (
+                    <tr key={p._id} className="hover:bg-slate-50/50">
+                      <td className="py-3 px-4">
+                        <div className="font-bold font-mono text-slate-900">{p.receiptNumber}</div>
+                        <div className="text-[10px] text-slate-400 font-medium">{p.date}</div>
+                      </td>
+                      <td className="py-3 px-4 font-semibold text-slate-900">
+                        {p.customer}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="inline-block px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium text-[11px]">
+                          {p.mode}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 font-mono text-slate-600">
+                        {p.refNumber}
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono font-bold text-slate-900 text-[13px]">
+                        ₹{p.amount.toLocaleString('en-IN')}
+                      </td>
+                      <td className="py-3 px-4 font-mono text-[11px] text-slate-600">
+                        {p.tallyVoucher}
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                          <span className="material-symbols-outlined text-[13px]">check_circle</span>
+                          Reconciled
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -339,11 +307,15 @@ export function PaymentsV3() {
                     onChange={(e) => setNewReceipt({ ...newReceipt, customer: e.target.value })}
                     className="w-full h-9 px-3 bg-slate-50 border border-slate-200 rounded-lg font-medium"
                   >
-                    <option value="Sharma General Store">Sharma General Store (Due: ₹18,200)</option>
-                    <option value="Mahalaxmi Kirana Mandir">Mahalaxmi Kirana Mandir (Due: ₹24,500)</option>
-                    <option value="Jodhpur Sweets & Namkeen">Jodhpur Sweets & Namkeen (Due: ₹42,000)</option>
-                    <option value="Kailash Provision Store">Kailash Provision Store (Due: ₹5,600)</option>
-                    <option value="Anoop Traders">Anoop Traders (Due: ₹54,200)</option>
+                    {parties.length === 0 ? (
+                      <option value="">No registered customers yet</option>
+                    ) : (
+                      parties.map(p => (
+                        <option key={p._id} value={p.businessName || p.name}>
+                          {p.businessName || p.name}
+                        </option>
+                      ))
+                    )}
                   </select>
                 </div>
 

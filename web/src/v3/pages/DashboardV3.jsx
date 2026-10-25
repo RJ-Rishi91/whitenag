@@ -8,84 +8,28 @@ export function DashboardV3() {
   const navigate = useNavigate();
 
   const [metrics, setMetrics] = useState({
-    todaySales: 48250,
-    invoicesCount: 38,
-    avgInvoice: 1270,
-    monthSales: 982000,
+    todaySales: 0,
+    invoicesCount: 0,
+    avgInvoice: 0,
+    monthSales: 0,
     monthTarget: 1200000,
-    monthPercent: 81.8,
-    outstanding: 324600,
-    overdue: 112000,
-    overdueParties: 9,
-    treasuryTotal: 296250,
-    cashInHand: 18400,
-    hdfcBank: 245000,
-    upiToday: 32850
+    monthPercent: 0,
+    outstanding: 0,
+    overdue: 0,
+    overdueParties: 0,
+    treasuryTotal: 0,
+    cashInHand: 0,
+    hdfcBank: 0,
+    upiToday: 0
   });
 
   const [activeTab, setActiveTab] = useState('all'); // 'all' | 'received' | 'packed' | 'shipped' | 'delivered'
-  const [orders, setOrders] = useState([
-    {
-      _id: 'ord-1026',
-      orderNo: 'SO-2024-1026',
-      customerName: 'Sharma General Store',
-      area: 'Hiran Magri Sec 3',
-      items: 'Urad Papad 30kg, Khakhra 8kg, Loung Sev 20kg',
-      amount: 14850,
-      weightKg: 62.0,
-      status: 'received',
-      time: '12m ago'
-    },
-    {
-      _id: 'ord-1027',
-      orderNo: 'SO-2024-1027',
-      customerName: 'Mahalaxmi Kirana Mandir',
-      area: 'Savina Main Mandi',
-      items: 'Chana Masala Papad 50kg, Bikaneri Bhujia 40kg',
-      amount: 22400,
-      weightKg: 110.0,
-      status: 'received',
-      time: '28m ago'
-    },
-    {
-      _id: 'ord-1028',
-      orderNo: 'SO-2024-1028',
-      customerName: 'Jodhpur Sweets & Namkeen',
-      area: 'Krishi Upaj Mandi',
-      items: 'Special Moong Papad 100kg, Ratlami Sev 50kg',
-      amount: 38500,
-      weightKg: 165.0,
-      status: 'packed',
-      time: '45m ago'
-    },
-    {
-      _id: 'ord-1029',
-      orderNo: 'SO-2024-1029',
-      customerName: 'Kailash Provision Store',
-      area: 'UIT Colony / Fatehpura',
-      items: 'Methi Khakhra 5kg, Hing Pickle 3kg',
-      amount: 4650,
-      weightKg: 18.0,
-      status: 'shipped',
-      time: '1h ago'
-    },
-    {
-      _id: 'ord-1030',
-      orderNo: 'SO-2024-1030',
-      customerName: 'Anoop Traders',
-      area: 'Sukher Industrial Area',
-      items: 'Export Grade Papad 180kg, Masala Sev 60kg',
-      amount: 54200,
-      weightKg: 240.0,
-      status: 'delivered',
-      time: '2h ago'
-    }
-  ]);
+  const [orders, setOrders] = useState([]);
 
   const [syncState, setSyncState] = useState({
-    synced: 148,
-    queue: 7,
-    conflict: 1,
+    synced: 0,
+    queue: 0,
+    conflict: 0,
     isSyncing: false
   });
 
@@ -104,41 +48,43 @@ export function DashboardV3() {
           const m = d.metrics || d;
           setMetrics(prev => ({
             ...prev,
-            todaySales: m.todaySales ?? prev.todaySales,
-            monthSales: m.monthSales ?? prev.monthSales,
-            invoicesCount: d.invoicesCount || (m.statusCounts ? Object.values(m.statusCounts).reduce((a, b) => a + b, 0) : prev.invoicesCount),
-            outstanding: m.outstandingTotal || d.totalOutstanding || prev.outstanding,
-            cashInHand: m.cashBalance !== undefined ? Math.abs(m.cashBalance) : prev.cashInHand,
-            hdfcBank: m.bankBalance !== undefined ? Math.abs(m.bankBalance) : prev.hdfcBank,
-            upiToday: m.upiCollection !== undefined ? m.upiCollection : prev.upiToday
+            todaySales: m.todaySales ?? 0,
+            monthSales: m.monthSales ?? 0,
+            invoicesCount: d.invoicesCount || (m.statusCounts ? Object.values(m.statusCounts).reduce((a, b) => a + b, 0) : 0),
+            outstanding: m.outstandingTotal || d.totalOutstanding || 0,
+            cashInHand: m.cashBalance !== undefined ? Math.abs(m.cashBalance) : 0,
+            hdfcBank: m.bankBalance !== undefined ? Math.abs(m.bankBalance) : 0,
+            upiToday: m.upiCollection !== undefined ? m.upiCollection : 0
           }));
         }
 
         if (syncRes?.success && syncRes.counts) {
           setSyncState(s => ({
             ...s,
-            synced: syncRes.counts.synced ?? s.synced,
-            queue: syncRes.counts.pending ?? s.queue,
-            conflict: syncRes.counts.conflict ?? s.conflict
+            synced: syncRes.counts.synced ?? 0,
+            queue: syncRes.counts.pending ?? 0,
+            conflict: syncRes.counts.conflict ?? 0
           }));
         }
 
-        if (ordersRes?.success && Array.isArray(ordersRes.data) && ordersRes.data.length > 0) {
+        if (ordersRes?.success && Array.isArray(ordersRes.data)) {
           const mapped = ordersRes.data.map(o => ({
             _id: o._id,
             orderNo: o.orderNo || `SO-${o._id.slice(-4).toUpperCase()}`,
             customerName: o.partyId?.name || o.customerName || 'Udaipur Retailer',
             area: o.partyId?.areaId?.name || o.areaId?.name || 'Savina Beat',
             items: o.items?.map(i => `${i.name || i.productName} (${i.qty || i.quantity || 1})`).join(', ') || 'Assorted Papad & Snacks',
-            amount: o.grandTotal || o.totalAmount || 12000,
+            amount: o.grandTotal || o.totalAmount || 0,
             weightKg: 45.0,
             status: o.status || 'received',
             time: o.createdAt ? new Date(o.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Today'
           }));
           setOrders(mapped);
+        } else {
+          setOrders([]);
         }
       } catch {
-        // keep fallback
+        setOrders([]);
       }
     }
     loadData();

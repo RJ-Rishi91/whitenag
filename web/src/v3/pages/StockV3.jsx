@@ -19,161 +19,8 @@ export function StockV3() {
   });
   const [transferSuccess, setTransferSuccess] = useState(false);
 
-  // Default FMCG stock items for Nagfani Foods
-  const defaultItems = [
-    {
-      _id: 'stk-001',
-      sku: 'NFD-PAP-001',
-      name: 'Urad Special Masala Papad (500g)',
-      category: 'Finished Goods',
-      godown: 'Savina Main Mandi (Godown A)',
-      inStock: 340,
-      reserved: 60,
-      available: 280,
-      minLevel: 100,
-      unit: 'Pkt',
-      rate: 65.0,
-      valuation: 22100,
-      status: 'healthy'
-    },
-    {
-      _id: 'stk-002',
-      sku: 'NFD-PAP-014',
-      name: 'Urad Hari Mirch Papad (500g)',
-      category: 'Finished Goods',
-      godown: 'Savina Main Mandi (Godown A)',
-      inStock: 140,
-      reserved: 30,
-      available: 110,
-      minLevel: 80,
-      unit: 'Pkt',
-      rate: 65.0,
-      valuation: 9100,
-      status: 'healthy'
-    },
-    {
-      _id: 'stk-003',
-      sku: 'NFD-SEV-003',
-      name: 'Rajasthani Loung Sev (1kg Bulk)',
-      category: 'Finished Goods',
-      godown: 'Savina Main Mandi (Godown A)',
-      inStock: 95,
-      reserved: 20,
-      available: 75,
-      minLevel: 50,
-      unit: 'Kg',
-      rate: 220.0,
-      valuation: 20900,
-      status: 'healthy'
-    },
-    {
-      _id: 'stk-004',
-      sku: 'NFD-KHK-008',
-      name: 'Methi Vacuum Khakhra (200g)',
-      category: 'Finished Goods',
-      godown: 'Savina Main Mandi (Godown A)',
-      inStock: 85,
-      reserved: 40,
-      available: 45,
-      minLevel: 60,
-      unit: 'Box',
-      rate: 52.0,
-      valuation: 4420,
-      status: 'low'
-    },
-    {
-      _id: 'stk-005',
-      sku: 'NFD-ACH-002',
-      name: 'Ker Sangri Aachar (500g Glass)',
-      category: 'Finished Goods',
-      godown: 'Savina Main Mandi (Godown A)',
-      inStock: 18,
-      reserved: 30,
-      available: -12,
-      minLevel: 40,
-      unit: 'Jar',
-      rate: 155.0,
-      valuation: 2790,
-      status: 'critical'
-    },
-    {
-      _id: 'stk-006',
-      sku: 'RAW-DAL-001',
-      name: 'Urad Mogar Dal Flour (Double Filtered)',
-      category: 'Raw Materials',
-      godown: 'Sukher Processing Plant',
-      inStock: 850,
-      reserved: 160,
-      available: 690,
-      minLevel: 400,
-      unit: 'Kg',
-      rate: 110.0,
-      valuation: 93500,
-      status: 'healthy'
-    },
-    {
-      _id: 'stk-007',
-      sku: 'RAW-BSN-002',
-      name: 'Pure Chana Dal Besan (Grade A)',
-      category: 'Raw Materials',
-      godown: 'Sukher Processing Plant',
-      inStock: 620,
-      reserved: 150,
-      available: 470,
-      minLevel: 300,
-      unit: 'Kg',
-      rate: 85.0,
-      valuation: 52700,
-      status: 'healthy'
-    },
-    {
-      _id: 'stk-008',
-      sku: 'RAW-HNG-003',
-      name: 'Compounded Hing (Hathras Special)',
-      category: 'Raw Materials',
-      godown: 'Savina Main Mandi (Godown A)',
-      inStock: 12,
-      reserved: 3.5,
-      available: 8.5,
-      minLevel: 15,
-      unit: 'Kg',
-      rate: 3400.0,
-      valuation: 40800,
-      status: 'low'
-    },
-    {
-      _id: 'stk-009',
-      sku: 'RAW-OIL-004',
-      name: 'Edible Cottonseed Oil (Refined)',
-      category: 'Raw Materials',
-      godown: 'Sukher Processing Plant',
-      inStock: 200,
-      reserved: 40,
-      available: 160,
-      minLevel: 100,
-      unit: 'L',
-      rate: 125.0,
-      valuation: 25000,
-      status: 'healthy'
-    },
-    {
-      _id: 'stk-010',
-      sku: 'PKG-PLY-001',
-      name: '500g Poly Pouches (Nagfani Brand)',
-      category: 'Packaging',
-      godown: 'Savina Main Mandi (Godown A)',
-      inStock: 4200,
-      reserved: 800,
-      available: 3400,
-      minLevel: 2000,
-      unit: 'Pcs',
-      rate: 1.8,
-      valuation: 7560,
-      status: 'healthy'
-    }
-  ];
-
-  const [items, setItems] = useState(defaultItems);
+  // Stock inventory items from live database
+  const [items, setItems] = useState([]);
 
   // Fetch live items / stock from API
   useEffect(() => {
@@ -396,76 +243,86 @@ export function StockV3() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
-                {filteredItems.map((item) => {
-                  const isCritical = item.status === 'critical';
-                  const isLow = item.status === 'low';
+                {filteredItems.length === 0 ? (
+                  <tr>
+                    <td colSpan={10} className="py-12 text-center text-slate-500">
+                      <span className="material-symbols-outlined text-4xl text-slate-300 mb-2 block">inventory_2</span>
+                      <p className="font-semibold text-slate-700">No stock items match your filter</p>
+                      <p className="text-xs text-slate-400 mt-0.5">Try selecting another godown location or category.</p>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredItems.map((item) => {
+                    const isCritical = item.status === 'critical';
+                    const isLow = item.status === 'low';
 
-                  return (
-                    <tr key={item._id} className="hover:bg-slate-50/50">
-                      <td className="py-3 px-4">
-                        <div className="font-bold text-slate-900">{item.name}</div>
-                        <div className="text-[10px] text-slate-400 font-mono">{item.sku}</div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="text-[11px] font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
-                          {item.category}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-slate-600 font-medium">
-                        {item.godown}
-                      </td>
-                      <td className="py-3 px-4 text-right font-mono font-bold text-slate-900">
-                        {item.inStock} {item.unit}
-                      </td>
-                      <td className="py-3 px-4 text-right font-mono text-amber-700 font-semibold">
-                        {item.reserved} {item.unit}
-                      </td>
-                      <td className={`py-3 px-4 text-right font-mono font-bold ${item.available < 0 ? 'text-rose-600' : 'text-slate-900'}`}>
-                        {item.available} {item.unit}
-                      </td>
-                      <td className="py-3 px-4 text-right font-mono text-slate-500">
-                        {item.minLevel} {item.unit}
-                      </td>
-                      <td className="py-3 px-4 text-right font-mono font-bold text-slate-900">
-                        ₹{item.rate.toFixed(2)}
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        {isCritical ? (
-                          <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                            Deficit
+                    return (
+                      <tr key={item._id} className="hover:bg-slate-50/50">
+                        <td className="py-3 px-4">
+                          <div className="font-bold text-slate-900">{item.name}</div>
+                          <div className="text-[10px] text-slate-400 font-mono">{item.sku}</div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="text-[11px] font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
+                            {item.category}
                           </span>
-                        ) : isLow ? (
-                          <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                            Low Stock
-                          </span>
-                        ) : (
-                          <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            In Stock
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        {item.category === 'Raw Materials' ? (
-                          <button
-                            type="button"
-                            onClick={() => navigate('/v3/purchases')}
-                            className="px-2 py-1 rounded bg-[#EA580C]/10 text-[#EA580C] hover:bg-[#EA580C] hover:text-white font-semibold text-[11px] transition-colors"
-                          >
-                            Reorder
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => navigate('/v3/production')}
-                            className="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-[11px] transition-colors"
-                          >
-                            Produce
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
+                        </td>
+                        <td className="py-3 px-4 text-slate-600 font-medium">
+                          {item.godown}
+                        </td>
+                        <td className="py-3 px-4 text-right font-mono font-bold text-slate-900">
+                          {item.inStock} {item.unit}
+                        </td>
+                        <td className="py-3 px-4 text-right font-mono text-amber-700 font-semibold">
+                          {item.reserved} {item.unit}
+                        </td>
+                        <td className={`py-3 px-4 text-right font-mono font-bold ${item.available < 0 ? 'text-rose-600' : 'text-slate-900'}`}>
+                          {item.available} {item.unit}
+                        </td>
+                        <td className="py-3 px-4 text-right font-mono text-slate-500">
+                          {item.minLevel} {item.unit}
+                        </td>
+                        <td className="py-3 px-4 text-right font-mono font-bold text-slate-900">
+                          ₹{item.rate.toFixed(2)}
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          {isCritical ? (
+                            <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                              Deficit
+                            </span>
+                          ) : isLow ? (
+                            <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                              Low Stock
+                            </span>
+                          ) : (
+                            <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              In Stock
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          {item.category === 'Raw Materials' ? (
+                            <button
+                              type="button"
+                              onClick={() => navigate('/v3/purchases')}
+                              className="px-2 py-1 rounded bg-[#EA580C]/10 text-[#EA580C] hover:bg-[#EA580C] hover:text-white font-semibold text-[11px] transition-colors"
+                            >
+                              Reorder
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => navigate('/v3/production')}
+                              className="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-[11px] transition-colors"
+                            >
+                              Produce
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>

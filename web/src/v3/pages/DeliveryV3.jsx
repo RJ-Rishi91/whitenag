@@ -15,25 +15,16 @@ export function DeliveryV3() {
       driver: 'Mukesh Sharma',
       phone: '+91 98291 44552',
       route: 'Sec 3 & Mewar Industrial Belt',
-      status: 'On Route',
-      completedStops: 5,
-      totalStops: 8,
-      cashToCollect: 32500,
-      cashCollected: 21500,
-      loadWeightKg: 420,
+      status: 'Ready / Standby',
+      completedStops: 0,
+      totalStops: 0,
+      cashToCollect: 0,
+      cashCollected: 0,
+      loadWeightKg: 0,
       capacityKg: 650,
-      currentStop: 'Sharma General Store (Plot 42, Sec 3)',
-      eta: '10 mins',
-      stops: [
-        { id: 's1', customer: 'Vijay Kirana Store', phone: '+91 98291 11223', sector: 'Sec 3', amount: 4800, weight: 45, status: 'delivered', time: '09:40 AM', instructions: 'Side door delivery, check seal' },
-        { id: 's2', customer: 'Shree Krishna Traders', phone: '+91 98291 22334', sector: 'Sec 4', amount: 8200, weight: 70, status: 'delivered', time: '10:15 AM', instructions: 'Cash collected & signed by Mohanji' },
-        { id: 's3', customer: 'Deepak General Store', phone: '+91 98291 33445', sector: 'Sec 3', amount: 3500, weight: 30, status: 'delivered', time: '10:50 AM', instructions: 'Hand over 5kg Papad sample pack' },
-        { id: 's4', customer: 'Goyal Supermarket', phone: '+91 98291 44556', sector: 'Sec 5', amount: 5000, weight: 55, status: 'delivered', time: '11:20 AM', instructions: 'Direct to grocery billing desk' },
-        { id: 's5', customer: 'Sharma General Store', phone: '+91 98291 55667', sector: 'Sec 3', amount: 0, weight: 60, status: 'delivered', time: '11:35 AM', instructions: 'Prepaid order invoice #1026' },
-        { id: 's6', customer: 'Mewar Confectioners', phone: '+91 98291 66778', sector: 'Sec 4', amount: 6200, weight: 50, status: 'in-progress', time: 'ETA 11:55 AM', instructions: 'Near Mewar Circle, call on arrival' },
-        { id: 's7', customer: 'Maheshwari Foods', phone: '+91 98291 77889', sector: 'Mewar Ind.', amount: 4800, weight: 110, status: 'pending', time: 'Pending', instructions: 'Unload at godown gate #3' },
-        { id: 's8', customer: 'Balaji Retailers', phone: '+91 98291 88990', sector: 'Sec 3', amount: 0, weight: 30, status: 'pending', time: 'Pending', instructions: 'Credit customer, receive sign on DC' }
-      ]
+      currentStop: 'Savina Main Depot',
+      eta: 'Standby',
+      stops: []
     },
     {
       id: 'van-02',
@@ -41,26 +32,16 @@ export function DeliveryV3() {
       driver: 'Sohan Lal Gurjar',
       phone: '+91 94142 88910',
       route: 'Savina Krishi Mandi Wholesale',
-      status: 'Loading Bay #2',
+      status: 'Ready / Standby',
       completedStops: 0,
-      totalStops: 9,
-      cashToCollect: 44200,
+      totalStops: 0,
+      cashToCollect: 0,
       cashCollected: 0,
-      loadWeightKg: 580,
+      loadWeightKg: 0,
       capacityKg: 700,
-      currentStop: 'Main Godown Savina (Staging)',
-      eta: 'Departing 11:30 AM',
-      stops: [
-        { id: 's20', customer: 'Mahalaxmi Kirana Mandir', phone: '+91 94142 11001', sector: 'Savina Mandi', amount: 12400, weight: 90, status: 'pending', time: 'Queue', instructions: 'Heavy 50kg bags, use hand trolley' },
-        { id: 's21', customer: 'Shri Ram Bhojnalaya', phone: '+91 94142 11002', sector: 'Savina Mandi', amount: 8600, weight: 75, status: 'pending', time: 'Queue', instructions: 'Restaurant kitchen side entrance' },
-        { id: 's22', customer: 'Jodhpur Sweets Wholesale', phone: '+91 94142 11003', sector: 'Mandi Block A', amount: 9500, weight: 80, status: 'pending', time: 'Queue', instructions: 'Collect Cheque or Cash on Delivery' },
-        { id: 's23', customer: 'Paras Provision Store', phone: '+91 94142 11004', sector: 'Savina Market', amount: 4200, weight: 45, status: 'pending', time: 'Queue', instructions: 'Shop opens at 12:00 PM noon' },
-        { id: 's24', customer: 'Vardhman Traders', phone: '+91 94142 11005', sector: 'Mandi Gate 1', amount: 5500, weight: 60, status: 'pending', time: 'Queue', instructions: 'Immediate Cash on Delivery' },
-        { id: 's25', customer: 'Mewar Grain Merchant', phone: '+91 94142 11006', sector: 'Subzi Mandi', amount: 4000, weight: 50, status: 'pending', time: 'Queue', instructions: 'Call Shri Ratan Lal prior to unload' },
-        { id: 's26', customer: 'Karni Kripa Kirana', phone: '+91 94142 11007', sector: 'Savina Colony', amount: 0, weight: 70, status: 'pending', time: 'Queue', instructions: 'B2B Ledger account, invoice copy' },
-        { id: 's27', customer: 'Nakoda Super Store', phone: '+91 94142 11008', sector: 'Mandi Road', amount: 0, weight: 50, status: 'pending', time: 'Queue', instructions: 'Collect 1 empty ghee container' },
-        { id: 's28', customer: 'Ambika Namkeen Depot', phone: '+91 94142 11009', sector: 'Savina Bypass', amount: 0, weight: 60, status: 'pending', time: 'Queue', instructions: 'Drop off at loading dock #1' }
-      ]
+      currentStop: 'Savina Main Depot',
+      eta: 'Standby',
+      stops: []
     },
     {
       id: 'van-03',
@@ -68,23 +49,16 @@ export function DeliveryV3() {
       driver: 'Ramesh Suthar',
       phone: '+91 98298 12093',
       route: 'UIT Colony & Chetak Circle',
-      status: 'On Route',
-      completedStops: 4,
-      totalStops: 6,
-      cashToCollect: 18400,
-      cashCollected: 13750,
-      loadWeightKg: 280,
+      status: 'Ready / Standby',
+      completedStops: 0,
+      totalStops: 0,
+      cashToCollect: 0,
+      cashCollected: 0,
+      loadWeightKg: 0,
       capacityKg: 500,
-      currentStop: 'Fatehpura Main Market',
-      eta: 'Arrived',
-      stops: [
-        { id: 's30', customer: 'Kailash Provision Store', phone: '+91 98298 11111', sector: 'UIT Colony', amount: 4650, weight: 18, status: 'delivered', time: '10:05 AM', instructions: 'Signed by Kailashji' },
-        { id: 's31', customer: 'Bapu Bazaar Depot', phone: '+91 98298 22222', sector: 'City Center', amount: 9100, weight: 145, status: 'delivered', time: '10:45 AM', instructions: 'Cash placed in van vault' },
-        { id: 's32', customer: 'Chetak Super Mart', phone: '+91 98298 33333', sector: 'Chetak Circle', amount: 0, weight: 35, status: 'delivered', time: '11:15 AM', instructions: 'Prepaid UPI transaction verified' },
-        { id: 's33', customer: 'Lakecity Sweets', phone: '+91 98298 44444', sector: 'Hathipole', amount: 0, weight: 40, status: 'delivered', time: '11:35 AM', instructions: 'Verified batch packaging integrity' },
-        { id: 's34', customer: 'Fatehpura Provision Store', phone: '+91 98298 55555', sector: 'Fatehpura', amount: 4650, weight: 42, status: 'in-progress', time: 'Arrived', instructions: 'Shop opposite HP petrol pump' },
-        { id: 's35', customer: 'Sukhadia Circle Dairy & Kirana', phone: '+91 98298 66666', sector: 'Sukhadia Circle', amount: 0, weight: 40, status: 'pending', time: 'Pending', instructions: 'Delivery Challan #DC-1092' }
-      ]
+      currentStop: 'Savina Main Depot',
+      eta: 'Standby',
+      stops: []
     },
     {
       id: 'van-04',
@@ -92,24 +66,16 @@ export function DeliveryV3() {
       driver: 'Dinesh Gurjar (Delivery Logistics)',
       phone: '+91 98290 12348',
       route: 'Hiran Magri (Sec 4 to 11)',
-      status: 'On Route',
-      completedStops: 2,
-      totalStops: 7,
-      cashToCollect: 28900,
-      cashCollected: 9200,
-      loadWeightKg: 390,
+      status: 'Ready / Standby',
+      completedStops: 0,
+      totalStops: 0,
+      cashToCollect: 0,
+      cashCollected: 0,
+      loadWeightKg: 0,
       capacityKg: 600,
-      currentStop: 'Gayatri General & Spices (Sec 8)',
-      eta: '15 mins',
-      stops: [
-        { id: 's40', customer: 'Choudhary Kirana', phone: '+91 97841 00001', sector: 'Sec 6 Commercial', amount: 9200, weight: 65, status: 'delivered', time: '10:30 AM', instructions: 'Full cash collected & counted' },
-        { id: 's41', customer: 'Mewar Traders', phone: '+91 97841 00002', sector: 'Sec 4', amount: 0, weight: 45, status: 'delivered', time: '11:00 AM', instructions: 'Prepaid order SO-1025' },
-        { id: 's42', customer: 'Gayatri General & Spices', phone: '+91 97841 00003', sector: 'Sec 8 Main Market', amount: 7400, weight: 50, status: 'in-progress', time: 'ETA 11:45 AM', instructions: 'Unload at rear shutter, call owner prior' },
-        { id: 's43', customer: 'Royal Namkeen Bhandar', phone: '+91 97841 00004', sector: 'Sec 5 Shopping Ctr', amount: 4800, weight: 40, status: 'pending', time: 'Queue', instructions: 'Collect cash + 2 empty plastic crates' },
-        { id: 's44', customer: 'Jai Jinendra Kirana', phone: '+91 97841 00005', sector: 'Sec 9 Housing Board', amount: 3600, weight: 45, status: 'pending', time: 'Queue', instructions: 'Hand over stamped invoice copy to Shri Shantilal' },
-        { id: 's45', customer: 'Shreenathji Super Store', phone: '+91 97841 00006', sector: 'Sec 11 Commercial', amount: 3900, weight: 65, status: 'pending', time: 'Queue', instructions: 'UPI QR payment on delivery' },
-        { id: 's46', customer: 'Navkar Traders', phone: '+91 97841 00007', sector: 'Sec 4 Near Bus Stand', amount: 0, weight: 80, status: 'pending', time: 'Queue', instructions: 'B2B 15-day credit, get signature on DC' }
-      ]
+      currentStop: 'Savina Main Depot',
+      eta: 'Standby',
+      stops: []
     }
   ]);
 
@@ -206,8 +172,10 @@ export function DeliveryV3() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
             <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Active Fleet</div>
-            <div className="text-2xl font-bold text-slate-900 font-mono mt-1">4 Vans</div>
-            <div className="text-[10px] text-emerald-600 font-semibold mt-0.5">3 on route • 1 loading at bay</div>
+            <div className="text-2xl font-bold text-slate-900 font-mono mt-1">{vans.length} Vans</div>
+            <div className="text-[10px] text-slate-500 font-semibold mt-0.5">
+              {vans.filter(v => v.status === 'On Route').length} on route • {vans.filter(v => v.status !== 'On Route').length} available at depot
+            </div>
           </div>
 
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
@@ -216,7 +184,7 @@ export function DeliveryV3() {
               {completedStopsAll} / {totalStopsAll}
             </div>
             <div className="text-[10px] text-slate-400 mt-0.5">
-              {Math.round((completedStopsAll / totalStopsAll) * 100)}% route completion rate
+              {totalStopsAll > 0 ? Math.round((completedStopsAll / totalStopsAll) * 100) : 0}% route completion rate
             </div>
           </div>
 
@@ -225,7 +193,7 @@ export function DeliveryV3() {
             <div className="text-2xl font-bold text-slate-900 font-mono mt-1">
               ₹{totalFleetCash.toLocaleString('en-IN')}
             </div>
-            <div className="text-[10px] text-slate-400 mt-0.5">Across all Udaipur sectors</div>
+            <div className="text-[10px] text-slate-400 mt-0.5">Across all delivery routes</div>
           </div>
 
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
@@ -250,8 +218,8 @@ export function DeliveryV3() {
 
             {vans.map((van) => {
               const isSelected = van.id === selectedVanId;
-              const percent = Math.round((van.completedStops / van.totalStops) * 100);
-              const weightPercent = Math.round((van.loadWeightKg / van.capacityKg) * 100);
+              const percent = van.totalStops > 0 ? Math.round((van.completedStops / van.totalStops) * 100) : 0;
+              const weightPercent = van.capacityKg > 0 ? Math.round((van.loadWeightKg / van.capacityKg) * 100) : 0;
               const isMyVan = isDeliveryDriver && van.id === 'van-04';
 
               return (
@@ -364,101 +332,111 @@ export function DeliveryV3() {
                 Scheduled Stops & Delivery Receipts
               </div>
 
-              {selectedVan.stops.map((stop, idx) => {
-                const isDelivered = stop.status === 'delivered';
-                const isInProgress = stop.status === 'in-progress';
+              {selectedVan.stops.length === 0 ? (
+                <div className="py-12 text-center text-slate-500 bg-slate-50/50 rounded-xl border border-dashed border-slate-200 p-6">
+                  <span className="material-symbols-outlined text-4xl text-slate-300 mb-2">local_shipping</span>
+                  <p className="font-semibold text-slate-700">No active delivery stops for this vehicle</p>
+                  <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                    Stops will appear here once orders are dispatched from packing stations and allocated to this delivery route.
+                  </p>
+                </div>
+              ) : (
+                selectedVan.stops.map((stop, idx) => {
+                  const isDelivered = stop.status === 'delivered';
+                  const isInProgress = stop.status === 'in-progress';
 
-                return (
-                  <div
-                    key={stop.id}
-                    className={`p-3 rounded-lg border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors ${
-                      isDelivered
-                        ? 'bg-slate-50/70 border-slate-200 text-slate-500'
-                        : isInProgress
-                        ? 'bg-amber-50/40 border-amber-300 text-slate-900'
-                        : 'bg-white border-slate-200 text-slate-800'
-                    }`}
-                  >
-                    <div className="flex items-start gap-3 flex-1 min-w-0">
-                      <div
-                        className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[11px] shrink-0 mt-0.5 ${
-                          isDelivered
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : isInProgress
-                            ? 'bg-amber-500 text-white animate-pulse'
-                            : 'bg-slate-100 text-slate-600'
-                        }`}
-                      >
-                        {idx + 1}
+                  return (
+                    <div
+                      key={stop.id}
+                      className={`p-3 rounded-lg border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors ${
+                        isDelivered
+                          ? 'bg-slate-50/70 border-slate-200 text-slate-500'
+                          : isInProgress
+                          ? 'bg-amber-50/40 border-amber-300 text-slate-900'
+                          : 'bg-white border-slate-200 text-slate-800'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <div
+                          className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[11px] shrink-0 mt-0.5 ${
+                            isDelivered
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : isInProgress
+                              ? 'bg-amber-500 text-white animate-pulse'
+                              : 'bg-slate-100 text-slate-600'
+                          }`}
+                        >
+                          {idx + 1}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`font-bold ${isDelivered ? 'line-through text-slate-400' : 'text-slate-900'}`}>
+                              {stop.customer}
+                            </span>
+                            {stop.phone && (
+                              <a
+                                href={`tel:${stop.phone}`}
+                                className="text-[11px] text-blue-600 hover:text-blue-800 flex items-center gap-0.5 bg-blue-50 px-1.5 py-0.5 rounded font-sans"
+                                title="Call Customer"
+                              >
+                                <span className="material-symbols-outlined text-[12px]">call</span>
+                                <span>Call</span>
+                              </a>
+                            )}
+                            <a
+                              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${stop.customer}, ${stop.sector}, Udaipur`)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[11px] text-slate-500 hover:text-slate-800 flex items-center gap-0.5 bg-slate-100 px-1.5 py-0.5 rounded font-sans"
+                              title="Navigate in Google Maps"
+                            >
+                              <span className="material-symbols-outlined text-[12px]">location_on</span>
+                              <span>Maps</span>
+                            </a>
+                          </div>
+
+                          <div className="text-[11px] text-slate-500 mt-0.5">
+                            {stop.sector} • Consignment: <strong className="text-slate-700">{stop.weight} kg</strong>
+                          </div>
+
+                          {stop.instructions && (
+                            <div className="text-[11px] text-amber-800 bg-amber-50/80 border border-amber-200/60 rounded px-2 py-0.5 mt-1.5 inline-flex items-center gap-1">
+                              <span className="material-symbols-outlined text-[13px] text-amber-600">info</span>
+                              <span>{stop.instructions}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
 
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className={`font-bold ${isDelivered ? 'line-through text-slate-400' : 'text-slate-900'}`}>
-                            {stop.customer}
-                          </span>
-                          {stop.phone && (
-                            <a
-                              href={`tel:${stop.phone}`}
-                              className="text-[11px] text-blue-600 hover:text-blue-800 flex items-center gap-0.5 bg-blue-50 px-1.5 py-0.5 rounded font-sans"
-                              title="Call Customer"
-                            >
-                              <span className="material-symbols-outlined text-[12px]">call</span>
-                              <span>Call</span>
-                            </a>
-                          )}
-                          <a
-                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${stop.customer}, ${stop.sector}, Udaipur`)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-[11px] text-slate-500 hover:text-slate-800 flex items-center gap-0.5 bg-slate-100 px-1.5 py-0.5 rounded font-sans"
-                            title="Navigate in Google Maps"
-                          >
-                            <span className="material-symbols-outlined text-[12px]">location_on</span>
-                            <span>Maps</span>
-                          </a>
-                        </div>
-
-                        <div className="text-[11px] text-slate-500 mt-0.5">
-                          {stop.sector} • Consignment: <strong className="text-slate-700">{stop.weight} kg</strong>
-                        </div>
-
-                        {stop.instructions && (
-                          <div className="text-[11px] text-amber-800 bg-amber-50/80 border border-amber-200/60 rounded px-2 py-0.5 mt-1.5 inline-flex items-center gap-1">
-                            <span className="material-symbols-outlined text-[13px] text-amber-600">info</span>
-                            <span>{stop.instructions}</span>
+                      <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                        <div className="text-right font-mono">
+                          <div className="font-bold text-slate-900 text-xs">
+                            {stop.amount > 0 ? `₹${stop.amount.toLocaleString('en-IN')}` : 'Credit / Prepaid'}
                           </div>
+                          <div className="text-[10px] text-slate-400">{stop.time}</div>
+                        </div>
+
+                        {!isDelivered ? (
+                          <button
+                            type="button"
+                            onClick={() => handleMarkStopDelivered(selectedVan.id, stop.id)}
+                            className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-[11px] shadow-xs transition-colors flex items-center gap-1 cursor-pointer"
+                          >
+                            <span className="material-symbols-outlined text-[14px]">check</span>
+                            <span>Delivered</span>
+                          </button>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 font-semibold px-2 py-1 rounded bg-emerald-50 border border-emerald-200">
+                            <span className="material-symbols-outlined text-[14px]">check_circle</span>
+                            Delivered &amp; Signed
+                          </span>
                         )}
                       </div>
                     </div>
-
-                    <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
-                      <div className="text-right font-mono">
-                        <div className="font-bold text-slate-900 text-xs">
-                          {stop.amount > 0 ? `₹${stop.amount.toLocaleString('en-IN')}` : 'Credit / Prepaid'}
-                        </div>
-                        <div className="text-[10px] text-slate-400">{stop.time}</div>
-                      </div>
-
-                      {!isDelivered ? (
-                        <button
-                          type="button"
-                          onClick={() => handleMarkStopDelivered(selectedVan.id, stop.id)}
-                          className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-[11px] shadow-xs transition-colors flex items-center gap-1 cursor-pointer"
-                        >
-                          <span className="material-symbols-outlined text-[14px]">check</span>
-                          <span>Delivered</span>
-                        </button>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 font-semibold px-2 py-1 rounded bg-emerald-50 border border-emerald-200">
-                          <span className="material-symbols-outlined text-[14px]">check_circle</span>
-                          Delivered &amp; Signed
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
 
             {/* Bottom Actions */}

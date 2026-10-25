@@ -10,11 +10,11 @@ export function TallySyncV3() {
       company: 'Nagfani Foods Pvt Ltd (FY 2024-25)'
     },
     counts: {
-      syncedToday: 148,
-      pending: 3,
+      syncedToday: 0,
+      pending: 0,
       failed: 0,
-      conflicts: 1,
-      totalLedgers: 42
+      conflicts: 0,
+      totalLedgers: 0
     },
     lastSyncedAt: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
   });
@@ -23,14 +23,7 @@ export function TallySyncV3() {
   const [successBanner, setSuccessBanner] = useState(false);
 
   // Sync audit records
-  const [logs, setLogs] = useState([
-    { id: 'v-101', voucher: 'SO-2024-1026', type: 'Sales Voucher', party: 'Sharma General Store', amount: 14850, time: '10:42 AM', status: 'synced', xmlSize: '4.2 KB' },
-    { id: 'v-102', voucher: 'RCPT-2024-0491', type: 'Receipt Voucher', party: 'Jodhpur Sweets & Namkeen', amount: 38500, time: '10:30 AM', status: 'synced', xmlSize: '2.8 KB' },
-    { id: 'v-103', voucher: 'SJ-2024-0082', type: 'Stock Journal', party: 'Savina Godown A -> Plant', amount: 22400, time: '10:15 AM', status: 'synced', xmlSize: '5.1 KB' },
-    { id: 'v-104', voucher: 'SO-2024-1027', type: 'Sales Voucher', party: 'Mahalaxmi Kirana Mandir', amount: 22400, time: '09:55 AM', status: 'conflict', xmlSize: '4.0 KB', note: 'Party GSTIN mismatch in Tally ledger master' },
-    { id: 'v-105', voucher: 'SO-2024-1029', type: 'Sales Voucher', party: 'Kailash Provision Store', amount: 4650, time: '09:30 AM', status: 'synced', xmlSize: '3.1 KB' },
-    { id: 'v-106', voucher: 'PUR-2024-0012', type: 'Purchase Voucher', party: 'Mewar Dal Mills Pvt Ltd', amount: 84000, time: '09:05 AM', status: 'synced', xmlSize: '6.4 KB' }
-  ]);
+  const [logs, setLogs] = useState([]);
 
   useEffect(() => {
     async function loadSync() {
@@ -239,61 +232,73 @@ export function TallySyncV3() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
-                {logs.map((log) => {
-                  const isConflict = log.status === 'conflict';
-                  return (
-                    <tr key={log.id} className={isConflict ? 'bg-rose-50/30' : 'hover:bg-slate-50/50'}>
-                      <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
-                        {log.voucher}
-                      </td>
-                      <td className="py-3.5 px-4 font-medium text-slate-700">
-                        {log.type}
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <div className="font-semibold text-slate-900">{log.party}</div>
-                        {log.note && (
-                          <div className="text-[11px] text-rose-600 font-medium mt-0.5">
-                            {log.note}
-                          </div>
-                        )}
-                      </td>
-                      <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-900 text-[13px]">
-                        ₹{log.amount.toLocaleString('en-IN')}
-                      </td>
-                      <td className="py-3.5 px-4 font-mono text-slate-500">
-                        {log.time}
-                      </td>
-                      <td className="py-3.5 px-4 text-center">
-                        {log.status === 'synced' ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                            <span className="material-symbols-outlined text-[13px]">check_circle</span>
-                            Posted
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
-                            <span className="material-symbols-outlined text-[13px]">error</span>
-                            Mismatch
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-3.5 px-4 text-right">
-                        {isConflict ? (
-                          <button
-                            type="button"
-                            onClick={() => handleResolveConflict(log.id)}
-                            className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded font-semibold text-[11px] transition-colors"
-                          >
-                            Resolve & Map
-                          </button>
-                        ) : (
-                          <span className="text-slate-400 font-mono text-[11px]">
-                            {log.xmlSize}
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
+                {logs.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-12 text-center text-slate-500">
+                      <span className="material-symbols-outlined text-4xl text-slate-300 mb-2 block">sync</span>
+                      <p className="font-semibold text-slate-700">No sync vouchers recorded yet</p>
+                      <p className="text-xs text-slate-400 mt-0.5 max-w-md mx-auto">
+                        Voucher sync transactions will appear in real time once orders, stock adjustments, or receipts are processed by the Tally connector.
+                      </p>
+                    </td>
+                  </tr>
+                ) : (
+                  logs.map((log) => {
+                    const isConflict = log.status === 'conflict';
+                    return (
+                      <tr key={log.id} className={isConflict ? 'bg-rose-50/30' : 'hover:bg-slate-50/50'}>
+                        <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
+                          {log.voucher}
+                        </td>
+                        <td className="py-3.5 px-4 font-medium text-slate-700">
+                          {log.type}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <div className="font-semibold text-slate-900">{log.party}</div>
+                          {log.note && (
+                            <div className="text-[11px] text-rose-600 font-medium mt-0.5">
+                              {log.note}
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-900 text-[13px]">
+                          ₹{log.amount.toLocaleString('en-IN')}
+                        </td>
+                        <td className="py-3.5 px-4 font-mono text-slate-500">
+                          {log.time}
+                        </td>
+                        <td className="py-3.5 px-4 text-center">
+                          {log.status === 'synced' ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                              <span className="material-symbols-outlined text-[13px]">check_circle</span>
+                              Posted
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                              <span className="material-symbols-outlined text-[13px]">error</span>
+                              Mismatch
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4 text-right">
+                          {isConflict ? (
+                            <button
+                              type="button"
+                              onClick={() => handleResolveConflict(log.id)}
+                              className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded font-semibold text-[11px] transition-colors"
+                            >
+                              Resolve & Map
+                            </button>
+                          ) : (
+                            <span className="text-slate-400 font-mono text-[11px]">
+                              {log.xmlSize}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>

@@ -9,71 +9,10 @@ export function PurchasesV3() {
   const [showPOModal, setShowPOModal] = useState(false);
   const [poSuccess, setPOSuccess] = useState(false);
 
-  // Default Purchase Orders
-  const defaultPurchases = [
-    {
-      _id: 'po-101',
-      poNumber: 'PO-2024-0042',
-      date: '23 Oct 2024',
-      supplier: 'Mewar Dal Mills Pvt Ltd',
-      itemsSummary: 'Urad Mogar Dal Flour (1,000 kg)',
-      godown: 'Sukher Processing Plant',
-      totalAmount: 110000,
-      paymentTerms: '15 Days Credit',
-      status: 'received',
-      grnNumber: 'GRN-2024-0038'
-    },
-    {
-      _id: 'po-102',
-      poNumber: 'PO-2024-0043',
-      date: '24 Oct 2024',
-      supplier: 'Mathania Chilli Mandi Syndicate',
-      itemsSummary: 'Mathania Red Chilli Powder (100 kg)',
-      godown: 'Savina Main Mandi (Godown A)',
-      totalAmount: 28000,
-      paymentTerms: 'Immediate Advance',
-      status: 'in-transit',
-      grnNumber: 'Pending Truck Arrival'
-    },
-    {
-      _id: 'po-103',
-      poNumber: 'PO-2024-0044',
-      date: '24 Oct 2024',
-      supplier: 'Hathras Hing Trading Co.',
-      itemsSummary: 'Compounded Pure Asafoetida (15 kg)',
-      godown: 'Savina Main Mandi (Godown A)',
-      totalAmount: 51000,
-      paymentTerms: 'Cheque on Delivery',
-      status: 'ordered',
-      grnNumber: 'Awaiting Dispatch'
-    },
-    {
-      _id: 'po-104',
-      poNumber: 'PO-2024-0045',
-      date: '22 Oct 2024',
-      supplier: 'Bikaner Chana Corporation',
-      itemsSummary: 'Grade A Chana Besan (800 kg)',
-      godown: 'Sukher Processing Plant',
-      totalAmount: 68000,
-      paymentTerms: '7 Days Credit',
-      status: 'received',
-      grnNumber: 'GRN-2024-0035'
-    },
-    {
-      _id: 'po-105',
-      poNumber: 'PO-2024-0046',
-      date: '21 Oct 2024',
-      supplier: 'Apex Polyfilm & Pouches',
-      itemsSummary: '500g Poly Pouches Nagfani Brand (10,000 pcs)',
-      godown: 'Savina Main Mandi (Godown A)',
-      totalAmount: 18000,
-      paymentTerms: '30 Days Net',
-      status: 'received',
-      grnNumber: 'GRN-2024-0033'
-    }
-  ];
+  // Default Purchase Orders (starts empty for real production)
+  const defaultPurchases = [];
 
-  const [purchases, setPurchases] = useState(defaultPurchases);
+  const [purchases, setPurchases] = useState([]);
 
   // New PO State
   const [newPO, setNewPO] = useState({
@@ -90,23 +29,25 @@ export function PurchasesV3() {
     async function loadPurchases() {
       try {
         const res = await api.get('/purchases').catch(() => null);
-        if (res?.success && Array.isArray(res.data) && res.data.length > 0) {
+        if (res?.success && Array.isArray(res.data)) {
           const mapped = res.data.map(p => ({
             _id: p._id,
             poNumber: p.purchaseNumber || `PO-${p._id.slice(-4)}`,
-            date: p.invoiceDate ? new Date(p.invoiceDate).toLocaleDateString('en-IN') : '24 Oct 2024',
+            date: p.invoiceDate ? new Date(p.invoiceDate).toLocaleDateString('en-IN') : 'Today',
             supplier: p.supplier?.businessName || p.supplierName || 'Mewar Supplier',
             itemsSummary: p.items?.map(i => `${i.productName || i.name} (${i.quantity} ${i.unit || 'kg'})`).join(', ') || 'Raw Ingredients',
             godown: p.godown?.name || 'Savina Main Mandi',
-            totalAmount: p.grandTotal || p.totalAmount || 50000,
+            totalAmount: p.grandTotal || p.totalAmount || 0,
             paymentTerms: p.paymentTerms || '15 Days Credit',
             status: p.status || 'received',
             grnNumber: p.grnNumber || 'GRN-LIVE'
           }));
           setPurchases(mapped);
+        } else {
+          setPurchases([]);
         }
       } catch {
-        // preserve defaults
+        setPurchases([]);
       }
     }
     loadPurchases();
@@ -285,60 +226,70 @@ export function PurchasesV3() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
-                {filteredPurchases.map((po) => {
-                  return (
-                    <tr key={po._id} className="hover:bg-slate-50/50">
-                      <td className="py-3 px-4">
-                        <div className="font-bold font-mono text-slate-900">{po.poNumber}</div>
-                        <div className="text-[10px] text-slate-400 font-medium">{po.date}</div>
-                      </td>
-                      <td className="py-3 px-4 font-semibold text-slate-900">
-                        {po.supplier}
-                        <div className="text-[10px] text-slate-400 font-normal">{po.paymentTerms}</div>
-                      </td>
-                      <td className="py-3 px-4 font-medium text-slate-700">
-                        {po.itemsSummary}
-                      </td>
-                      <td className="py-3 px-4 text-slate-600 font-medium">
-                        {po.godown}
-                      </td>
-                      <td className="py-3 px-4 text-right font-mono font-bold text-slate-900 text-[13px]">
-                        ₹{po.totalAmount.toLocaleString('en-IN')}
-                      </td>
-                      <td className="py-3 px-4 font-mono text-[11px] text-slate-600">
-                        {po.grnNumber}
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        {po.status === 'received' ? (
-                          <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            Received
-                          </span>
-                        ) : po.status === 'in-transit' ? (
-                          <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                            On Truck
-                          </span>
-                        ) : (
-                          <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                            Ordered
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        {po.status !== 'received' ? (
-                          <button
-                            type="button"
-                            onClick={() => handleMarkReceived(po._id)}
-                            className="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-[11px] shadow-xs transition-colors"
-                          >
-                            Receive Inward
-                          </button>
-                        ) : (
-                          <span className="text-[11px] text-slate-400 font-mono">Stocked</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
+                {filteredPurchases.length === 0 ? (
+                  <tr>
+                    <td colSpan="8" className="py-12 text-center text-slate-400">
+                      <span className="material-symbols-outlined text-[36px] mb-2 block text-slate-300">receipt_long</span>
+                      <p className="font-semibold text-slate-600">No purchase orders found</p>
+                      <p className="text-[11px] text-slate-400">Click '+ New Purchase Order' to record raw material procurement.</p>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredPurchases.map((po) => {
+                    return (
+                      <tr key={po._id} className="hover:bg-slate-50/50">
+                        <td className="py-3 px-4">
+                          <div className="font-bold font-mono text-slate-900">{po.poNumber}</div>
+                          <div className="text-[10px] text-slate-400 font-medium">{po.date}</div>
+                        </td>
+                        <td className="py-3 px-4 font-semibold text-slate-900">
+                          {po.supplier}
+                          <div className="text-[10px] text-slate-400 font-normal">{po.paymentTerms}</div>
+                        </td>
+                        <td className="py-3 px-4 font-medium text-slate-700">
+                          {po.itemsSummary}
+                        </td>
+                        <td className="py-3 px-4 text-slate-600 font-medium">
+                          {po.godown}
+                        </td>
+                        <td className="py-3 px-4 text-right font-mono font-bold text-slate-900 text-[13px]">
+                          ₹{po.totalAmount.toLocaleString('en-IN')}
+                        </td>
+                        <td className="py-3 px-4 font-mono text-[11px] text-slate-600">
+                          {po.grnNumber}
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          {po.status === 'received' ? (
+                            <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              Received
+                            </span>
+                          ) : po.status === 'in-transit' ? (
+                            <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                              On Truck
+                            </span>
+                          ) : (
+                            <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                              Ordered
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          {po.status !== 'received' ? (
+                            <button
+                              type="button"
+                              onClick={() => handleMarkReceived(po._id)}
+                              className="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-[11px] shadow-xs transition-colors"
+                            >
+                              Receive Inward
+                            </button>
+                          ) : (
+                            <span className="text-[11px] text-slate-400 font-mono">Stocked</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>

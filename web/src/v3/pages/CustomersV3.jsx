@@ -20,95 +20,16 @@ export function CustomersV3() {
     address: ''
   });
 
-  // Default Parties
-  const defaultParties = [
-    {
-      _id: 'cust-sharma',
-      businessName: 'Sharma General Store',
-      contactPerson: 'Mr. Ramesh Sharma',
-      phone: '+91 98290 12345',
-      gstin: '08AAACS1421K1ZB',
-      route: 'Hiran Magri (Sec 3-5)',
-      address: 'Plot 42, Hiran Magri Sec 3, Udaipur',
-      creditLimit: 50000,
-      outstanding: 18200,
-      totalOrders: 34,
-      lastOrderDate: '24 Oct 2024'
-    },
-    {
-      _id: 'cust-mahalaxmi',
-      businessName: 'Mahalaxmi Kirana Mandir',
-      contactPerson: 'Prakash Chandra',
-      phone: '+91 94141 87654',
-      gstin: '08ABCP8821M1Z1',
-      route: 'Savina Main Mandi',
-      address: 'Shop 12, Krishi Upaj Mandi, Savina, Udaipur',
-      creditLimit: 75000,
-      outstanding: 24500,
-      totalOrders: 52,
-      lastOrderDate: '24 Oct 2024'
-    },
-    {
-      _id: 'cust-jodhpur',
-      businessName: 'Jodhpur Sweets & Namkeen',
-      contactPerson: 'Bhawani Singh',
-      phone: '+91 98280 43210',
-      gstin: '08AAGFJ7712P1ZN',
-      route: 'Krishi Mandi Hub',
-      address: 'Opp. Town Hall, City Center, Udaipur',
-      creditLimit: 100000,
-      outstanding: 42000,
-      totalOrders: 68,
-      lastOrderDate: '23 Oct 2024'
-    },
-    {
-      _id: 'cust-kailash',
-      businessName: 'Kailash Provision Store',
-      contactPerson: 'Kailash Meena',
-      phone: '+91 97840 55443',
-      gstin: '08BCKPM3321L1Z9',
-      route: 'UIT Colony',
-      address: 'Sector 14 Main Circle, UIT Colony, Udaipur',
-      creditLimit: 30000,
-      outstanding: 5600,
-      totalOrders: 19,
-      lastOrderDate: '22 Oct 2024'
-    },
-    {
-      _id: 'cust-anoop',
-      businessName: 'Anoop Traders',
-      contactPerson: 'Anoop Agarwal',
-      phone: '+91 98292 99881',
-      gstin: '08AAAPA5512N1ZQ',
-      route: 'Sukher Industrial',
-      address: 'B-14, Industrial Area Phase 2, Sukher, Udaipur',
-      creditLimit: 150000,
-      outstanding: 54200,
-      totalOrders: 84,
-      lastOrderDate: '24 Oct 2024'
-    },
-    {
-      _id: 'cust-shriram',
-      businessName: 'Shri Ram Bhojnalaya',
-      contactPerson: 'Ramnarayan Sharma',
-      phone: '+91 94144 33221',
-      gstin: '08AABCR1209K1ZT',
-      route: 'Savina Main Mandi',
-      address: 'Gate No. 2, Savina Krishi Mandi, Udaipur',
-      creditLimit: 40000,
-      outstanding: 0,
-      totalOrders: 41,
-      lastOrderDate: '24 Oct 2024'
-    }
-  ];
+  // Default Parties (starts empty for real production ledgers)
+  const defaultParties = [];
 
-  const [parties, setParties] = useState(defaultParties);
+  const [parties, setParties] = useState([]);
 
   useEffect(() => {
     async function loadParties() {
       try {
         const res = await api.get('/parties').catch(() => null);
-        if (res?.success && Array.isArray(res.data) && res.data.length > 0) {
+        if (res?.success && Array.isArray(res.data)) {
           const mapped = res.data.map(p => ({
             _id: p._id,
             businessName: p.name || p.businessName,
@@ -119,13 +40,15 @@ export function CustomersV3() {
             address: p.address || 'Udaipur, Rajasthan',
             creditLimit: p.creditLimit || 50000,
             outstanding: p.balance !== undefined ? p.balance : (p.outstanding || 0),
-            totalOrders: p.ordersCount || 12,
+            totalOrders: p.ordersCount || 0,
             lastOrderDate: 'Active'
           }));
           setParties(mapped);
+        } else {
+          setParties([]);
         }
       } catch {
-        // preserve defaults
+        setParties([]);
       }
     }
     loadParties();
@@ -249,7 +172,7 @@ export function CustomersV3() {
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
             <div className="text-[11px] font-semibold text-emerald-600 uppercase tracking-wider">GST Registered Ratio</div>
             <div className="text-2xl font-bold text-emerald-700 font-mono mt-1">
-              {Math.round((parties.filter(p => p.gstin && p.gstin.startsWith('08')).length / parties.length) * 100)}%
+              {parties.length > 0 ? Math.round((parties.filter(p => p.gstin && p.gstin.startsWith('08')).length / parties.length) * 100) : 0}%
             </div>
             <div className="text-[10px] text-slate-400 mt-0.5">Rajasthan GSTIN verified</div>
           </div>
@@ -331,65 +254,75 @@ export function CustomersV3() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
-                {filteredParties.map((party) => {
-                  const isHighOutstanding = party.outstanding > party.creditLimit * 0.8;
+                {filteredParties.length === 0 ? (
+                  <tr>
+                    <td colSpan="9" className="py-12 text-center text-slate-400">
+                      <span className="material-symbols-outlined text-[36px] mb-2 block text-slate-300">contacts</span>
+                      <p className="font-semibold text-slate-600">No customer party ledgers found</p>
+                      <p className="text-[11px] text-slate-400">Click '+ Add Customer' to create a customer ledger or sync from Tally.</p>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredParties.map((party) => {
+                    const isHighOutstanding = party.outstanding > party.creditLimit * 0.8;
 
-                  return (
-                    <tr key={party._id} className="hover:bg-slate-50/50">
-                      <td className="py-3 px-4 font-bold text-slate-900">
-                        {party.businessName}
-                        <div className="text-[10px] text-slate-400 font-normal">{party.address}</div>
-                      </td>
-                      <td className="py-3 px-4 text-slate-700 font-medium">
-                        {party.contactPerson}
-                      </td>
-                      <td className="py-3 px-4 font-mono text-slate-600">
-                        <a href={`tel:${party.phone}`} className="hover:text-blue-600 hover:underline">
-                          {party.phone}
-                        </a>
-                      </td>
-                      <td className="py-3 px-4 font-mono font-semibold text-slate-700">
-                        {party.gstin}
-                      </td>
-                      <td className="py-3 px-4 font-medium text-slate-600">
-                        {party.route}
-                      </td>
-                      <td className="py-3 px-4 text-right font-mono text-slate-800">
-                        ₹{party.creditLimit.toLocaleString('en-IN')}
-                      </td>
-                      <td className={`py-3 px-4 text-right font-mono font-bold text-[13px] ${isHighOutstanding ? 'text-amber-700' : 'text-slate-900'}`}>
-                        ₹{party.outstanding.toLocaleString('en-IN')}
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        {party.outstanding === 0 ? (
-                          <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            Clear
-                          </span>
-                        ) : isHighOutstanding ? (
-                          <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                            High Due
-                          </span>
-                        ) : (
-                          <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                            Active
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => navigate('/v3/orders/new', { state: { partyId: party._id } })}
-                            className="px-2.5 py-1 rounded bg-[#EA580C] hover:bg-[#C2410C] text-white font-semibold text-[11px] transition-colors"
-                            title="Create Order for this Party"
-                          >
-                            + Order
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
+                    return (
+                      <tr key={party._id} className="hover:bg-slate-50/50">
+                        <td className="py-3 px-4 font-bold text-slate-900">
+                          {party.businessName}
+                          <div className="text-[10px] text-slate-400 font-normal">{party.address}</div>
+                        </td>
+                        <td className="py-3 px-4 text-slate-700 font-medium">
+                          {party.contactPerson}
+                        </td>
+                        <td className="py-3 px-4 font-mono text-slate-600">
+                          <a href={`tel:${party.phone}`} className="hover:text-blue-600 hover:underline">
+                            {party.phone}
+                          </a>
+                        </td>
+                        <td className="py-3 px-4 font-mono font-semibold text-slate-700">
+                          {party.gstin}
+                        </td>
+                        <td className="py-3 px-4 font-medium text-slate-600">
+                          {party.route}
+                        </td>
+                        <td className="py-3 px-4 text-right font-mono text-slate-800">
+                          ₹{party.creditLimit.toLocaleString('en-IN')}
+                        </td>
+                        <td className={`py-3 px-4 text-right font-mono font-bold text-[13px] ${isHighOutstanding ? 'text-amber-700' : 'text-slate-900'}`}>
+                          ₹{party.outstanding.toLocaleString('en-IN')}
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          {party.outstanding === 0 ? (
+                            <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              Clear
+                            </span>
+                          ) : isHighOutstanding ? (
+                            <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                              High Due
+                            </span>
+                          ) : (
+                            <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                              Active
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => navigate('/v3/orders/new', { state: { partyId: party._id } })}
+                              className="px-2.5 py-1 rounded bg-[#EA580C] hover:bg-[#C2410C] text-white font-semibold text-[11px] transition-colors"
+                              title="Create Order for this Party"
+                            >
+                              + Order
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>
