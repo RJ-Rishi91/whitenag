@@ -1,35 +1,49 @@
-================================================================
-   NAGFANI FOODS ERP - TALLYPRIME LIVE CONNECTOR & SYNC
-================================================================
+=====================================================================
+    NAGFANI FOODS ERP - TALLYPRIME LIVE GATEWAY (WINDOWS SETUP)
+=====================================================================
 
-QUICK SETUP ON CLIENT'S PC (OVER ANYDESK):
+Welcome to the Nagfani Foods Tally Gateway!
+This lightweight desktop tool runs seamlessly alongside Livekeeping without
+interfering with your existing setup.
 
-STEP 1: TEST TALLY CONNECTIVITY
--------------------------------
-1. In TallyPrime, make sure "NAGFANI FOODS" is open.
-2. Double-click "test_tally.bat".
-   It will check port 9000 and say:
-   "[SUCCESS] TallyPrime is responding on port 9000!"
-   (Since Livekeeping is already installed on this PC, Tally is already configured!)
+WHAT THIS SOFTWARE DOES:
+1. Welcome Screen & Branding: Clean Nagfani Foods interface.
+2. Live Connectivity Dashboard:
+   - TallyPrime (Port 9000): Checks if Tally is open and responding.
+   - Cloud ERP API: Checks live cloud connection & heartbeat.
+   - Sync Outbox Queue: Shows pending vouchers and real-time status.
+3. Live Search & Activity Filter:
+   - Instant search bar to search any incoming/outgoing request or error.
+4. One-Click Controls:
+   - [Test Connection]: Verifies Tally + Cloud in 1 second.
+   - [Test Safe Entry]: Posts safe test ledger to Tally without touching accounts.
+   - [Pull Masters from Tally]: 1-click import of Debtors, Creditors & Stock into ERP.
+   - [Settings]: Adjust Company Name, Tally Port, and API URL anytime.
 
-STEP 2: ONE-CLICK IMPORT REAL CLIENTS & STOCK (LIVEKEEPING STYLE)
------------------------------------------------------------------
-1. Double-click "sync_from_tally.bat".
-2. It will automatically pull:
-   - All Customer & Supplier Ledgers (Sundry Debtors & Creditors)
-   - Real Tally Closing Balances & Outstandings
-   - Phone Numbers, GSTINs, and Addresses
-   - Real Stock Items and Closing Quantities
-3. All your real Tally data will instantly appear in the Nagfani ERP web portal!
+---------------------------------------------------------------------
+QUICK 2-STEP WINDOWS SETUP:
+---------------------------------------------------------------------
+Step 1: Extract this folder anywhere on your computer (e.g. C:\NagfaniConnector).
+Step 2: Double-click "Setup_Windows.bat".
+        It will automatically verify Python, install dependencies, and create
+        a "Nagfani Tally Connector" shortcut right on your Desktop!
 
-STEP 3: RUN THE CONTINUOUS TWO-WAY CONNECTOR
---------------------------------------------
-1. Double-click "run_connector.bat".
-2. It will continuously poll for new orders, invoices, and payment receipts
-   created on mobile/web and post them directly into Tally.
-3. Check the cloud ERP dashboard at:
-   https://nagmani.onerishi.in/#/v3/sync
-   Indicator will turn GREEN!
+After setup, simply double-click the desktop shortcut or "Launch_Nagfani_Connector.bat".
+It launches with ZERO black terminal windows—just like Livekeeping.
 
-Need Help?
-Contact Developer / Administrator.
+---------------------------------------------------------------------
+FILES INCLUDED IN THIS PACKAGE:
+---------------------------------------------------------------------
+- Setup_Windows.bat            : One-click setup & Desktop shortcut creator
+- Launch_Nagfani_Connector.bat : Quick launcher (or use Desktop shortcut)
+- Launch_Nagfani_Connector.vbs : Silent launcher (no console window)
+- Build_Standalone_EXE.bat     : Compiles a standalone .exe if needed
+- connector_gui.py             : Main desktop graphical application
+- config.ini                   : Server URL, port & credentials
+- pull_tally_masters.py        : Master extraction engine
+- tally_xml.py                 : High-speed Tally XML generator
+- test_make_entry.bat          : Standalone safe entry diagnostic test
+
+SUPPORT:
+If you need any adjustments, click [Settings] inside the software or contact support.
+=====================================================================
