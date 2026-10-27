@@ -6,6 +6,7 @@ build/
 *.log
 stitch_reference/
 *.zip
+*.exe
 .DS_Store
 __pycache__/
 *.pyc

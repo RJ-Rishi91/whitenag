@@ -42,6 +42,18 @@ class TallyConnectorGUI:
         self.root.geometry("820x680")
         self.root.minsize(760, 600)
 
+        # Set app icon if available
+        if getattr(sys, "frozen", False):
+            base_dir = os.path.dirname(sys.executable)
+        else:
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+        ico_file = os.path.join(base_dir, "app_icon.ico")
+        if os.path.exists(ico_file):
+            try:
+                self.root.iconbitmap(ico_file)
+            except Exception:
+                pass
+
         # Set app colors (Nagfani Heritage & Livekeeping inspired)
         self.c_teal = "#03353A"
         self.c_dark_teal = "#02282C"

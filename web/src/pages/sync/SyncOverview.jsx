@@ -9,7 +9,8 @@ import {
   Clock,
   ArrowRight,
   RotateCw,
-  ShieldAlert
+  ShieldAlert,
+  Download
 } from 'lucide-react';
 import { api } from '../../api/client.js';
 import { MetricCard } from '../../components/MetricCard.jsx';
@@ -67,13 +68,23 @@ export function SyncOverview() {
           </p>
         </div>
 
-        <button
-          onClick={fetchSyncData}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-[#EADBC8] bg-white hover:bg-[#FFF8EC] text-[#2B1B12] text-xs font-semibold self-start sm:self-auto cursor-pointer"
-        >
-          <RotateCw className="w-4 h-4 text-[#D9580B]" />
-          <span>Refresh Queue</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+          <a
+            href="/Setup.exe"
+            download="Nagfani_Tally_Gateway_Setup.exe"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#03353A] hover:bg-[#02282C] text-white text-xs font-semibold cursor-pointer shadow-sm transition-colors"
+          >
+            <Download className="w-4 h-4 text-[#D9580B]" />
+            <span>Download Windows Setup (.exe)</span>
+          </a>
+          <button
+            onClick={fetchSyncData}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-[#EADBC8] bg-white hover:bg-[#FFF8EC] text-[#2B1B12] text-xs font-semibold cursor-pointer"
+          >
+            <RotateCw className="w-4 h-4 text-[#D9580B]" />
+            <span>Refresh Queue</span>
+          </button>
+        </div>
       </div>
 
       {/* Connector Status Banner */}
