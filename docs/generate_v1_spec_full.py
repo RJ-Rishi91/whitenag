@@ -1,0 +1,1158 @@
+import os
+import sys
+import subprocess
+import json
+
+HTML_PATH = "/home/rushal/Desktop/TEST SITES/Nagmani/docs/Nagfani_Foods_ERP_V1_Functional_Map.html"
+PDF_PATH = "/home/rushal/Desktop/TEST SITES/Nagmani/docs/Nagfani_Foods_ERP_V1_Functional_Map.pdf"
+PUBLIC_PDF = "/home/rushal/Desktop/TEST SITES/Nagmani/web/public/Nagfani_Foods_ERP_V1_Functional_Map.pdf"
+DIST_PDF = "/home/rushal/Desktop/TEST SITES/Nagmani/web/dist/Nagfani_Foods_ERP_V1_Functional_Map.pdf"
+
+print("Building complete V1 System Architecture & Functional Specification...")
+
+content = []
+
+# =========================================================================
+# HTML HEAD & STYLES
+# =========================================================================
+content.append("""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Nagfani Foods ERP (V1.0 Classic) - System Architecture & Functional Specification Map</title>
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 14mm 12mm 16mm 12mm;
+    @bottom-right {
+      content: "Page " counter(page) " of " counter(pages);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 8pt;
+      color: #64748B;
+    }
+    @bottom-left {
+      content: "Nagfani Foods ERP V1.0 — Complete Functional Map & Architecture";
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 8pt;
+      color: #64748B;
+    }
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #0F172A;
+    background: #FFFFFF;
+    line-height: 1.45;
+    font-size: 8.5pt;
+    margin: 0;
+    padding: 0;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: #03353A;
+    font-weight: 700;
+    margin-top: 1.2em;
+    margin-bottom: 0.3em;
+    page-break-after: avoid;
+  }
+
+  h1 { font-size: 18pt; border-bottom: 2px solid #D9580B; padding-bottom: 4px; margin-top: 0; }
+  h2 { font-size: 13pt; border-bottom: 1.5px solid #CBD5E1; padding-bottom: 3px; color: #03353A; margin-top: 1.4em; }
+  h3 { font-size: 10.5pt; color: #D9580B; margin-top: 1.1em; }
+  h4 { font-size: 9pt; color: #1E293B; margin-top: 0.7em; }
+
+  p { margin: 0.3em 0; }
+  ul, ol { margin: 0.3em 0; padding-left: 18px; }
+  li { margin-bottom: 0.2em; }
+
+  .page-break {
+    page-break-before: always;
+  }
+
+  .avoid-break {
+    page-break-inside: avoid;
+  }
+
+  /* Cover Card */
+  .cover-card {
+    background: linear-gradient(135deg, #03353A 0%, #02282C 100%);
+    color: #FFFFFF;
+    padding: 20px 24px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    border-left: 6px solid #D9580B;
+  }
+  .cover-card h1 {
+    color: #FFFFFF;
+    border-bottom: none;
+    margin: 0 0 4px 0;
+    font-size: 20pt;
+  }
+  .cover-card .subtitle {
+    color: #99F6E4;
+    font-size: 10.5pt;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  .cover-card .desc {
+    color: #E2E8F0;
+    font-size: 8.5pt;
+    margin-bottom: 12px;
+    line-height: 1.4;
+  }
+  .cover-card .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: 10px;
+    background: rgba(255, 255, 255, 0.08);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 7.5pt;
+  }
+  .meta-grid div strong {
+    color: #FDBA74;
+    display: block;
+    font-size: 7pt;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Badges */
+  .badge {
+    display: inline-block;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 7pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    vertical-align: middle;
+  }
+  .badge-get { background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; }
+  .badge-post { background: #DCFCE7; color: #15803D; border: 1px solid #BBF7D0; }
+  .badge-put { background: #FEF3C7; color: #B45309; border: 1px solid #FDE68A; }
+  .badge-patch { background: #F3E8FF; color: #7E22CE; border: 1px solid #E9D5FF; }
+  .badge-delete { background: #FEE2E2; color: #B91C1C; border: 1px solid #FECACA; }
+
+  .badge-role {
+    background: #F1F5F9;
+    color: #334155;
+    border: 1px solid #CBD5E1;
+    font-family: monospace;
+    font-size: 7pt;
+  }
+  .badge-role-admin { background: #FEE2E2; color: #991B1B; border-color: #FECACA; }
+  .badge-role-order { background: #E0E7FF; color: #3730A3; border-color: #C7D2FE; }
+  .badge-role-pack { background: #FEF3C7; color: #92400E; border-color: #FDE68A; }
+  .badge-role-deliv { background: #ECFCCB; color: #3F6212; border-color: #D9F99D; }
+  .badge-role-acct { background: #E0F2FE; color: #075985; border-color: #BAE6FD; }
+
+  /* Callouts */
+  .callout {
+    padding: 8px 12px;
+    border-radius: 5px;
+    margin: 8px 0;
+    font-size: 8pt;
+    border-left: 3.5px solid;
+    page-break-inside: avoid;
+  }
+  .callout-info { background: #F0FDF4; border-color: #16A34A; color: #166534; }
+  .callout-warn { background: #FFFBEB; border-color: #D97706; color: #92400E; }
+  .callout-alert { background: #FEF2F2; border-color: #DC2626; color: #991B1B; }
+  .callout-tip { background: #F8FAFC; border-color: #03353A; color: #0F172A; }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 6px 0 10px 0;
+    font-size: 7.5pt;
+    page-break-inside: avoid;
+  }
+  th, td {
+    padding: 4px 6px;
+    border: 1px solid #CBD5E1;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: #F1F5F9;
+    color: #03353A;
+    font-weight: 700;
+  }
+  tr:nth-child(even) td {
+    background: #F8FAFC;
+  }
+
+  /* Code */
+  code, pre {
+    font-family: "JetBrains Mono", Consolas, "Courier New", monospace;
+  }
+  code {
+    background: #F1F5F9;
+    color: #03353A;
+    padding: 1px 3px;
+    border-radius: 3px;
+    font-size: 7.5pt;
+    border: 1px solid #E2E8F0;
+  }
+  pre {
+    background: #0B1120;
+    color: #F8FAFC;
+    padding: 8px 10px;
+    border-radius: 5px;
+    font-size: 7pt;
+    line-height: 1.35;
+    overflow-x: auto;
+    margin: 5px 0;
+    page-break-inside: avoid;
+  }
+
+  .api-card {
+    border: 1px solid #E2E8F0;
+    border-radius: 5px;
+    margin: 6px 0;
+    padding: 6px 8px;
+    background: #FFFFFF;
+    page-break-inside: avoid;
+  }
+  .api-card-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 8pt;
+    margin-bottom: 3px;
+  }
+  .api-card-header .endpoint {
+    font-family: monospace;
+    font-weight: 700;
+    color: #0F172A;
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+</style>
+</head>
+<body>
+""")
+
+# =========================================================================
+# SECTION 1: COVER & SYSTEM MANIFEST
+# =========================================================================
+content.append("""
+<div class="cover-card">
+  <h1>NAGFANI FOODS ERP (V1.0 CLASSIC)</h1>
+  <div class="subtitle">COMPLETE FUNCTIONAL SPECIFICATION, STATE MACHINES & API SYSTEM MAP</div>
+  <div class="desc">
+    This document serves as the canonical technical map and functional blueprint of the Nagfani Foods ERP (Version 1.0 Classic). 
+    Engineered specifically for machine-readability, AI context-ingestion, and developer auditability, it comprehensively maps 
+    all 24 frontend screens, 45+ backend API endpoints, 22 database collections, real-time WebSocket events, and the on-premises 
+    TallyPrime port 9000 XML gateway.
+  </div>
+  <div class="meta-grid">
+    <div><strong>Platform</strong>Nagfani Foods ERP</div>
+    <div><strong>Target Release</strong>V1.0 Classic Core</div>
+    <div><strong>Deployment</strong>Live Cloud & Desktop</div>
+    <div><strong>Database</strong>MongoDB (Mongoose)</div>
+    <div><strong>Frontend</strong>React 18 + Vite PWA</div>
+    <div><strong>Backend</strong>Node 20 + Express REST</div>
+    <div><strong>Real-Time</strong>Socket.IO WebSocket</div>
+    <div><strong>Accounting</strong>TallyPrime (Port 9000)</div>
+  </div>
+</div>
+
+<div class="callout callout-info">
+  <strong>🤖 AI Context Note:</strong> This document contains structured data dictionaries, exact route parameters, JSON schemas, 
+  state machine lifecycle rules, and mathematical invariants. Text, table columns, and code signatures are formatted for direct parsing 
+  by Large Language Models, code generation engines, and automated test runners.
+</div>
+
+<h2>1. AI Manifest & System Constants</h2>
+<table>
+  <tr><th>Constant Key</th><th>System Value</th><th>Architectural Significance</th></tr>
+  <tr><td><code>VERSION_CODE</code></td><td>1.0.0-classic</td><td>Identifies the baseline stable release containing classic layout and workflows.</td></tr>
+  <tr><td><code>MONOREPO_ROOT</code></td><td><code>/home/rushal/Desktop/TEST SITES/Nagmani</code></td><td>Monorepo containing <code>web/</code>, <code>api/</code>, <code>connector/</code>, and <code>installer/</code>.</td></tr>
+  <tr><td><code>DEFAULT_PORT_API</code></td><td>5000</td><td>Node.js Express REST API server and Socket.IO real-time hub.</td></tr>
+  <tr><td><code>DEFAULT_PORT_WEB</code></td><td>5173</td><td>Vite React Single Page Application (HashRouter based).</td></tr>
+  <tr><td><code>DEFAULT_PORT_TALLY</code></td><td>9000</td><td>TallyPrime HTTP XML server running on client Windows workstation.</td></tr>
+  <tr><td><code>CORE_STOCK_INVARIANT</code></td><td><code>Physical - Reserved = Available</code></td><td>Fundamental law of inventory; stock is never mutated directly without a movement record.</td></tr>
+  <tr><td><code>TAX_JURISDICTION</code></td><td>State Code <code>08</code> (Rajasthan)</td><td>Intra-state: CGST (2.5%) + SGST (2.5%) = 5%; Inter-state: IGST (5%).</td></tr>
+  <tr><td><code>AUTH_SCHEME</code></td><td>Bearer JWT (12h expiration)</td><td>Standard Authorization header: <code>Authorization: Bearer &lt;TOKEN&gt;</code>.</td></tr>
+  <tr><td><code>CONNECTOR_AUTH</code></td><td>Header <code>x-api-key</code></td><td>Dedicated long-lived API key authenticating the Windows Tally gateway.</td></tr>
+</table>
+""")
+
+# =========================================================================
+# SECTION 2: SYSTEM ARCHITECTURE & TOPOLOGY
+# =========================================================================
+content.append("""
+<h2>2. Executive System Architecture & Topology</h2>
+
+<div class="avoid-break">
+<pre>
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                               NAGFANI FOODS ERP V1.0 TOPOLOGY                                    │
+├──────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                  │
+│   CLIENT TIER (PWA)                     APPLICATION TIER (REST & SOCKET)    DATA TIER            │
+│  ┌───────────────────────┐             ┌───────────────────────────────┐   ┌──────────────────┐  │
+│  │ Mobile Staff Browser  │             │ Node 20 + Express API         │   │ MongoDB Replica  │  │
+│  │ (Order/Delivery/Pack) │──HTTPS/WS──>│ Port 5000                     │──>│ Set (ReplSet rs0)│  │
+│  └───────────────────────┘             │  • Auth & RBAC Middleware     │   │                  │  │
+│  ┌───────────────────────┐             │  • Transaction Management     │   │  • 22 Collections│  │
+│  │ Desktop Admin / Accts │──HTTPS/WS──>│  • Socket.IO Event Broadcast  │   │  • ACID Sessions │  │
+│  │ (HashRouter V1 Shell) │             │  • Sync Outbox Queue          │   │  • Schema Indexes│  │
+│  └───────────────────────┘             └───────────────────────────────┘   └──────────────────┘  │
+│                                                        ▲                                         │
+│                                        Outbound HTTPS  │                                         │
+│                                        Poll & Heartbeat│                                         │
+│                                                        │                                         │
+│  WINDOWS CLIENT ENVIRONMENT (ON-PREMISES)              │                                         │
+│  ┌─────────────────────────────────────────────────────┴─────┐                                   │
+│  │ Nagfani Tally Gateway (Windows NSIS Setup.exe / Python)   │                                   │
+│  │  • Tkinter GUI Dashboard & Search Activity Stream         │                                   │
+│  │  • 3-Second Background Polling Loop                       │                                   │
+│  │  • XML Envelope Generator (Sales, Purchase, Receipts)     │                                   │
+│  └─────────────────────────────┬─────────────────────────────┘                                   │
+│                                │ HTTP XML (Port 9000)                                            │
+│                                ▼                                                                 │
+│  ┌───────────────────────────────────────────────────────────┐                                   │
+│  │ TallyPrime Silver / Gold Workstation                      │                                   │
+│  │  • Company: "NAGFANI FOODS"                               │                                   │
+│  │  • Day Book, Ledgers, Stock Journals, Vouchers            │                                   │
+│  └───────────────────────────────────────────────────────────┘                                   │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+</div>
+
+<h3>2.1 Monorepo Structure & Module Boundaries</h3>
+<ul>
+  <li><code>web/</code>: Vite + React 18 single page application. HashRouter navigation, Tailwind CSS styling, TanStack Query for cache invalidation, Zustand for auth state.</li>
+  <li><code>api/</code>: Express application in ES modules. Mongoose models, controllers, Zod/Joi validation, Socket.IO broadcast handlers, centralized transaction wrappers.</li>
+  <li><code>connector/</code> & <code>tally-connector-client/</code>: Python 3.10+ gateway application, Tkinter desktop GUI, <code>tally_xml.py</code> XML builders and parsers, <code>pull_tally_masters.py</code> importer.</li>
+  <li><code>installer/</code>: NSIS installer compiler scripts (<code>nagfani_installer.nsi</code>) producing self-extracting <code>Setup.exe</code> with embedded Python runtime and offline wheel dependencies.</li>
+</ul>
+
+<h3>2.2 UI Design System Tokens (V1 Classic)</h3>
+<table>
+  <tr><th>Token Name</th><th>Color Hex</th><th>RGB / Class</th><th>Usage Context</th></tr>
+  <tr><td>Brand Primary</td><td><code>#D9580B</code></td><td>Heritage Orange</td><td>Primary action buttons, brand badges, active tab underlines, price accents.</td></tr>
+  <tr><td>Brand Secondary</td><td><code>#03353A</code></td><td>Deep Mewar Teal</td><td>Top header navigation bar, main sidebar background, table header text.</td></tr>
+  <tr><td>Brand Dark Teal</td><td><code>#02282C</code></td><td>Dark Teal Shade</td><td>Active sidebar item hover state, header logo box borders.</td></tr>
+  <tr><td>Background</td><td><code>#F8FAFC</code></td><td>Slate 50</td><td>Page body background, muted card borders.</td></tr>
+  <tr><td>Card Surface</td><td><code>#FFFFFF</code></td><td>Pure White</td><td>Content containers, modal dialogs, data table backgrounds.</td></tr>
+  <tr><td>Status Success</td><td><code>#10B981</code></td><td>Emerald 500</td><td>"Delivered" status, "Synced" Tally status, positive stock levels.</td></tr>
+  <tr><td>Status Warning</td><td><code>#F59E0B</code></td><td>Amber 500</td><td>"Packed" status, "Pending" outbox queue, low-stock threshold warning.</td></tr>
+  <tr><td>Status Danger</td><td><code>#EF4444</code></td><td>Red 500</td><td>"Cancelled" status, "Failed" sync attempts, stock shortfall alerts.</td></tr>
+</table>
+""")
+
+# =========================================================================
+# SECTION 3: CORE BUSINESS LOGIC ENGINES & FORMULAS
+# =========================================================================
+content.append("""
+<div class="page-break"></div>
+<h2>3. Core Business Logic Engines & Mathematical Foundations</h2>
+
+<h3>3.1 Multi-Godown Stock Engine</h3>
+<div class="callout callout-alert">
+  <strong>CRITICAL SYSTEM RULE:</strong> Stock quantities in <code>stock_levels</code> are NEVER directly overwritten or updated via direct arithmetic. 
+  Every inventory change MUST be written as an immutable document in <code>stock_movements</code> wrapped inside a MongoDB session transaction.
+</div>
+
+<p>The state of inventory for any item in any godown is governed by the following mathematical identity:</p>
+<pre>
+  Available Stock = Physical Stock - Reserved Stock
+</pre>
+
+<table>
+  <tr><th>Movement Type</th><th>Physical Effect</th><th>Reserved Effect</th><th>Available Effect</th><th>Triggering Business Event</th></tr>
+  <tr><td><code>purchase</code></td><td><code>+ qty</code></td><td>0</td><td><code>+ qty</code></td><td>Supplier purchase invoice receipt confirmed.</td></tr>
+  <tr><td><code>production_in</code></td><td><code>+ qty</code></td><td>0</td><td><code>+ qty</code></td><td>Manufacturing batch completed & packed.</td></tr>
+  <tr><td><code>consumption</code></td><td><code>- qty</code></td><td>0</td><td><code>- qty</code></td><td>Raw material consumed in recipe batch.</td></tr>
+  <tr><td><code>reserve</code></td><td>0</td><td><code>+ qty</code></td><td><code>- qty</code></td><td>Customer sales order booked in "received" status.</td></tr>
+  <tr><td><code>release</code></td><td>0</td><td><code>- qty</code></td><td><code>+ qty</code></td><td>Order cancelled or line items deleted.</td></tr>
+  <tr><td><code>pack</code></td><td>0</td><td>0</td><td>0</td><td>Warehouse packs goods into delivery staging bay.</td></tr>
+  <tr><td><code>ship</code></td><td><code>- qty</code></td><td><code>- qty</code></td><td>0</td><td>Delivery van departs warehouse with consignment.</td></tr>
+  <tr><td><code>transfer_out</code></td><td><code>- qty</code></td><td>0</td><td><code>- qty</code></td><td>Source godown in godown-to-godown transfer.</td></tr>
+  <tr><td><code>transfer_in</code></td><td><code>+ qty</code></td><td>0</td><td><code>+ qty</code></td><td>Destination godown in godown-to-godown transfer.</td></tr>
+  <tr><td><code>adjustment</code></td><td><code>± qty</code></td><td>0</td><td><code>± qty</code></td><td>Audit adjustment (physical count recount).</td></tr>
+  <tr><td><code>wastage</code></td><td><code>- qty</code></td><td>0</td><td><code>- qty</code></td><td>Damaged goods, expired packets, frying residue.</td></tr>
+</table>
+
+<h3>3.2 Order Lifecycle & State Machine</h3>
+<div class="avoid-break">
+<pre>
+  [Draft / New Order Entry]
+             │
+             ▼
+      ( 1. RECEIVED ) ──[Order Booked]──> Reserves inventory (Reserved +qty, Available -qty)
+             │
+             ▼
+      ( 2. PACKED )   ──[Staged at Bay]─> Physical & Reserved stay intact; order locked from user edit
+             │
+             ▼
+      ( 3. SHIPPED )  ──[Van Departs]───> Physical stock deducted (Physical -qty, Reserved -qty)
+             │
+             ▼
+      ( 4. DELIVERED )──[Customer Receives / COD Collected]──> Triggers Invoice & Payment entry
+             │
+             ▼
+      [ 5. INVOICE ISSUED & TALLY SYNCED ]
+
+  * CANCEL GUARD: Order can be cancelled ONLY from 'RECEIVED' or 'PACKED'. Once 'SHIPPED', cancel is blocked.
+</pre>
+</div>
+
+<h3>3.3 Customer Rate-Memory Algorithm</h3>
+<p>When an order line item is added, the system automatically suggests the pricing for that specific customer using a strict fallback hierarchy:</p>
+<ol>
+  <li><strong>Customer Historical Rate:</strong> Queries <code>rate_history</code> for <code>partyId</code> + <code>itemId</code> sorted by <code>date: -1</code>. If found, returns the most recent agreed rate.</li>
+  <li><strong>Item Standard MRP:</strong> If no prior transaction exists for that customer, defaults to the item's <code>mrp</code> from <code>items</code>.</li>
+  <li><strong>Item Standard Cost:</strong> If MRP is undefined, falls back to <code>standardCost</code> or base Rs 100.</li>
+</ol>
+
+<h3>3.4 Recipe BOM Batch Scaling & Manufacturing Variance</h3>
+<p>Recipes are defined for a standard base batch (typically 100 kg or 100 packs). During production entry, quantities are dynamically scaled:</p>
+<pre>
+  Theoretical Line Qty = BOM.baseLineQty * (ActualBatchProducedQty / BOM.baseQty)
+  Variance = ActualConsumptionQty - TheoreticalLineQty
+</pre>
+<p><strong>Accounting & Inventory Impact:</strong> In a single atomic transaction:</p>
+<ul>
+  <li>Each raw material item has a <code>consumption</code> movement logged (godown physical stock decreases).</li>
+  <li>The finished goods item has a <code>production_in</code> movement logged (godown physical stock increases).</li>
+  <li>If <code>wastage &gt; 0</code>, a <code>wastage</code> movement is logged on the finished product.</li>
+  <li>A Manufacturing Stock Journal entry is enqueued to <code>sync_outbox</code> for TallyPrime posting.</li>
+</ul>
+
+<h3>3.5 Customer Running Balance Ledger & Payment Mechanics</h3>
+<p>Customer accounts use an open-item running balance calculation:</p>
+<pre>
+  Invoice Generated (Debit)  ──> Balance increases (+ Grand Total)
+  Payment Recorded (Credit)  ──> Balance decreases (- Paid Amount)
+  Net Ledger Balance         ──> Current Receivable (Outstanding Debt)
+</pre>
+<p>For suppliers, the polarity is inverted: purchase bills credit the supplier account (increasing accounts payable, represented as a negative balance).</p>
+""")
+
+# =========================================================================
+# SECTION 4: DATA DICTIONARY & MONGOOSE SCHEMAS
+# =========================================================================
+content.append("""
+<div class="page-break"></div>
+<h2>4. Complete Data Dictionary & Schema Specification</h2>
+<p>All core business collections inherit timestamp fields (<code>createdAt</code>, <code>updatedAt</code>) and synchronization sub-documents where applicable.</p>
+
+<div class="schema-box">
+  <div class="schema-header"><span>1. User Entity</span><span class="coll-name">Collection: users</span></div>
+  <table>
+    <tr><th>Field Name</th><th>Data Type</th><th>Constraints</th><th>Description & Rules</th></tr>
+    <tr><td><code>name</code></td><td>String</td><td>Required, trim</td><td>Full legal name of the user (e.g. "Suresh Meena").</td></tr>
+    <tr><td><code>username</code></td><td>String</td><td>Required, unique, lowercase</td><td>Unique login identifier (alphanumeric, no spaces).</td></tr>
+    <tr><td><code>mobile</code></td><td>String</td><td>Required, trim</td><td>10-digit primary mobile contact number.</td></tr>
+    <tr><td><code>passwordHash</code></td><td>String</td><td>Required</td><td>bcrypt hashed password string (cost factor 10).</td></tr>
+    <tr><td><code>roleId</code></td><td>ObjectId</td><td>Ref: Role, Required</td><td>Links to assigned role defining permission rights.</td></tr>
+    <tr><td><code>active</code></td><td>Boolean</td><td>Default: true</td><td>Soft-deactivation flag; deactivated users cannot log in.</td></tr>
+    <tr><td><code>mustChangePassword</code></td><td>Boolean</td><td>Default: false</td><td>Forces password change modal on first login.</td></tr>
+    <tr><td><code>lastLogin</code></td><td>Date</td><td>Nullable</td><td>Timestamp of last authenticated session.</td></tr>
+  </table>
+</div>
+
+<div class="schema-box">
+  <div class="schema-header"><span>2. Role Entity</span><span class="coll-name">Collection: roles</span></div>
+  <table>
+    <tr><th>Field Name</th><th>Data Type</th><th>Constraints</th><th>Description & Rules</th></tr>
+    <tr><td><code>name</code></td><td>String</td><td>Required, trim</td><td>Display name of role (e.g. "Order Executive").</td></tr>
+    <tr><td><code>code</code></td><td>String</td><td>Required, uppercase, unique</td><td>Role code: <code>ADMIN</code>, <code>ORDER</code>, <code>PACKING</code>, <code>DELIVERY</code>, <code>ACCOUNTS</code>.</td></tr>
+    <tr><td><code>description</code></td><td>String</td><td>Default: ''</td><td>Detailed scope of operational duties.</td></tr>
+    <tr><td><code>permissions</code></td><td>[String]</td><td>Array of strings</td><td>Permission keys (e.g. <code>['order.create', 'order.view']</code> or <code>['*']</code>).</td></tr>
+    <tr><td><code>active</code></td><td>Boolean</td><td>Default: true</td><td>Status flag for role availability.</td></tr>
+  </table>
+</div>
+
+<div class="schema-box">
+  <div class="schema-header"><span>3. Item Entity (Raw & Finished Goods)</span><span class="coll-name">Collection: items</span></div>
+  <table>
+    <tr><th>Field Name</th><th>Data Type</th><th>Constraints</th><th>Description & Rules</th></tr>
+    <tr><td><code>name</code></td><td>String</td><td>Required, trim</td><td>Commercial product name (e.g. "Urad Hari Mirch Papad").</td></tr>
+    <tr><td><code>sku</code></td><td>String</td><td>Required, unique, uppercase</td><td>Unique inventory SKU code (e.g. "URAD-HARI-MIRCH-500G").</td></tr>
+    <tr><td><code>category</code></td><td>String</td><td>Enum: raw, finished, packaging, other</td><td>Classification determining BOM consumption vs sales eligibility.</td></tr>
+    <tr><td><code>productGroup</code></td><td>String</td><td>Default: ''</td><td>Grouping category: PAPAD, KHAKHRA, NAMKEEN, AACHAR, MASALA.</td></tr>
+    <tr><td><code>packWeightGrams</code></td><td>Number</td><td>Default: 0</td><td>Gram weight per unit pack (e.g. 200, 500).</td></tr>
+    <tr><td><code>unitId</code></td><td>ObjectId</td><td>Ref: Unit, Required</td><td>Base measurement unit (e.g. kg, pcs).</td></tr>
+    <tr><td><code>mrp</code></td><td>Number</td><td>Default: 0</td><td>Maximum Retail Price printed on consumer packaging.</td></tr>
+    <tr><td><code>standardCost</code></td><td>Number</td><td>Default: 0</td><td>Standard purchase or production cost per unit.</td></tr>
+    <tr><td><code>gstRate</code></td><td>Number</td><td>Default: 5</td><td>GST tax rate percentage (0, 5, 12, 18).</td></tr>
+    <tr><td><code>hsn</code></td><td>String</td><td>Default: '1905'</td><td>Harmonized System Nomenclature code for invoicing.</td></tr>
+    <tr><td><code>minStock</code></td><td>Number</td><td>Default: 10</td><td>Low-stock alert reorder threshold.</td></tr>
+    <tr><td><code>tallyGuid</code></td><td>String</td><td>Default: null</td><td>Remote GUID mapping record to Tally StockItem master.</td></tr>
+    <tr><td><code>active</code></td><td>Boolean</td><td>Default: true</td><td>Master availability status.</td></tr>
+  </table>
+</div>
+
+<div class="schema-box">
+  <div class="schema-header"><span>4. Party Entity (Customers & Suppliers)</span><span class="coll-name">Collection: parties</span></div>
+  <table>
+    <tr><th>Field Name</th><th>Data Type</th><th>Constraints</th><th>Description & Rules</th></tr>
+    <tr><td><code>type</code></td><td>String</td><td>Enum: customer, supplier</td><td>Master entity type.</td></tr>
+    <tr><td><code>segment</code></td><td>String</td><td>Enum: b2b, b2c</td><td>Classification driving invoice numbering & Challan generation.</td></tr>
+    <tr><td><code>b2bType</code></td><td>String</td><td>Enum: wholesale, retailer, distributor, other</td><td>Sub-category for wholesale discount tiers.</td></tr>
+    <tr><td><code>name</code></td><td>String</td><td>Required, trim</td><td>Business firm name or individual customer name.</td></tr>
+    <tr><td><code>mobile</code></td><td>String</td><td>Required, index</td><td>Primary 10-digit WhatsApp/calling contact.</td></tr>
+    <tr><td><code>address</code> / <code>city</code> / <code>pincode</code></td><td>String</td><td>Required</td><td>Physical billing and delivery address.</td></tr>
+    <tr><td><code>areaId</code></td><td>ObjectId</td><td>Ref: Area, Required</td><td>Logistics beat area (one of 31 Udaipur beats).</td></tr>
+    <tr><td><code>mapsUrl</code></td><td>String</td><td>Default: ''</td><td>Direct Google Maps navigation URL for driver routing.</td></tr>
+    <tr><td><code>gstin</code></td><td>String</td><td>Uppercase, trim</td><td>15-character GST identification number.</td></tr>
+    <tr><td><code>balance</code></td><td>Number</td><td>Default: 0</td><td>Running ledger balance (Positive = Due from customer, Negative = Payable to vendor).</td></tr>
+    <tr><td><code>creditLimit</code> / <code>creditDays</code></td><td>Number</td><td>Default: 0</td><td>Credit risk controls enforcing max credit and payment term days.</td></tr>
+    <tr><td><code>tallyGuid</code></td><td>String</td><td>Default: null</td><td>Remote GUID mapping record to Tally Sundry Debtor/Creditor ledger.</td></tr>
+  </table>
+</div>
+
+<div class="schema-box">
+  <div class="schema-header"><span>5. Order Entity</span><span class="coll-name">Collection: orders</span></div>
+  <table>
+    <tr><th>Field Name</th><th>Data Type</th><th>Constraints</th><th>Description & Rules</th></tr>
+    <tr><td><code>orderNo</code></td><td>String</td><td>Required, unique</td><td>Sequential identifier formatted as <code>ORD-000123</code>.</td></tr>
+    <tr><td><code>partyId</code></td><td>ObjectId</td><td>Ref: Party, Required</td><td>Customer account booking the consignment.</td></tr>
+    <tr><td><code>segment</code></td><td>String</td><td>Enum: b2b, b2c</td><td>Inherited from party at booking time.</td></tr>
+    <tr><td><code>areaId</code></td><td>ObjectId</td><td>Ref: Area, Required</td><td>Delivery area beat for routing and run sheets.</td></tr>
+    <tr><td><code>godownId</code></td><td>ObjectId</td><td>Ref: Godown, Required</td><td>Warehouse facility fulfilling and reserving inventory.</td></tr>
+    <tr><td><code>items</code></td><td>Array of sub-docs</td><td>Required, non-empty</td><td>Array containing <code>itemId</code>, <code>sku</code>, <code>name</code>, <code>qty</code>, <code>rate</code>, <code>discount</code>, <code>taxRate</code>, <code>lineTotal</code>.</td></tr>
+    <tr><td><code>subtotal</code> / <code>taxTotal</code> / <code>grandTotal</code></td><td>Number</td><td>Required</td><td>Aggregated monetary totals in INR.</td></tr>
+    <tr><td><code>challanNo</code></td><td>String</td><td>Default: ''</td><td>Delivery Challan number (mandatory for B2C, e.g. <code>DC-000125</code>).</td></tr>
+    <tr><td><code>invoiceId</code></td><td>ObjectId</td><td>Ref: Invoice, Nullable</td><td>Links to generated Tax Invoice document.</td></tr>
+    <tr><td><code>status</code></td><td>String</td><td>Enum: received, packed, shipped, delivered, cancelled</td><td>Operational lifecycle stage of the order.</td></tr>
+    <tr><td><code>paymentStatus</code></td><td>String</td><td>Enum: unpaid, partial, paid</td><td>Settlement status against order total.</td></tr>
+    <tr><td><code>paidAmount</code></td><td>Number</td><td>Default: 0</td><td>Cumulative sum of payments credited to this order.</td></tr>
+  </table>
+</div>
+
+<div class="schema-box">
+  <div class="schema-header"><span>6. Bill of Materials (BOM) Entity</span><span class="coll-name">Collection: boms</span></div>
+  <table>
+    <tr><th>Field Name</th><th>Data Type</th><th>Constraints</th><th>Description & Rules</th></tr>
+    <tr><td><code>productId</code></td><td>ObjectId</td><td>Ref: Item, Required</td><td>Finished food item produced by this recipe.</td></tr>
+    <tr><td><code>name</code></td><td>String</td><td>Required, trim</td><td>Recipe title (e.g. "Standard Urad Papad Recipe").</td></tr>
+    <tr><td><code>version</code></td><td>Number</td><td>Required, default: 1</td><td>Sequential revision number; higher version takes precedence.</td></tr>
+    <tr><td><code>baseQty</code></td><td>Number</td><td>Required, default: 100</td><td>Standard batch yield quantity (e.g. 100 kg or 100 packs).</td></tr>
+    <tr><td><code>lines</code></td><td>Array of sub-docs</td><td>Required</td><td>List of raw materials with <code>itemId</code>, <code>sku</code>, <code>name</code>, <code>qty</code>, <code>unitSymbol</code>.</td></tr>
+    <tr><td><code>active</code></td><td>Boolean</td><td>Default: true</td><td>Only active BOMs appear in production dropdowns.</td></tr>
+  </table>
+</div>
+
+<div class="schema-box">
+  <div class="schema-header"><span>7. Production Entry (Manufacturing Journal)</span><span class="coll-name">Collection: production_entries</span></div>
+  <table>
+    <tr><th>Field Name</th><th>Data Type</th><th>Constraints</th><th>Description & Rules</th></tr>
+    <tr><td><code>productionNo</code></td><td>String</td><td>Required, unique</td><td>Sequential identifier formatted as <code>PRD-000045</code>.</td></tr>
+    <tr><td><code>date</code></td><td>Date</td><td>Required, default: now</td><td>Date of kitchen or factory production batch.</td></tr>
+    <tr><td><code>productId</code></td><td>ObjectId</td><td>Ref: Item, Required</td><td>Finished goods item manufactured.</td></tr>
+    <tr><td><code>qty</code></td><td>Number</td><td>Required, &gt; 0</td><td>Actual quantity of finished packs manufactured.</td></tr>
+    <tr><td><code>godownId</code></td><td>ObjectId</td><td>Ref: Godown, Required</td><td>Godown where raw materials are consumed and goods inwarded.</td></tr>
+    <tr><td><code>bomId</code> / <code>bomVersion</code></td><td>ObjectId / Number</td><td>Required</td><td>Recipe template reference used for scaling.</td></tr>
+    <tr><td><code>batchNo</code></td><td>String</td><td>Required</td><td>Lot identifier (e.g. "BATCH-261025").</td></tr>
+    <tr><td><code>wastage</code></td><td>Number</td><td>Default: 0</td><td>Quantity of defective or scrap goods produced.</td></tr>
+    <tr><td><code>lines</code></td><td>Array of sub-docs</td><td>Required</td><td>Raw materials showing <code>bomQty</code>, <code>actualQty</code>, and calculated <code>variance</code>.</td></tr>
+  </table>
+</div>
+
+<div class="schema-box">
+  <div class="schema-header"><span>8. Synchronization Outbox & Inbox Entities</span><span class="coll-name">Collections: sync_outbox & sync_inbox</span></div>
+  <table>
+    <tr><th>Field Name</th><th>Data Type</th><th>Constraints</th><th>Description & Rules</th></tr>
+    <tr><td><code>entityType</code></td><td>String</td><td>Enum: order, invoice, payment, purchase, production, party, item</td><td>Specifies the domain entity being synchronized.</td></tr>
+    <tr><td><code>entityId</code></td><td>ObjectId</td><td>Required</td><td>Database primary key of the synchronized record.</td></tr>
+    <tr><td><code>operation</code></td><td>String</td><td>Enum: create, update, delete</td><td>Database operation to mirror into TallyPrime.</td></tr>
+    <tr><td><code>payload</code></td><td>Object</td><td>Required</td><td>Full document state exported to XML generator.</td></tr>
+    <tr><td><code>idempotencyKey</code></td><td>String</td><td>Required, unique index</td><td>Prevents duplicate voucher creation on network retries.</td></tr>
+    <tr><td><code>status</code></td><td>String</td><td>Enum: pending, sent, synced, failed, conflict</td><td>Current gateway transmission state.</td></tr>
+    <tr><td><code>attempts</code></td><td>Number</td><td>Default: 0</td><td>Failure count before backoff pauses item.</td></tr>
+    <tr><td><code>lastError</code></td><td>String</td><td>Default: null</td><td>Raw error message returned by Tally HTTP server.</td></tr>
+  </table>
+</div>
+""")
+
+# =========================================================================
+# SECTION 5: EXHAUSTIVE REST API ENDPOINT SPECIFICATION
+# =========================================================================
+content.append("""
+<div class="page-break"></div>
+<h2>5. Exhaustive REST API Route & Controller Specification</h2>
+<p>All endpoints are prefixed with <code>/api/v1</code> and enforce strict JWT authentication unless marked public.</p>
+
+<h3>5.1 Authentication Controller (<code>/api/v1/auth</code>)</h3>
+<div class="api-card">
+  <div class="api-card-header"><span class="badge badge-post">POST</span><span class="endpoint">/api/v1/auth/login</span></div>
+  <div class="api-card-meta">Access: Public · Rate Limit: 10 req/min · Auth: None</div>
+  <p>Authenticates user via username, email, or 10-digit mobile number and returns signed JWT token.</p>
+  <pre>Request:  { "username": "admin", "password": "secure_password" }
+Response: { "success": true, "token": "eyJhbG...", "user": { "id": "...", "name": "Admin", "role": { "code": "ADMIN" } } }</pre>
+</div>
+
+<div class="api-card">
+  <div class="api-card-header"><span class="badge badge-get">GET</span><span class="endpoint">/api/v1/auth/me</span></div>
+  <div class="api-card-meta">Access: Authenticated · Auth: Bearer JWT</div>
+  <p>Returns the currently authenticated user session details, role, and mustChangePassword flag.</p>
+</div>
+
+<div class="api-card">
+  <div class="api-card-header"><span class="badge badge-post">POST</span><span class="endpoint">/api/v1/auth/change-password</span></div>
+  <div class="api-card-meta">Access: Authenticated · Auth: Bearer JWT</div>
+  <p>Updates user password. Verifies current password before hashing new password with bcrypt.</p>
+</div>
+
+<h3>5.2 Orders Controller (<code>/api/v1/orders</code>)</h3>
+<div class="api-card">
+  <div class="api-card-header"><span class="badge badge-get">GET</span><span class="endpoint">/api/v1/orders</span></div>
+  <div class="api-card-meta">Access: Order, Packing, Delivery, Accounts, Admin · Query: status, areaId, segment, search, fromDate, toDate</div>
+  <p>Retrieves paginated orders with populated party, area, and godown metadata.</p>
+</div>
+
+<div class="api-card">
+  <div class="api-card-header"><span class="badge badge-post">POST</span><span class="endpoint">/api/v1/orders</span></div>
+  <div class="api-card-meta">Access: Order, Admin · Permission: <code>order.create</code> · Transaction: Yes</div>
+  <p>Books new customer order. In an atomic transaction: checks stock availability, auto-generates <code>orderNo</code> (e.g. <code>ORD-000123</code>), auto-generates B2C Delivery Challan number (<code>DC-000125</code>), computes line-level GST, logs <code>reserve</code> stock movements, enqueues <code>sync_outbox</code>, and emits <code>order:created</code> via Socket.IO.</p>
+  <pre>Request:  { "partyId": "...", "godownId": "...", "items": [{ "itemId": "...", "qty": 10, "rate": 140 }], "paymentTerms": "COD" }
+Response: { "success": true, "data": { "orderNo": "ORD-000123", "status": "received", "grandTotal": 1400 } }</pre>
+</div>
+
+<div class="api-card">
+  <div class="api-card-header"><span class="badge badge-post">POST</span> / <span class="badge badge-patch">PATCH</span><span class="endpoint">/api/v1/orders/:id/status</span></div>
+  <div class="api-card-meta">Access: Role-guarded · Transaction: Yes · Sockets: <code>order:status</code></div>
+  <p>Transitions order lifecycle status. Enforces strict transitions:</p>
+  <ul>
+    <li><code>packed</code>: Marked by Packing role; verifies staging without modifying stock reserve.</li>
+    <li><code>shipped</code>: Marked by Delivery/Admin; invokes <code>shipOrderStock()</code> reducing physical inventory.</li>
+    <li><code>delivered</code>: Marked by Delivery/Admin; finalizes delivery and updates status timeline.</li>
+    <li><code>cancelled</code>: Blocked if already shipped; releases reserved inventory back to available stock.</li>
+  </ul>
+</div>
+
+<div class="api-card">
+  <div class="api-card-header"><span class="badge badge-post">POST</span><span class="endpoint">/api/v1/orders/:id/payment</span></div>
+  <div class="api-card-meta">Access: Delivery, Accounts, Admin · Permission: <code>payment.record</code> · Transaction: Yes</div>
+  <p>Records cash/UPI collection against an order. Updates order <code>paidAmount</code>, adjusts customer ledger balance, and enqueues Tally Receipt voucher.</p>
+</div>
+
+<h3>5.3 Inventory & Multi-Godown Controller (<code>/api/v1/stock</code>)</h3>
+<div class="api-card">
+  <div class="api-card-header"><span class="badge badge-get">GET</span><span class="endpoint">/api/v1/stock/levels</span></div>
+  <div class="api-card-meta">Access: All Authenticated · Query: godownId, category, lowStockOnly</div>
+  <p>Returns physical, reserved, and available quantities per item and godown.</p>
+</div>
+
+<div class="api-card">
+  <div class="api-card-header"><span class="badge badge-post">POST</span><span class="endpoint">/api/v1/stock/transfers</span></div>
+  <div class="api-card-meta">Access: Admin, Stock Supervisor · Permission: <code>stock.transfer</code> · Transaction: Yes</div>
+  <p>Executes godown-to-godown inventory movement. Writes paired <code>transfer_out</code> and <code>transfer_in</code> movements atomically.</p>
+</div>
+
+<div class="api-card">
+  <div class="api-card-header"><span class="badge badge-post">POST</span><span class="endpoint">/api/v1/stock/adjustments</span></div>
+  <div class="api-card-meta">Access: Admin · Permission: <code>stock.adjust</code> · Transaction: Yes</div>
+  <p>Records physical inventory count correction or wastage write-off with mandatory audit reason.</p>
+</div>
+
+<h3>5.4 Food Manufacturing Controller (<code>/api/v1/manufacturing</code> & <code>/api/v1/boms</code>)</h3>
+<div class="api-card">
+  <div class="api-card-header"><span class="badge badge-get">GET</span><span class="endpoint">/api/v1/boms/for-product/:productId</span></div>
+  <div class="api-card-meta">Access: Order, Production, Admin</div>
+  <p>Fetches the active recipe BOM for a product to auto-populate theoretical ingredient consumption in production form.</p>
+</div>
+
+<div class="api-card">
+  <div class="api-card-header"><span class="badge badge-post">POST</span><span class="endpoint">/api/v1/production</span></div>
+  <div class="api-card-meta">Access: Production Lead, Admin · Permission: <code>manufacturing.create</code> · Transaction: Yes</div>
+  <p>Confirms food manufacturing batch. Decreases raw material quantities, increases finished goods, records wastage, computes consumption variance, and creates Tally Stock Journal sync record.</p>
+</div>
+
+<h3>5.5 Billing & Invoicing Controller (<code>/api/v1/invoices</code>)</h3>
+<div class="api-card">
+  <div class="api-card-header"><span class="badge badge-post">POST</span><span class="endpoint">/api/v1/invoices/generate-from-order/:orderId</span></div>
+  <div class="api-card-meta">Access: Accounts, Admin · Permission: <code>invoice.create</code> · Transaction: Yes</div>
+  <p>Generates sequential Tax Invoice (<code>INV-000123</code>). Computes CGST/SGST/IGST breakdown, debits customer ledger balance, links invoice to order, and queues Tally Sales Voucher.</p>
+</div>
+
+<h3>5.6 Tally Gateway Integration Controller (<code>/api/v1/sync</code>)</h3>
+<div class="api-card">
+  <div class="api-card-header"><span class="badge badge-post">POST</span><span class="endpoint">/api/v1/sync/heartbeat</span></div>
+  <div class="api-card-meta">Access: Connector · Auth: Header <code>x-api-key</code></div>
+  <p>Called every 3 seconds by Windows desktop connector. Updates connector online status and Tally reachability flag.</p>
+</div>
+
+<div class="api-card">
+  <div class="api-card-header"><span class="badge badge-get">GET</span><span class="endpoint">/api/v1/sync/pending</span></div>
+  <div class="api-card-meta">Access: Connector · Auth: Header <code>x-api-key</code> · Query: limit</div>
+  <p>Fetches unposted outbound records from <code>sync_outbox</code> to be converted to XML and posted to TallyPrime port 9000.</p>
+</div>
+
+<div class="api-card">
+  <div class="api-card-header"><span class="badge badge-post">POST</span><span class="endpoint">/api/v1/sync/ack</span></div>
+  <div class="api-card-meta">Access: Connector · Auth: Header <code>x-api-key</code></div>
+  <p>Acknowledges successful Tally XML posting. Updates outbox item to <code>synced</code> and records Tally GUID in sync log.</p>
+</div>
+
+<div class="api-card">
+  <div class="api-card-header"><span class="badge badge-post">POST</span><span class="endpoint">/api/v1/sync/inbound-bulk</span></div>
+  <div class="api-card-meta">Access: Connector · Auth: Header <code>x-api-key</code></div>
+  <p>Bulk imports customer ledgers, supplier ledgers, and stock items extracted directly from TallyPrime into the ERP cloud database.</p>
+</div>
+""")
+
+# =========================================================================
+# SECTION 6: FRONTEND V1 CLASSIC PAGE & COMPONENT SPECIFICATION
+# =========================================================================
+content.append("""
+<div class="page-break"></div>
+<h2>6. Frontend V1 Classic Page & Component Specification</h2>
+<p>The V1 frontend is implemented with React 18, Vite, and Tailwind CSS. The classic shell (<code>Layout.jsx</code>) provides responsive navigation with a persistent top bar, collapsible sidebar on desktop (&ge;1024px), and bottom tab bar on mobile.</p>
+
+<table>
+  <tr><th>Route Path</th><th>Page Component</th><th>Permitted Roles</th><th>Key Functions & Interactive Triggers</th></tr>
+  <tr>
+    <td><code>/login</code></td>
+    <td><code>Login.jsx</code></td>
+    <td>Public</td>
+    <td>Username/mobile/email input, password field with visibility toggle, error alert, remembers redirect URL.</td>
+  </tr>
+  <tr>
+    <td><code>/</code></td>
+    <td><code>Dashboard.jsx</code></td>
+    <td>All Roles</td>
+    <td>Real-time KPI metrics (today sales, month sales, B2B vs B2C split, order counters, cash/bank/UPI balances, low-stock count, pending Tally queue), 30-day sales trend chart, top 5 customer debts.</td>
+  </tr>
+  <tr>
+    <td><code>/orders</code></td>
+    <td><code>OrderList.jsx</code></td>
+    <td>All Roles</td>
+    <td>Tabbed status filter (Received, Packed, Shipped, Delivered, All), sector filter dropdown, date range picker, search bar, one-click status transition buttons, link to Order Detail.</td>
+  </tr>
+  <tr>
+    <td><code>/orders/new</code></td>
+    <td><code>NewOrder.jsx</code></td>
+    <td>Order, Admin</td>
+    <td>Customer picker with live credit limit display, automatic B2B/B2C detection, item picker with <strong>last-rate auto-suggest</strong>, stock availability warnings, payment terms selection, live GST calculation.</td>
+  </tr>
+  <tr>
+    <td><code>/orders/:id</code></td>
+    <td><code>OrderDetail.jsx</code></td>
+    <td>All Roles</td>
+    <td>Consignment breakdown, audit timeline (who changed status, timestamp, note), printable Delivery Challan, Tax Invoice generator button, payment collection drawer, Tally sync status chip.</td>
+  </tr>
+  <tr>
+    <td><code>/delivery</code></td>
+    <td><code>DeliveryBoard.jsx</code></td>
+    <td>Delivery, Packing, Admin</td>
+    <td>Area chip selector across 31 Udaipur beats, counts per status, route map navigation buttons ("Open in Google Maps"), driver run-sheet generator, bulk dispatch confirmation.</td>
+  </tr>
+  <tr>
+    <td><code>/customers</code></td>
+    <td><code>CustomerList.jsx</code></td>
+    <td>Order, Accounts, Admin</td>
+    <td>Filter by B2B/B2C, sector area, outstanding &gt; 0, live search by name/mobile, customer balance chips, link to customer ledger and profile.</td>
+  </tr>
+  <tr>
+    <td><code>/customers/:id</code></td>
+    <td><code>CustomerProfile.jsx</code></td>
+    <td>Order, Accounts, Admin</td>
+    <td>Comprehensive party profile: outstanding receivables, credit terms, complete order history, payment history, <strong>rate history per SKU</strong>, running balance ledger, direct WhatsApp link.</td>
+  </tr>
+  <tr>
+    <td><code>/stock</code></td>
+    <td><code>StockOverview.jsx</code></td>
+    <td>All Roles</td>
+    <td>Inventory tabs (Raw Materials, Finished Goods, Packaging), godown filter, columns for Physical, Reserved, and Available stock, low-stock highlight flags, stock movement audit drawer.</td>
+  </tr>
+  <tr>
+    <td><code>/stock/transfer</code></td>
+    <td><code>StockTransfer.jsx</code></td>
+    <td>Stock Lead, Admin</td>
+    <td>Godown-to-godown transfer entry: source godown, destination godown, multi-item line picker with real-time available stock validation, transfer history log.</td>
+  </tr>
+  <tr>
+    <td><code>/stock/adjustments</code></td>
+    <td><code>StockAdjustments.jsx</code></td>
+    <td>Admin</td>
+    <td>Inventory adjustment entry: physical count adjustment or wastage write-off, reason selector, godown selector, historical adjustment audit log.</td>
+  </tr>
+  <tr>
+    <td><code>/items</code></td>
+    <td><code>ItemMaster.jsx</code></td>
+    <td>Admin</td>
+    <td>Catalog management: finished goods & raw materials list, category filters, unit mapping, GST rate, HSN code, minimum reorder stock level, Tally GUID link.</td>
+  </tr>
+  <tr>
+    <td><code>/purchases</code></td>
+    <td><code>PurchaseList.jsx</code></td>
+    <td>Accounts, Admin</td>
+    <td>Supplier bills list, date and vendor filter, payment status badges, total procurement expenditure tracking.</td>
+  </tr>
+  <tr>
+    <td><code>/purchases/new</code></td>
+    <td><code>NewPurchase.jsx</code></td>
+    <td>Accounts, Admin</td>
+    <td>Supplier bill entry: vendor selection, invoice number, date, receiving godown, raw material lines with rate and GST, automated stock inward movement creation.</td>
+  </tr>
+  <tr>
+    <td><code>/manufacturing</code></td>
+    <td><code>ProductionList.jsx</code></td>
+    <td>Production, Admin</td>
+    <td>Manufacturing journal entries table: date, product, batch lot number, quantity produced, wastage count, link to recipe variance report.</td>
+  </tr>
+  <tr>
+    <td><code>/manufacturing/new</code></td>
+    <td><code>NewProduction.jsx</code></td>
+    <td>Production, Admin</td>
+    <td>Batch production entry: product selection, BOM version picker, batch yield entry, <strong>auto-calculated consumption table</strong> (theoretical vs actual ingredient consumption), variance logging.</td>
+  </tr>
+  <tr>
+    <td><code>/boms</code></td>
+    <td><code>BOMManager.jsx</code></td>
+    <td>Production, Admin</td>
+    <td>Recipe manager: view, create, copy, and version recipes. Defines base batch quantity (e.g. 100 kg) and ingredient proportions.</td>
+  </tr>
+  <tr>
+    <td><code>/invoices</code></td>
+    <td><code>InvoiceList.jsx</code></td>
+    <td>Accounts, Admin</td>
+    <td>Tax Invoices list, search by invoice no., challan no., or customer, payment status, PDF download button.</td>
+  </tr>
+  <tr>
+    <td><code>/invoices/:id</code></td>
+    <td><code>InvoicePreview.jsx</code></td>
+    <td>All Roles</td>
+    <td>Printable GST-compliant Tax Invoice & Delivery Challan, company header, customer GSTIN, HSN tax table, direct WhatsApp share button, thermal/A4 print styling.</td>
+  </tr>
+  <tr>
+    <td><code>/payments</code></td>
+    <td><code>PaymentRegister.jsx</code></td>
+    <td>Accounts, Delivery, Admin</td>
+    <td>Cash and bank receipt register: filter by mode (Cash, UPI, Bank Transfer), daily collection summaries, link to customer ledger.</td>
+  </tr>
+  <tr>
+    <td><code>/outstanding</code></td>
+    <td><code>OutstandingList.jsx</code></td>
+    <td>Accounts, Order, Admin</td>
+    <td>Customer debt aging analysis table: party name, area beat, total balance due, credit limit, days overdue, quick "Record Payment" modal.</td>
+  </tr>
+  <tr>
+    <td><code>/reports</code></td>
+    <td><code>ReportsHub.jsx</code></td>
+    <td>Accounts, Admin</td>
+    <td>Centralized BI analytics hub: daily/monthly sales reports, area-wise revenue, product group profitability, purchase history, production output, CSV data export.</td>
+  </tr>
+  <tr>
+    <td><code>/sync</code></td>
+    <td><code>SyncOverview.jsx</code></td>
+    <td>Accounts, Admin</td>
+    <td>Tally gateway status dashboard: live port 9000 reachability indicator, heartbeat timestamp, outbox pending count, error audit log, retry button, <strong>Windows Setup.exe download link</strong>.</td>
+  </tr>
+  <tr>
+    <td><code>/settings</code></td>
+    <td><code>SettingsHub.jsx</code></td>
+    <td>Admin</td>
+    <td>System configuration: user management, role permission matrix editor, area code editor (31 beats), godown manager, company profile (GSTIN, address, logo).</td>
+  </tr>
+  <tr>
+    <td><code>/search</code></td>
+    <td><code>Search.jsx</code></td>
+    <td>All Roles</td>
+    <td>Global unified search across orders, customers, invoices, challans, products, batches, and areas with categorised result cards.</td>
+  </tr>
+</table>
+""")
+
+# =========================================================================
+# SECTION 7: RBAC PERMISSION MATRIX
+# =========================================================================
+content.append("""
+<div class="page-break"></div>
+<h2>7. Role-Based Access Control (RBAC) Permission Matrix</h2>
+<p>Nagfani Foods ERP enforces fine-grained access control. The system ships with 5 standard roles mapped across 25 operational permissions:</p>
+
+<table>
+  <tr><th>Permission Key</th><th>Administrative Scope</th><th>ADMIN</th><th>ORDER</th><th>PACKING</th><th>DELIVERY</th><th>ACCOUNTS</th></tr>
+  <tr><td><code>*</code></td><td>Universal Superuser Access</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+  <tr><td><code>order.create</code></td><td>Book new customer sales order</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td></tr>
+  <tr><td><code>order.edit</code></td><td>Modify items/rates before packed</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td></tr>
+  <tr><td><code>order.pack</code></td><td>Advance order status to 'packed'</td><td>✅</td><td>❌</td><td>✅</td><td>❌</td><td>❌</td></tr>
+  <tr><td><code>order.ship</code></td><td>Advance order status to 'shipped'</td><td>✅</td><td>❌</td><td>❌</td><td>✅</td><td>❌</td></tr>
+  <tr><td><code>order.deliver</code></td><td>Confirm order 'delivered' to client</td><td>✅</td><td>❌</td><td>❌</td><td>✅</td><td>❌</td></tr>
+  <tr><td><code>order.view</code></td><td>View orders & consignment lists</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
+  <tr><td><code>customer.create</code></td><td>Create & edit customer profiles</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td><td>✅</td></tr>
+  <tr><td><code>customer.view</code></td><td>View customer directory & balances</td><td>✅</td><td>✅</td><td>❌</td><td>✅</td><td>✅</td></tr>
+  <tr><td><code>stock.view</code></td><td>View godown inventory levels</td><td>✅</td><td>✅</td><td>✅</td><td>❌</td><td>✅</td></tr>
+  <tr><td><code>stock.transfer</code></td><td>Execute godown-to-godown transfer</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+  <tr><td><code>stock.adjust</code></td><td>Perform stock count audit/adjustment</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+  <tr><td><code>manufacturing.create</code></td><td>Record batch production & BOM</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+  <tr><td><code>manufacturing.view</code></td><td>View recipes & production journals</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>✅</td></tr>
+  <tr><td><code>purchase.create</code></td><td>Enter raw material vendor bills</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>✅</td></tr>
+  <tr><td><code>purchase.view</code></td><td>View supplier bills & purchases</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>✅</td></tr>
+  <tr><td><code>invoice.create</code></td><td>Generate Tax Invoice from order</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>✅</td></tr>
+  <tr><td><code>invoice.view</code></td><td>View & print Tax Invoices / Challans</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
+  <tr><td><code>payment.record</code></td><td>Record customer payment (Cash/UPI)</td><td>✅</td><td>❌</td><td>❌</td><td>✅</td><td>✅</td></tr>
+  <tr><td><code>payment.view</code></td><td>View cash/bank ledgers & balances</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>✅</td></tr>
+  <tr><td><code>delivery.view</code></td><td>Access area boards & run sheets</td><td>✅</td><td>❌</td><td>✅</td><td>✅</td><td>❌</td></tr>
+  <tr><td><code>reports.view</code></td><td>Access BI sales & revenue reports</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>✅</td></tr>
+  <tr><td><code>sync.view</code></td><td>View Tally connector status & logs</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>✅</td></tr>
+  <tr><td><code>sync.manage</code></td><td>Retry failed items & edit mappings</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+  <tr><td><code>settings.manage</code></td><td>Configure users, roles, and areas</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+</table>
+""")
+
+# =========================================================================
+# SECTION 8: TALLYPRIME XML PROTOCOL & GATEWAY
+# =========================================================================
+content.append("""
+<div class="page-break"></div>
+<h2>8. Bidirectional TallyPrime XML Protocol & Gateway Engine</h2>
+
+<div class="callout callout-info">
+  <strong>Gateway Connectivity:</strong> TallyPrime runs as an on-premises HTTP web server on <code>http://localhost:9000</code>. 
+  The Python Desktop Gateway (distributed as <code>Setup.exe</code>) establishes outbound HTTPS polling to the cloud ERP API, eliminating 
+  the need for static IPs, port forwarding, or firewall holes on the client PC.
+</div>
+
+<h3>8.1 Synchronization Protocol & Polling Lifecycle</h3>
+<ol>
+  <li><strong>Heartbeat Ping (Every 3 seconds):</strong> Gateway sends <code>POST /api/v1/sync/heartbeat</code> containing Tally port 9000 reachability and current company name.</li>
+  <li><strong>Outbound Queue Fetch:</strong> If Tally is responsive, gateway requests <code>GET /api/v1/sync/pending?limit=20</code>.</li>
+  <li><strong>XML Transformation:</strong> Gateway compiles the JSON domain payload into Tally-compliant XML envelopes using <code>tally_xml.py</code>.</li>
+  <li><strong>Tally Ingestion:</strong> Gateway sends <code>POST http://localhost:9000</code> with <code>Content-Type: text/xml; charset=utf-8</code>.</li>
+  <li><strong>Response Parsing & Acknowledgment:</strong>
+    <ul>
+      <li>If <code>&lt;CREATED&gt;1&lt;/CREATED&gt;</code> or <code>&lt;ALTERED&gt;1&lt;/ALTERED&gt;</code>: Calls <code>POST /api/v1/sync/ack</code> with Tally GUID.</li>
+      <li>If <code>&lt;ERRORS&gt;&gt;0&lt;/ERRORS&gt;</code>: Calls <code>POST /api/v1/sync/fail</code> with exact line error description.</li>
+    </ul>
+  </li>
+</ol>
+
+<h3>8.2 Tally XML Voucher Envelopes</h3>
+<div class="grid-2">
+  <div>
+    <h4>Sales Voucher XML Template</h4>
+    <pre>&lt;ENVELOPE&gt;
+  &lt;HEADER&gt;&lt;TALLYREQUEST&gt;Import Data&lt;/TALLYREQUEST&gt;&lt;/HEADER&gt;
+  &lt;BODY&gt;
+    &lt;IMPORTDATA&gt;
+      &lt;REQUESTDESC&gt;
+        &lt;REPORTNAME&gt;Vouchers&lt;/REPORTNAME&gt;
+        &lt;STATICVARIABLES&gt;&lt;SVCURRENTCOMPANY&gt;NAGFANI FOODS&lt;/SVCURRENTCOMPANY&gt;&lt;/STATICVARIABLES&gt;
+      &lt;/REQUESTDESC&gt;
+      &lt;REQUESTDATA&gt;
+        &lt;TALLYMESSAGE xmlns:UDF="TallyUDF"&gt;
+          &lt;VOUCHER VCHTYPE="Sales" ACTION="Create"&gt;
+            &lt;DATE&gt;20261027&lt;/DATE&gt;
+            &lt;VOUCHERNUMBER&gt;INV-000125&lt;/VOUCHERNUMBER&gt;
+            &lt;PARTYLEDGERNAME&gt;Mewar Traders&lt;/PARTYLEDGERNAME&gt;
+            &lt;REFERENCE&gt;ORD-000125&lt;/REFERENCE&gt;
+            &lt;NARRATION&gt;DC-000125 / SEC-04&lt;/NARRATION&gt;
+            &lt;ALLLEDGERENTRIES.LIST&gt;
+              &lt;LEDGERNAME&gt;Mewar Traders&lt;/LEDGERNAME&gt;
+              &lt;ISDEEMEDPOSITIVE&gt;Yes&lt;/ISDEEMEDPOSITIVE&gt;
+              &lt;AMOUNT&gt;-1400.00&lt;/AMOUNT&gt;
+            &lt;/ALLLEDGERENTRIES.LIST&gt;
+            &lt;ALLLEDGERENTRIES.LIST&gt;
+              &lt;LEDGERNAME&gt;Sales Account&lt;/LEDGERNAME&gt;
+              &lt;ISDEEMEDPOSITIVE&gt;No&lt;/ISDEEMEDPOSITIVE&gt;
+              &lt;AMOUNT&gt;1333.33&lt;/AMOUNT&gt;
+            &lt;/ALLLEDGERENTRIES.LIST&gt;
+            &lt;ALLLEDGERENTRIES.LIST&gt;
+              &lt;LEDGERNAME&gt;CGST Output&lt;/LEDGERNAME&gt;
+              &lt;ISDEEMEDPOSITIVE&gt;No&lt;/ISDEEMEDPOSITIVE&gt;
+              &lt;AMOUNT&gt;33.33&lt;/AMOUNT&gt;
+            &lt;/ALLLEDGERENTRIES.LIST&gt;
+            &lt;ALLLEDGERENTRIES.LIST&gt;
+              &lt;LEDGERNAME&gt;SGST Output&lt;/LEDGERNAME&gt;
+              &lt;ISDEEMEDPOSITIVE&gt;No&lt;/ISDEEMEDPOSITIVE&gt;
+              &lt;AMOUNT&gt;33.34&lt;/AMOUNT&gt;
+            &lt;/ALLLEDGERENTRIES.LIST&gt;
+          &lt;/VOUCHER&gt;
+        &lt;/TALLYMESSAGE&gt;
+      &lt;/REQUESTDATA&gt;
+    &lt;/IMPORTDATA&gt;
+  &lt;/BODY&gt;
+&lt;/ENVELOPE&gt;</pre>
+  </div>
+  <div>
+    <h4>Receipt Voucher XML Template</h4>
+    <pre>&lt;ENVELOPE&gt;
+  &lt;HEADER&gt;&lt;TALLYREQUEST&gt;Import Data&lt;/TALLYREQUEST&gt;&lt;/HEADER&gt;
+  &lt;BODY&gt;
+    &lt;IMPORTDATA&gt;
+      &lt;REQUESTDESC&gt;
+        &lt;REPORTNAME&gt;Vouchers&lt;/REPORTNAME&gt;
+        &lt;STATICVARIABLES&gt;&lt;SVCURRENTCOMPANY&gt;NAGFANI FOODS&lt;/SVCURRENTCOMPANY&gt;&lt;/STATICVARIABLES&gt;
+      &lt;/REQUESTDESC&gt;
+      &lt;REQUESTDATA&gt;
+        &lt;TALLYMESSAGE xmlns:UDF="TallyUDF"&gt;
+          &lt;VOUCHER VCHTYPE="Receipt" ACTION="Create"&gt;
+            &lt;DATE&gt;20261027&lt;/DATE&gt;
+            &lt;VOUCHERNUMBER&gt;RCT-000089&lt;/VOUCHERNUMBER&gt;
+            &lt;PARTYLEDGERNAME&gt;Mewar Traders&lt;/PARTYLEDGERNAME&gt;
+            &lt;NARRATION&gt;Payment received via Cash / Van 01&lt;/NARRATION&gt;
+            &lt;ALLLEDGERENTRIES.LIST&gt;
+              &lt;LEDGERNAME&gt;Cash&lt;/LEDGERNAME&gt;
+              &lt;ISDEEMEDPOSITIVE&gt;Yes&lt;/ISDEEMEDPOSITIVE&gt;
+              &lt;AMOUNT&gt;-1400.00&lt;/AMOUNT&gt;
+            &lt;/ALLLEDGERENTRIES.LIST&gt;
+            &lt;ALLLEDGERENTRIES.LIST&gt;
+              &lt;LEDGERNAME&gt;Mewar Traders&lt;/LEDGERNAME&gt;
+              &lt;ISDEEMEDPOSITIVE&gt;No&lt;/ISDEEMEDPOSITIVE&gt;
+              &lt;AMOUNT&gt;1400.00&lt;/AMOUNT&gt;
+            &lt;/ALLLEDGERENTRIES.LIST&gt;
+          &lt;/VOUCHER&gt;
+        &lt;/TALLYMESSAGE&gt;
+      &lt;/REQUESTDATA&gt;
+    &lt;/IMPORTDATA&gt;
+  &lt;/BODY&gt;
+&lt;/ENVELOPE&gt;</pre>
+  </div>
+</div>
+
+<h3>8.3 Master Data Ownership & Conflict Resolution Rules</h3>
+<table>
+  <tr><th>Domain Entity</th><th>Authoritative Owner</th><th>Conflict Resolution Policy</th></tr>
+  <tr><td>Customer Sales Orders & Challans</td><td>Nagfani Cloud ERP</td><td>App is sole authority. Tally receives vouchers via outbox queue.</td></tr>
+  <tr><td>Warehouse Inventory & Godowns</td><td>Nagfani Cloud ERP</td><td>Physical & Reserved quantities maintained exclusively in Cloud DB.</td></tr>
+  <tr><td>Posted Accounting Vouchers</td><td>TallyPrime</td><td>Once posted, modifications in Tally generate a conflict flag in ERP.</td></tr>
+  <tr><td>Customer / Supplier Masters</td><td>Shared (Two-Way)</td><td>Matched on Tally GUID. Master pull imports new ledgers; duplicates go to review queue.</td></tr>
+  <tr><td>Finished Goods / Raw Item Masters</td><td>Shared (Two-Way)</td><td>Matched on SKU / Item Name. Tally stock item import updates remote GUID.</td></tr>
+</table>
+""")
+
+# =========================================================================
+# SECTION 9: REAL-TIME WEBSOCKET EVENTS
+# =========================================================================
+content.append("""
+<div class="page-break"></div>
+<h2>9. Real-Time WebSocket Event Dictionary</h2>
+<p>The backend emits real-time events via Socket.IO after database transactions commit. Frontend clients listen for these events to automatically trigger TanStack Query cache invalidations, ensuring immediate updates across all active terminals without full-page reloads.</p>
+
+<table>
+  <tr><th>Event Name</th><th>Triggering Action</th><th>Payload Schema</th><th>Frontend Cache Invalidation Target</th></tr>
+  <tr>
+    <td><code>order:created</code></td>
+    <td>New order confirmed</td>
+    <td><code>{ orderId, orderNo, grandTotal, party }</code></td>
+    <td><code>['orders'], ['dashboard'], ['stock_levels']</code></td>
+  </tr>
+  <tr>
+    <td><code>order:status</code></td>
+    <td>Status transitioned (pack/ship/deliver)</td>
+    <td><code>{ orderId, status, previousStatus, order }</code></td>
+    <td><code>['orders'], ['order', id], ['delivery_board']</code></td>
+  </tr>
+  <tr>
+    <td><code>stock:changed</code></td>
+    <td>Movements, transfers, adjustments</td>
+    <td><code>{ type, itemId, godownId, level }</code></td>
+    <td><code>['stock_levels'], ['stock_movements'], ['stock_reserved']</code></td>
+  </tr>
+  <tr>
+    <td><code>production:created</code></td>
+    <td>Manufacturing batch completed</td>
+    <td><code>{ productionNo, productId, qty, batchNo }</code></td>
+    <td><code>['production'], ['stock_levels'], ['dashboard']</code></td>
+  </tr>
+  <tr>
+    <td><code>purchase:created</code></td>
+    <td>Vendor purchase bill inwarded</td>
+    <td><code>{ purchaseNo, supplierId, grandTotal }</code></td>
+    <td><code>['purchases'], ['stock_levels'], ['parties']</code></td>
+  </tr>
+  <tr>
+    <td><code>sync:status</code></td>
+    <td>Tally voucher acknowledged/failed</td>
+    <td><code>{ idempotencyKey, status, tallyGuid, error }</code></td>
+    <td><code>['sync_overview'], ['sync_log']</code></td>
+  </tr>
+  <tr>
+    <td><code>connector:status</code></td>
+    <td>Desktop gateway heartbeat</td>
+    <td><code>{ tallyReachable, company, version, at }</code></td>
+    <td><code>['sync_overview'] (Updates live green pill)</code></td>
+  </tr>
+  <tr>
+    <td><code>sync:inbound_masters</code></td>
+    <td>Bulk master pull completed</td>
+    <td><code>{ parties: { created, updated }, items: {...} }</code></td>
+    <td><code>['parties'], ['items'], ['sync_overview']</code></td>
+  </tr>
+</table>
+
+<h2>10. Machine-Readable Quick-Lookup System Index</h2>
+<div class="callout callout-tip">
+  <strong>AI System Index:</strong> The following compact JSON manifest provides programmatic summary metadata for automated indexing tools:
+</div>
+
+<pre>{
+  "system": "Nagfani Foods ERP",
+  "version": "1.0.0-classic",
+  "architecture": "Distributed 3-Tier (React PWA + Node REST/WS + Windows Tally Gateway)",
+  "coreInvariants": {
+    "stockFormula": "Available = Physical - Reserved",
+    "directStockMutationAllowed": false,
+    "gstStateCodeIntra": "08",
+    "tallyPort": 9000,
+    "outboundSyncProtocol": "Store-and-Forward Idempotent Queue"
+  },
+  "modules": [
+    { "id": "AUTH", "baseRoute": "/api/v1/auth", "models": ["users", "roles"] },
+    { "id": "MASTERS", "baseRoute": "/api/v1", "models": ["areas", "godowns", "units"] },
+    { "id": "ITEMS", "baseRoute": "/api/v1/items", "models": ["items"] },
+    { "id": "PARTIES", "baseRoute": "/api/v1/parties", "models": ["parties", "rate_history"] },
+    { "id": "ORDERS", "baseRoute": "/api/v1/orders", "models": ["orders", "counters"] },
+    { "id": "STOCK", "baseRoute": "/api/v1/stock", "models": ["stock_movements", "stock_levels", "stock_transfers"] },
+    { "id": "PURCHASE", "baseRoute": "/api/v1/purchases", "models": ["purchases"] },
+    { "id": "MANUFACTURING", "baseRoute": "/api/v1", "models": ["boms", "production_entries"] },
+    { "id": "BILLING", "baseRoute": "/api/v1", "models": ["invoices"] },
+    { "id": "PAYMENTS", "baseRoute": "/api/v1/payments", "models": ["payments"] },
+    { "id": "SYNC", "baseRoute": "/api/v1/sync", "models": ["sync_outbox", "sync_inbox", "sync_log"] }
+  ]
+}</pre>
+
+<div style="margin-top: 25px; padding-top: 10px; border-top: 1px solid #CBD5E1; font-size: 7.5pt; color: #64748B; text-align: center;">
+  Nagfani Foods ERP V1.0 Classic &bull; Canonical System Architecture Specification & Functional Map &bull; Compiled for Human & AI Auditability
+</div>
+</body>
+</html>
+""")
+
+html_content = "".join(content)
+
+with open(HTML_PATH, "w", encoding="utf-8") as f:
+    f.write(html_content)
+
+print(f"HTML specification generated at: {HTML_PATH} ({len(html_content)} bytes)")
+
+print("Compiling high-resolution PDF via headless Brave Browser...")
+cmd = [
+    "/usr/bin/brave-browser",
+    "--headless",
+    "--disable-gpu",
+    "--no-sandbox",
+    f"--print-to-pdf={PDF_PATH}",
+    HTML_PATH
+]
+
+res = subprocess.run(cmd, capture_output=True, text=True)
+if res.returncode == 0:
+    print(f"SUCCESS: PDF generated at: {PDF_PATH}")
+    # Copy to web public and web dist so it's instantly downloadable via the web server
+    subprocess.run(["cp", PDF_PATH, PUBLIC_PDF], check=True)
+    subprocess.run(["cp", PDF_PATH, DIST_PDF], check=True)
+    print(f"Deployed to web server: {PUBLIC_PDF} and {DIST_PDF}")
+else:
+    print(f"Error compiling PDF: {res.stderr}")
+    sys.exit(1)
