@@ -31,6 +31,7 @@ import { SyncOverview } from './pages/sync/SyncOverview.jsx';
 import { SettingsHub } from './pages/settings/SettingsHub.jsx';
 import { Search } from './pages/Search.jsx';
 import { NotFound } from './pages/NotFound.jsx';
+import { AuditTrail } from './pages/admin/AuditTrail.jsx';
 
 // Version 2.0 Modern Executive Pages & Shell
 import { LayoutV2 } from './v2/components/LayoutV2.jsx';
@@ -114,6 +115,7 @@ export function App() {
           <Route path="invoices" element={<InvoicesV3 />} />
           <Route path="invoices/:id" element={<InvoicesV3 />} />
           <Route path="sync" element={<TallySyncV3 />} />
+          <Route path="audit" element={<AuditTrail />} />
           <Route path="stock" element={<StockV3 />} />
           <Route path="customers" element={<CustomersV3 />} />
           <Route path="purchases" element={<PurchasesV3 />} />
@@ -141,6 +143,7 @@ export function App() {
           <Route path="manufacturing" element={<ProductionV2 />} />
           <Route path="invoices" element={<InvoiceV2 />} />
           <Route path="invoices/:id" element={<InvoiceV2 />} />
+          <Route path="audit" element={<AuditTrail />} />
         </Route>
 
         {/* ============================================================ */}
@@ -187,6 +190,7 @@ export function App() {
 
           <Route path="reports" element={<ReportsHub />} />
           <Route path="sync" element={<SyncOverview />} />
+          <Route path="audit" element={<AuditTrail />} />
           <Route path="settings" element={<SettingsHub />} />
 
           <Route path="search" element={<Search />} />

@@ -7,6 +7,7 @@ import { authenticateToken } from '../middleware/auth.js';
 import { requirePermission } from '../middleware/rbac.js';
 import { getNextSequence } from '../services/counterService.js';
 import { enqueueSyncOutbox } from '../services/syncService.js';
+import { recordAudit } from '../services/auditService.js';
 
 const router = express.Router();
 
@@ -148,6 +149,17 @@ router.post(['/invoices/generate-from-order/:orderId', '/generate-from-order/:or
     const populated = await Invoice.findById(invoice._id)
       .populate('partyId')
       .populate('orderId');
+
+    // Immutable Audit Trail
+    await recordAudit({
+      req,
+      action: 'CREATE',
+      entity: 'invoice',
+      entityId: invoice._id,
+      entityRef: invoice.invoiceNo,
+      summary: `Invoice #${invoice.invoiceNo} issued for order #${order.orderNo} totaling ₹${invoice.grandTotal.toLocaleString('en-IN')}`,
+      after: { invoiceNo: invoice.invoiceNo, orderNo: order.orderNo, total: invoice.grandTotal }
+    });
 
     res.status(201).json({ success: true, data: populated });
   } catch (err) {

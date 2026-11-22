@@ -16,6 +16,7 @@ import {
   checkStockAvailability
 } from '../services/stockService.js';
 import { enqueueSyncOutbox } from '../services/syncService.js';
+import { recordAudit } from '../services/auditService.js';
 import { emitEvent } from '../services/socketService.js';
 
 const router = express.Router();
@@ -269,6 +270,17 @@ router.post('/', requirePermission('order.create'), async (req, res, next) => {
 
     emitEvent('order:created', populated);
 
+    // Immutable Audit Trail
+    await recordAudit({
+      req,
+      action: 'CREATE',
+      entity: 'order',
+      entityId: order._id,
+      entityRef: order.orderNo,
+      summary: `Order #${order.orderNo} created for '${party.name}' (${order.items.length} items, ₹${order.grandTotal.toLocaleString('en-IN')})`,
+      after: { orderNo: order.orderNo, party: party.name, total: order.grandTotal, itemsCount: order.items.length }
+    });
+
     res.status(201).json({ success: true, data: populated });
   } catch (err) {
     await session.abortTransaction();
@@ -345,6 +357,19 @@ const updateOrderStatus = async (req, res, next) => {
       .populate('statusHistory.by', 'name username');
 
     emitEvent('order:status', { orderId: order._id, status, previousStatus, order: populated });
+
+    // Immutable Audit Trail
+    await recordAudit({
+      req,
+      action: status === 'cancelled' ? 'CANCEL' : 'STATUS_CHANGE',
+      entity: 'order',
+      entityId: order._id,
+      entityRef: order.orderNo,
+      summary: `Order #${order.orderNo} status changed from '${previousStatus}' to '${status}'${note ? ' (' + note + ')' : ''}`,
+      diff: { status: { from: previousStatus, to: status }, note },
+      before: { status: previousStatus },
+      after: { status }
+    });
 
     res.json({ success: true, data: populated });
   } catch (err) {
@@ -434,6 +459,17 @@ router.post('/:id/payment', async (req, res, next) => {
     session.endSession();
 
     emitEvent('order:payment', { orderId: order._id, payment });
+
+    // Immutable Audit Trail
+    await recordAudit({
+      req,
+      action: 'PAYMENT_COLLECTED',
+      entity: 'payment',
+      entityId: payment._id,
+      entityRef: payment.receiptNo,
+      summary: `Payment receipt #${payment.receiptNo} of ₹${paymentAmount.toLocaleString('en-IN')} (${mode.toUpperCase()}) collected for order #${order.orderNo}`,
+      after: { receiptNo: payment.receiptNo, orderNo: order.orderNo, amount: paymentAmount, mode }
+    });
 
     res.json({ success: true, payment, order });
   } catch (err) {

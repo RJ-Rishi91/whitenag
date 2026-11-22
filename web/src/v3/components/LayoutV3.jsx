@@ -70,6 +70,7 @@ export function LayoutV3({ onSwitchVersion }) {
         { to: '/v3/payments', label: 'Payments & Cash', icon: 'payments' },
         { to: '/v3/reports', label: 'Reports & P&L', icon: 'insights' },
         { to: '/v3/sync', label: 'TallyPrime Hub', icon: 'sync_alt' },
+        { to: '/v3/audit', label: 'Audit Trail & Vault', icon: 'verified_user' },
         { to: '/v3/settings', label: 'Settings', icon: 'tune' }
       ]
     }

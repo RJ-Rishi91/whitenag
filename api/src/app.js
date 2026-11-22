@@ -26,6 +26,7 @@ import dashboardRoutes from './routes/dashboardRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
 import searchRoutes from './routes/searchRoutes.js';
 import syncRoutes from './routes/syncRoutes.js';
+import auditRoutes from './routes/auditRoutes.js';
 
 export function createApp() {
   const app = express();
@@ -62,6 +63,7 @@ export function createApp() {
   app.use(`${apiPrefix}/reports`, reportRoutes);
   app.use(`${apiPrefix}/search`, searchRoutes);
   app.use(`${apiPrefix}/sync`, syncRoutes);
+  app.use(`${apiPrefix}/audit`, auditRoutes);
 
   // Serve frontend static build if present
   const staticPath = path.resolve(__dirname, '../../web/dist');

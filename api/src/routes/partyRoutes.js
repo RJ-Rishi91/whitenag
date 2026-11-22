@@ -6,6 +6,7 @@ import { Payment } from '../models/Payment.js';
 import { Invoice } from '../models/Invoice.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { enqueueSyncOutbox } from '../services/syncService.js';
+import { recordAudit } from '../services/auditService.js';
 
 const router = express.Router();
 
@@ -169,6 +170,17 @@ router.post('/', async (req, res, next) => {
       payload: party.toObject()
     });
 
+    // Immutable Audit Trail
+    await recordAudit({
+      req,
+      action: 'CREATE',
+      entity: 'party',
+      entityId: party._id,
+      entityRef: party.name,
+      summary: `New party '${party.name}' (${party.type || 'customer'}) created`,
+      after: { name: party.name, type: party.type, mobile: party.mobile, gstin: party.gstin }
+    });
+
     res.status(201).json({ success: true, data: party });
   } catch (err) {
     next(err);
@@ -178,6 +190,7 @@ router.post('/', async (req, res, next) => {
 // PUT /api/v1/parties/:id
 router.put('/:id', async (req, res, next) => {
   try {
+    const previous = await Party.findById(req.params.id);
     const party = await Party.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!party) return res.status(404).json({ success: false, message: 'Party not found' });
 
@@ -188,7 +201,43 @@ router.put('/:id', async (req, res, next) => {
       payload: party.toObject()
     });
 
+    // Immutable Audit Trail
+    await recordAudit({
+      req,
+      action: 'UPDATE',
+      entity: 'party',
+      entityId: party._id,
+      entityRef: party.name,
+      summary: `Party '${party.name}' details updated`,
+      before: previous ? { name: previous.name, balance: previous.balance, mobile: previous.mobile } : null,
+      after: { name: party.name, balance: party.balance, mobile: party.mobile }
+    });
+
     res.json({ success: true, data: party });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE /api/v1/parties/:id (SOFT DELETE: Data is never deleted from our database)
+router.delete('/:id', async (req, res, next) => {
+  try {
+    const party = await Party.findById(req.params.id);
+    if (!party) return res.status(404).json({ success: false, message: 'Party not found' });
+
+    party.active = false;
+    await party.save();
+
+    await recordAudit({
+      req,
+      action: 'DELETE',
+      entity: 'party',
+      entityId: party._id,
+      entityRef: party.name,
+      summary: `Party '${party.name}' deactivated (soft-deleted). Data retained permanently.`
+    });
+
+    res.json({ success: true, message: 'Party deactivated safely. Record preserved in system permanently.' });
   } catch (err) {
     next(err);
   }

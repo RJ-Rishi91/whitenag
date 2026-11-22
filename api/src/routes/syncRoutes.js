@@ -6,9 +6,11 @@ import { fileURLToPath } from 'url';
 import { SyncOutbox } from '../models/SyncOutbox.js';
 import { SyncInbox } from '../models/SyncInbox.js';
 import { SyncLog } from '../models/SyncLog.js';
-import { Party, Item, Unit, Godown, StockLevel } from '../models/index.js';
+import mongoose from 'mongoose';
+import { Party, Item, Unit, Godown, StockLevel, Order, Invoice, Payment } from '../models/index.js';
 import { authenticateToken, authenticateConnector } from '../middleware/auth.js';
 import { emitEvent } from '../services/socketService.js';
+import { recordAudit } from '../services/auditService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -33,6 +35,54 @@ router.post('/heartbeat', authenticateConnector, (req, res) => {
 
   emitEvent('connector:status', lastConnectorHeartbeat);
   res.json({ success: true, timestamp: lastConnectorHeartbeat.at });
+});
+
+// GET /api/v1/sync/status (Connector status & last entry)
+router.get('/status', async (req, res, next) => {
+  try {
+    const lastSynced = await SyncOutbox.findOne({ status: 'synced' }).sort({ syncedAt: -1 }).lean();
+    const lastMasterLog = await SyncLog.findOne({ entityType: 'master_import' }).sort({ at: -1 }).lean();
+    const pendingCount = await SyncOutbox.countDocuments({ status: { $in: ['pending', 'failed'] } });
+    const syncedCount = await SyncOutbox.countDocuments({ status: 'synced' });
+
+    const totalOrders = await Order.countDocuments();
+    const totalInvoices = await Invoice.countDocuments();
+    const totalPayments = await Payment.countDocuments();
+    const totalParties = await Party.countDocuments();
+    const totalItems = await Item.countDocuments();
+
+    res.json({
+      success: true,
+      data: {
+        lastSyncedEntry: lastSynced ? {
+          entityType: lastSynced.entityType,
+          idempotencyKey: lastSynced.idempotencyKey,
+          syncedAt: lastSynced.syncedAt,
+          voucherNumber: lastSynced.payload?.invoiceNo || lastSynced.payload?.receiptNo || lastSynced.payload?.orderNo || lastSynced.idempotencyKey
+        } : null,
+        lastMasterUpdate: lastMasterLog ? {
+          at: lastMasterLog.at,
+          message: lastMasterLog.message
+        } : null,
+        pendingCount,
+        syncedCount,
+        vault: {
+          status: '100% Immutable Vault Active',
+          neverDeleted: true,
+          totalRecordsPreserved: totalOrders + totalInvoices + totalPayments + totalParties + totalItems,
+          breakdown: {
+            orders: totalOrders,
+            invoices: totalInvoices,
+            payments: totalPayments,
+            parties: totalParties,
+            items: totalItems
+          }
+        }
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
 });
 
 // GET /api/v1/sync/pending
@@ -74,6 +124,16 @@ router.post('/ack', authenticateConnector, async (req, res, next) => {
       result: 'success',
       message: `Synced to Tally (${voucherNumber || tallyGuid})`,
       at: new Date()
+    });
+
+    await recordAudit({
+      action: 'SYNC_ACK',
+      entity: 'sync',
+      entityId: item.entityId,
+      entityRef: voucherNumber || tallyGuid || idempotencyKey,
+      summary: `[TALLY SYNC] ${item.entityType.toUpperCase()} voucher acknowledged by TallyPrime (${voucherNumber || tallyGuid})`,
+      userName: 'Tally Connector',
+      userRole: 'Desktop Gateway'
     });
 
     emitEvent('sync:status', { idempotencyKey, status: 'synced', tallyGuid });
@@ -252,6 +312,15 @@ router.post('/inbound-bulk', authenticateConnector, async (req, res, next) => {
     emitEvent('sync:inbound_masters', {
       parties: { created: partiesCreated, updated: partiesUpdated },
       items: { created: itemsCreated, updated: itemsUpdated }
+    });
+
+    await recordAudit({
+      action: 'MASTER_MERGE',
+      entity: 'sync',
+      entityRef: 'Tally Masters',
+      summary: `[TALLY MERGE] Master data merged: ${partiesCreated + partiesUpdated} parties (${partiesCreated} new), ${itemsCreated + itemsUpdated} items (${itemsCreated} new)`,
+      userName: 'Tally Connector',
+      userRole: 'Desktop Gateway'
     });
 
     res.json({

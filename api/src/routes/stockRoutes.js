@@ -9,6 +9,7 @@ import { requirePermission } from '../middleware/rbac.js';
 import { getNextSequence } from '../services/counterService.js';
 import { recordStockMovement, transferGodownStock } from '../services/stockService.js';
 import { emitEvent } from '../services/socketService.js';
+import { recordAudit } from '../services/auditService.js';
 
 const router = express.Router();
 
@@ -144,6 +145,17 @@ router.post('/transfers', requirePermission('stock.transfer'), async (req, res, 
 
     emitEvent('stock:changed', { type: 'transfer', transfer: populated });
 
+    // Immutable Audit Trail
+    await recordAudit({
+      req,
+      action: 'TRANSFER',
+      entity: 'stock',
+      entityId: transfer._id,
+      entityRef: transfer.transferNo,
+      summary: `Stock transfer #${transfer.transferNo} executed (${lines.length} items from ${populated.fromGodownId?.name || 'Godown'} to ${populated.toGodownId?.name || 'Godown'})`,
+      after: { transferNo: transfer.transferNo, linesCount: lines.length }
+    });
+
     res.status(201).json({ success: true, data: populated });
   } catch (err) {
     await session.abortTransaction();
@@ -184,6 +196,17 @@ router.post('/adjustments', requirePermission('stock.adjust'), async (req, res, 
     session.endSession();
 
     emitEvent('stock:changed', { type: movementType, itemId, godownId, level });
+
+    // Immutable Audit Trail
+    await recordAudit({
+      req,
+      action: 'STOCK_ADJUSTMENT',
+      entity: 'stock',
+      entityId: movement._id,
+      entityRef: `Stock ${movementType.toUpperCase()}`,
+      summary: `Stock ${movementType} of ${adjustmentQty > 0 ? '+' : ''}${adjustmentQty} recorded (${remarks || 'Physical adjustment'})`,
+      after: { qty: adjustmentQty, type: movementType, levelAvailable: level.available }
+    });
 
     res.status(201).json({ success: true, movement, level });
   } catch (err) {

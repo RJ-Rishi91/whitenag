@@ -7,6 +7,7 @@ import { authenticateToken } from '../middleware/auth.js';
 import { requirePermission } from '../middleware/rbac.js';
 import { getNextSequence } from '../services/counterService.js';
 import { enqueueSyncOutbox } from '../services/syncService.js';
+import { recordAudit } from '../services/auditService.js';
 
 const router = express.Router();
 
@@ -119,6 +120,17 @@ router.post('/', requirePermission('payment.record'), async (req, res, next) => 
     const populated = await Payment.findById(payment._id)
       .populate('partyId')
       .populate('recordedBy', 'name username');
+
+    // Immutable Audit Trail
+    await recordAudit({
+      req,
+      action: 'PAYMENT_COLLECTED',
+      entity: 'payment',
+      entityId: payment._id,
+      entityRef: payment.receiptNo,
+      summary: `Payment receipt #${payment.receiptNo} of ₹${payment.amount.toLocaleString('en-IN')} (${payment.mode.toUpperCase()}) recorded for '${party.name}'`,
+      after: { receiptNo: payment.receiptNo, party: party.name, amount: payment.amount, mode: payment.mode }
+    });
 
     res.status(201).json({ success: true, data: populated });
   } catch (err) {

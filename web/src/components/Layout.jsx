@@ -13,6 +13,7 @@ import {
   BarChart3,
   RefreshCw,
   Settings,
+  ShieldCheck,
   Search,
   LogOut,
   Menu,
@@ -92,6 +93,7 @@ export function Layout() {
     { to: '/payments', label: 'Payments & Cash', icon: CreditCard },
     { to: '/reports', label: 'Reports', icon: BarChart3 },
     { to: '/sync', label: 'Tally Sync', icon: RefreshCw },
+    { to: '/audit', label: 'Audit Trail', icon: ShieldCheck },
     { to: '/settings', label: 'Settings', icon: Settings }
   ];
 
