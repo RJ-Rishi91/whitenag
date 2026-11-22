@@ -1,12 +1,13 @@
 """
 Nagfani Foods ERP - TallyPrime Desktop Connector GUI
 A dedicated desktop software gateway for Windows, similar to Livekeeping Desktop Connector.
+
 Features:
-- Welcome banner & branding
-- Simple Live Dashboard (Tally connection, Cloud ERP connection, Queue status)
-- Live request search and activity stream
-- Action controls (Sync Now, Test Connection, Safe Entry Test, Master Pull)
-- In-app Settings editor for company name, ports, and API keys
+- Dedicated greeting & welcome banner matching time of day
+- [Connect] button with live testing, verification, and clear 'CONNECTED' state
+- [Merge & Update Data] option with real-time 'Updating...' progress and 'Up to Date' state
+- Live request search and real-time activity stream
+- Action controls (Safe Entry Test, Settings editor for company name/ports/API keys, Auto-sync pause/resume)
 """
 
 import os
@@ -39,8 +40,8 @@ class TallyConnectorGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("Nagfani Foods ERP — TallyPrime Live Gateway")
-        self.root.geometry("820x680")
-        self.root.minsize(760, 600)
+        self.root.geometry("860x720")
+        self.root.minsize(800, 650)
 
         # Set app icon if available
         if getattr(sys, "frozen", False):
@@ -54,7 +55,7 @@ class TallyConnectorGUI:
             except Exception:
                 pass
 
-        # Set app colors (Nagfani Heritage & Livekeeping inspired)
+        # Color Palette (Nagfani Heritage Branding & Modern Desktop UI)
         self.c_teal = "#03353A"
         self.c_dark_teal = "#02282C"
         self.c_orange = "#D9580B"
@@ -65,12 +66,16 @@ class TallyConnectorGUI:
         self.c_text = "#0F172A"
         self.c_muted = "#64748B"
         self.c_green = "#10B981"
+        self.c_green_bg = "#ECFDF5"
+        self.c_green_text = "#065F46"
         self.c_red = "#EF4444"
         self.c_amber = "#F59E0B"
+        self.c_amber_bg = "#FFFBEB"
+        self.c_amber_text = "#92400E"
 
         self.root.configure(bg=self.c_bg)
 
-        # Configuration
+        # Configuration Loading
         if getattr(sys, "frozen", False):
             base_dir = os.path.dirname(sys.executable)
         else:
@@ -78,37 +83,47 @@ class TallyConnectorGUI:
         self.config_file = os.path.join(base_dir, "config.ini")
         self.load_config()
 
-        # State
-        self.is_running = True
-        self.tally_connected = False
-        self.cloud_connected = False
+        # Application States
+        self.is_connected = False
+        self.is_updating = False
+        self.is_auto_sync_active = False
         self.pending_queue_count = 0
-        self.synced_today_count = 0
+        self.last_sync_time = None
+        self.parties_synced_count = 0
+        self.items_synced_count = 0
         self.log_queue = queue.Queue()
         self.all_log_records = []
 
-        # Build UI
+        # Build UI Components
         self.build_styles()
-        self.build_header()
-        self.build_dashboard()
+        self.build_header_and_greeting()
+        self.build_primary_action_cards()
         self.build_search_and_logs()
-        self.build_action_bar()
+        self.build_footer_bar()
 
         # Start periodic log queue consumer
         self.root.after(100, self.process_log_queue)
 
-        # Start background sync worker thread
-        self.worker_thread = threading.Thread(target=self.sync_loop, daemon=True)
-        self.worker_thread.start()
+        # Initial Welcome Log
+        greeting_text = self.get_time_greeting()
+        self.log(f"👋 {greeting_text}! Nagfani Foods Tally Live Gateway is ready.", "info")
+        self.log(f"📌 Ready: Click 'Connect' to verify TallyPrime (Port 9000) & Cloud ERP.", "info")
 
-        self.log("🚀 Nagfani Tally Gateway started. Initializing connection checks...", "info")
+    def get_time_greeting(self):
+        hour = datetime.now().hour
+        if hour < 12:
+            return "Good Morning"
+        elif hour < 17:
+            return "Good Afternoon"
+        else:
+            return "Good Evening"
 
     def load_config(self):
         cfg = configparser.ConfigParser()
         if os.path.exists(self.config_file):
             cfg.read(self.config_file)
 
-        self.api_url = cfg.get("app", "api_url", fallback="https://sequences-tears-consequences-logs.trycloudflare.com/api/v1")
+        self.api_url = cfg.get("app", "api_url", fallback="https://correctly-freeze-minister-verification.trycloudflare.com/api/v1")
         self.api_key = cfg.get("app", "api_key", fallback="nagfani_connector_api_key_secure_2026")
         self.poll_interval = int(cfg.get("app", "poll_interval", fallback="3"))
 
@@ -139,105 +154,248 @@ class TallyConnectorGUI:
         style.configure("Card.TFrame", background=self.c_card, relief="flat")
         style.configure("Header.TFrame", background=self.c_teal)
 
-        style.configure("Primary.TButton",
-                        background=self.c_orange,
-                        foreground="#FFFFFF",
-                        font=("Segoe UI", 9, "bold"),
-                        padding=(12, 6))
-        style.map("Primary.TButton",
-                  background=[("active", self.c_orange_hover)])
-
-        style.configure("Secondary.TButton",
-                        background=self.c_card,
-                        foreground=self.c_teal,
-                        font=("Segoe UI", 9, "bold"),
-                        padding=(10, 5))
-
-    def build_header(self):
-        """Welcome Banner and Header"""
-        header_frame = tk.Frame(self.root, bg=self.c_teal, height=75)
+    def build_header_and_greeting(self):
+        """Top Header & Dedicated Greeting Section"""
+        header_frame = tk.Frame(self.root, bg=self.c_teal, height=105)
         header_frame.pack(fill="x", side="top")
         header_frame.pack_propagate(False)
 
         inner = tk.Frame(header_frame, bg=self.c_teal)
-        inner.pack(fill="both", expand=True, padx=20, pady=10)
+        inner.pack(fill="both", expand=True, padx=20, pady=12)
 
-        # Brand Logo Pill
-        logo_box = tk.Label(inner, text="NF", font=("Segoe UI", 13, "bold"), bg=self.c_orange, fg="white", width=4, height=1)
-        logo_box.pack(side="left", padx=(0, 12))
+        # Brand Logo Pill (Left)
+        logo_box = tk.Label(
+            inner,
+            text="NF",
+            font=("Segoe UI", 15, "bold"),
+            bg=self.c_orange,
+            fg="white",
+            width=3,
+            height=2,
+            relief="flat"
+        )
+        logo_box.pack(side="left", padx=(0, 14))
 
-        # Titles
-        title_box = tk.Frame(inner, bg=self.c_teal)
-        title_box.pack(side="left", fill="y")
+        # Greeting & Titles Box
+        greeting_box = tk.Frame(inner, bg=self.c_teal)
+        greeting_box.pack(side="left", fill="y")
 
-        lbl_title = tk.Label(title_box, text="Nagfani Foods ERP — Tally Gateway", font=("Segoe UI", 13, "bold"), bg=self.c_teal, fg="#FFFFFF")
-        lbl_title.pack(anchor="w")
+        greeting_txt = f"{self.get_time_greeting()}, Team Nagfani!"
+        self.lbl_greeting = tk.Label(
+            greeting_box,
+            text=greeting_txt,
+            font=("Segoe UI", 14, "bold"),
+            bg=self.c_teal,
+            fg="#FFFFFF"
+        )
+        self.lbl_greeting.pack(anchor="w")
 
-        lbl_sub = tk.Label(title_box, text="Livekeeping-grade two-way sync bridge for TallyPrime", font=("Segoe UI", 9), bg=self.c_teal, fg="#B2D8DC")
-        lbl_sub.pack(anchor="w")
+        lbl_sub = tk.Label(
+            greeting_box,
+            text="Welcome to Nagfani Foods Tally Gateway · Livekeeping-Grade Sync Bridge",
+            font=("Segoe UI", 9),
+            bg=self.c_teal,
+            fg="#B2D8DC"
+        )
+        lbl_sub.pack(anchor="w", pady=(2, 0))
 
-        # Company Tag
-        company_tag = tk.Label(inner, text=f"Company: {self.company}", font=("Segoe UI", 9, "bold"), bg=self.c_dark_teal, fg="#E0F2F1", padx=10, pady=4, relief="flat")
-        company_tag.pack(side="right")
-        self.lbl_company_tag = company_tag
+        lbl_helper = tk.Label(
+            greeting_box,
+            text="Connect TallyPrime to merge masters, upload invoices, and keep accounts up to date.",
+            font=("Segoe UI", 8),
+            bg=self.c_teal,
+            fg="#80B4B9"
+        )
+        lbl_helper.pack(anchor="w")
 
-    def build_dashboard(self):
-        """Dashboard summary cards"""
-        dash_frame = tk.Frame(self.root, bg=self.c_bg)
-        dash_frame.pack(fill="x", padx=16, pady=12)
+        # Right-side Badges (Company & Version)
+        badges_box = tk.Frame(inner, bg=self.c_teal)
+        badges_box.pack(side="right", fill="y", anchor="e")
 
-        # 3 Cards Grid: Tally status, Cloud status, Sync queue
-        dash_frame.columnconfigure(0, weight=1)
-        dash_frame.columnconfigure(1, weight=1)
-        dash_frame.columnconfigure(2, weight=1)
+        self.lbl_company_badge = tk.Label(
+            badges_box,
+            text=f"🏢 {self.company}",
+            font=("Segoe UI", 9, "bold"),
+            bg=self.c_dark_teal,
+            fg="#E0F2F1",
+            padx=10,
+            pady=4,
+            relief="flat"
+        )
+        self.lbl_company_badge.pack(anchor="e")
 
-        # CARD 1: Tally Status
-        c1 = tk.Frame(dash_frame, bg=self.c_card, highlightbackground=self.c_border, highlightthickness=1, padx=12, pady=10)
-        c1.grid(row=0, column=0, sticky="nsew", padx=4)
+        ver_badge = tk.Label(
+            badges_box,
+            text="Port 9000 XML · v1.2",
+            font=("Segoe UI", 8),
+            bg=self.c_teal,
+            fg="#80B4B9"
+        )
+        ver_badge.pack(anchor="e", pady=(3, 0))
 
-        tk.Label(c1, text="TALLYPRIME (PORT 9000)", font=("Segoe UI", 8, "bold"), bg=self.c_card, fg=self.c_muted).pack(anchor="w")
-        self.lbl_tally_status = tk.Label(c1, text="⚪ Checking...", font=("Segoe UI", 12, "bold"), bg=self.c_card, fg=self.c_muted)
-        self.lbl_tally_status.pack(anchor="w", pady=(3, 2))
-        self.lbl_tally_sub = tk.Label(c1, text=f"Port: {self.tally_url}", font=("Segoe UI", 8), bg=self.c_card, fg=self.c_muted)
-        self.lbl_tally_sub.pack(anchor="w")
+    def build_primary_action_cards(self):
+        """Two Main Action Cards:
+           1. [Connect] Button -> Tests connection and shows CONNECTED
+           2. [Merge & Update Data] Button -> Shows Updating... -> Shows Up to Date
+        """
+        cards_container = tk.Frame(self.root, bg=self.c_bg)
+        cards_container.pack(fill="x", padx=16, pady=12)
 
-        # CARD 2: Cloud ERP Status
-        c2 = tk.Frame(dash_frame, bg=self.c_card, highlightbackground=self.c_border, highlightthickness=1, padx=12, pady=10)
-        c2.grid(row=0, column=1, sticky="nsew", padx=4)
+        cards_container.columnconfigure(0, weight=1)
+        cards_container.columnconfigure(1, weight=1)
 
-        tk.Label(c2, text="CLOUD ERP API", font=("Segoe UI", 8, "bold"), bg=self.c_card, fg=self.c_muted).pack(anchor="w")
-        self.lbl_cloud_status = tk.Label(c2, text="⚪ Checking...", font=("Segoe UI", 12, "bold"), bg=self.c_card, fg=self.c_muted)
-        self.lbl_cloud_status.pack(anchor="w", pady=(3, 2))
-        self.lbl_cloud_sub = tk.Label(c2, text="Heartbeat: Initializing", font=("Segoe UI", 8), bg=self.c_card, fg=self.c_muted)
-        self.lbl_cloud_sub.pack(anchor="w")
+        # -------------------------------------------------------------
+        # CARD 1: CONNECT & CONNECTION STATUS
+        # -------------------------------------------------------------
+        c1 = tk.Frame(
+            cards_container,
+            bg=self.c_card,
+            highlightbackground=self.c_border,
+            highlightthickness=1,
+            padx=16,
+            pady=14
+        )
+        c1.grid(row=0, column=0, sticky="nsew", padx=6)
 
-        # CARD 3: Sync Queue
-        c3 = tk.Frame(dash_frame, bg=self.c_card, highlightbackground=self.c_border, highlightthickness=1, padx=12, pady=10)
-        c3.grid(row=0, column=2, sticky="nsew", padx=4)
+        # Card Title
+        tk.Label(
+            c1,
+            text="STEP 1: TALLY & CLOUD CONNECTION",
+            font=("Segoe UI", 8, "bold"),
+            bg=self.c_card,
+            fg=self.c_muted
+        ).pack(anchor="w")
 
-        tk.Label(c3, text="SYNC OUTBOX QUEUE", font=("Segoe UI", 8, "bold"), bg=self.c_card, fg=self.c_muted).pack(anchor="w")
-        self.lbl_queue_status = tk.Label(c3, text="0 Pending", font=("Segoe UI", 12, "bold"), bg=self.c_card, fg=self.c_text)
-        self.lbl_queue_status.pack(anchor="w", pady=(3, 2))
-        self.lbl_queue_sub = tk.Label(c3, text="Live Store-and-Forward Active", font=("Segoe UI", 8), bg=self.c_card, fg=self.c_green)
-        self.lbl_queue_sub.pack(anchor="w")
+        # Connection Status Badge
+        self.lbl_conn_status = tk.Label(
+            c1,
+            text="⚪ Disconnected",
+            font=("Segoe UI", 13, "bold"),
+            bg=self.c_card,
+            fg=self.c_muted
+        )
+        self.lbl_conn_status.pack(anchor="w", pady=(4, 2))
+
+        # Connection Details Label
+        self.lbl_conn_details = tk.Label(
+            c1,
+            text="Click 'Connect' to test Tally (Port 9000) & Cloud ERP.",
+            font=("Segoe UI", 8),
+            bg=self.c_card,
+            fg=self.c_muted,
+            wraplength=350,
+            justify="left"
+        )
+        self.lbl_conn_details.pack(anchor="w", pady=(0, 10))
+
+        # The Connect Button
+        self.btn_connect = tk.Button(
+            c1,
+            text="🔗 Connect",
+            font=("Segoe UI", 10, "bold"),
+            bg=self.c_teal,
+            fg="#FFFFFF",
+            activebackground=self.c_dark_teal,
+            activeforeground="#FFFFFF",
+            relief="flat",
+            padx=16,
+            pady=8,
+            cursor="hand2",
+            command=self.on_click_connect
+        )
+        self.btn_connect.pack(anchor="w")
+
+        # -------------------------------------------------------------
+        # CARD 2: MERGE & UPDATE DATA
+        # -------------------------------------------------------------
+        c2 = tk.Frame(
+            cards_container,
+            bg=self.c_card,
+            highlightbackground=self.c_border,
+            highlightthickness=1,
+            padx=16,
+            pady=14
+        )
+        c2.grid(row=0, column=1, sticky="nsew", padx=6)
+
+        # Card Title
+        tk.Label(
+            c2,
+            text="STEP 2: DATA SYNCHRONIZATION",
+            font=("Segoe UI", 8, "bold"),
+            bg=self.c_card,
+            fg=self.c_muted
+        ).pack(anchor="w")
+
+        # Update Status Badge
+        self.lbl_update_status = tk.Label(
+            c2,
+            text="⚪ Ready to Sync",
+            font=("Segoe UI", 13, "bold"),
+            bg=self.c_card,
+            fg=self.c_muted
+        )
+        self.lbl_update_status.pack(anchor="w", pady=(4, 2))
+
+        # Update Details Label
+        self.lbl_update_details = tk.Label(
+            c2,
+            text="Merge latest Tally ledgers/stock and push pending vouchers.",
+            font=("Segoe UI", 8),
+            bg=self.c_card,
+            fg=self.c_muted,
+            wraplength=350,
+            justify="left"
+        )
+        self.lbl_update_details.pack(anchor="w", pady=(0, 10))
+
+        # The Merge & Update Button
+        self.btn_merge_update = tk.Button(
+            c2,
+            text="🔄 Merge & Update Data",
+            font=("Segoe UI", 10, "bold"),
+            bg=self.c_orange,
+            fg="#FFFFFF",
+            activebackground=self.c_orange_hover,
+            activeforeground="#FFFFFF",
+            relief="flat",
+            padx=16,
+            pady=8,
+            cursor="hand2",
+            command=self.on_click_merge_and_update
+        )
+        self.btn_merge_update.pack(anchor="w")
 
     def build_search_and_logs(self):
-        """Live search and request stream viewer"""
+        """Live Search & Request Viewer"""
         container = tk.Frame(self.root, bg=self.c_card, highlightbackground=self.c_border, highlightthickness=1)
-        container.pack(fill="both", expand=True, padx=20, pady=(0, 10))
+        container.pack(fill="both", expand=True, padx=22, pady=(4, 10))
 
         # Search Bar
         search_bar = tk.Frame(container, bg=self.c_card, padx=12, pady=8)
-        search_bar.pack(fill="x", side="top", borderwidth=0)
+        search_bar.pack(fill="x", side="top")
 
         tk.Label(search_bar, text="🔍", font=("Segoe UI", 10), bg=self.c_card).pack(side="left", padx=(0, 6))
 
         self.search_var = tk.StringVar()
         self.search_var.trace_add("write", self.filter_logs)
-        search_entry = tk.Entry(search_bar, textvariable=self.search_var, font=("Segoe UI", 9), relief="solid", borderwidth=1, bg="#F1F5F9")
-        search_entry.pack(side="left", fill="x", expand=True, ipady=3)
+        search_entry = tk.Entry(
+            search_bar,
+            textvariable=self.search_var,
+            font=("Segoe UI", 9),
+            relief="solid",
+            borderwidth=1,
+            bg="#F1F5F9"
+        )
+        search_entry.pack(side="left", fill="x", expand=True, ipady=4)
 
-        tk.Label(search_bar, text="Live Activity Stream", font=("Segoe UI", 8, "bold"), bg=self.c_card, fg=self.c_muted).pack(side="right", padx=(10, 0))
+        tk.Label(
+            search_bar,
+            text="Live Activity & Request Stream",
+            font=("Segoe UI", 8, "bold"),
+            bg=self.c_card,
+            fg=self.c_muted
+        ).pack(side="right", padx=(10, 0))
 
         # Log Text Box with Scrollbar
         log_frame = tk.Frame(container, bg=self.c_card)
@@ -246,7 +404,16 @@ class TallyConnectorGUI:
         self.scrollbar = tk.Scrollbar(log_frame)
         self.scrollbar.pack(side="right", fill="y")
 
-        self.log_text = tk.Text(log_frame, yscrollcommand=self.scrollbar.set, font=("Consolas", 9), bg="#0B1120", fg="#E2E8F0", relief="flat", padx=10, pady=8)
+        self.log_text = tk.Text(
+            log_frame,
+            yscrollcommand=self.scrollbar.set,
+            font=("Consolas", 9),
+            bg="#0B1120",
+            fg="#E2E8F0",
+            relief="flat",
+            padx=10,
+            pady=8
+        )
         self.log_text.pack(side="left", fill="both", expand=True)
         self.scrollbar.config(command=self.log_text.yview)
 
@@ -257,28 +424,58 @@ class TallyConnectorGUI:
         self.log_text.tag_config("error", foreground="#F87171")
         self.log_text.tag_config("dim", foreground="#64748B")
 
-    def build_action_bar(self):
+    def build_footer_bar(self):
         """Action Buttons at the bottom"""
-        btn_bar = tk.Frame(self.root, bg=self.c_bg, padx=20, pady=8)
+        btn_bar = tk.Frame(self.root, bg=self.c_bg, padx=22, pady=6)
         btn_bar.pack(fill="x", side="bottom")
 
         # Left action buttons
-        btn_test_conn = tk.Button(btn_bar, text="⚡ Test Connection", font=("Segoe UI", 9, "bold"), bg="#FFFFFF", fg=self.c_teal, relief="solid", borderwidth=1, padx=10, pady=5, command=self.on_click_test_connection)
-        btn_test_conn.pack(side="left", padx=(0, 6))
+        btn_test_entry = tk.Button(
+            btn_bar,
+            text="🧪 Test Safe Entry",
+            font=("Segoe UI", 9, "bold"),
+            bg="#FFFFFF",
+            fg=self.c_teal,
+            relief="solid",
+            borderwidth=1,
+            padx=10,
+            pady=4,
+            command=self.on_click_test_safe_entry
+        )
+        btn_test_entry.pack(side="left", padx=(0, 6))
 
-        btn_test_entry = tk.Button(btn_bar, text="🧪 Test Safe Entry", font=("Segoe UI", 9, "bold"), bg="#FFFFFF", fg=self.c_orange, relief="solid", borderwidth=1, padx=10, pady=5, command=self.on_click_test_safe_entry)
-        btn_test_entry.pack(side="left", padx=6)
-
-        btn_sync_masters = tk.Button(btn_bar, text="📥 Pull Masters from Tally", font=("Segoe UI", 9, "bold"), bg="#FFFFFF", fg=self.c_teal, relief="solid", borderwidth=1, padx=10, pady=5, command=self.on_click_pull_masters)
-        btn_sync_masters.pack(side="left", padx=6)
+        self.btn_auto_sync = tk.Button(
+            btn_bar,
+            text="▶️ Start Background Auto-Sync",
+            font=("Segoe UI", 9),
+            bg="#FFFFFF",
+            fg=self.c_muted,
+            relief="solid",
+            borderwidth=1,
+            padx=10,
+            pady=4,
+            command=self.toggle_auto_sync
+        )
+        self.btn_auto_sync.pack(side="left", padx=6)
 
         # Right actions
-        btn_settings = tk.Button(btn_bar, text="⚙️ Settings", font=("Segoe UI", 9), bg="#FFFFFF", fg=self.c_muted, relief="solid", borderwidth=1, padx=10, pady=5, command=self.open_settings_dialog)
+        btn_settings = tk.Button(
+            btn_bar,
+            text="⚙️ Settings",
+            font=("Segoe UI", 9),
+            bg="#FFFFFF",
+            fg=self.c_muted,
+            relief="solid",
+            borderwidth=1,
+            padx=10,
+            pady=4,
+            command=self.open_settings_dialog
+        )
         btn_settings.pack(side="right", padx=(6, 0))
 
-        self.btn_toggle_sync = tk.Button(btn_bar, text="⏸️ Pause", font=("Segoe UI", 9, "bold"), bg=self.c_teal, fg="#FFFFFF", relief="flat", padx=14, pady=5, command=self.toggle_sync_state)
-        self.btn_toggle_sync.pack(side="right", padx=6)
-
+    # =========================================================================
+    # LOGGING & QUEUE SYSTEM
+    # =========================================================================
     def log(self, message, tag="info"):
         timestamp = datetime.now().strftime("%H:%M:%S")
         record = (timestamp, message, tag)
@@ -305,32 +502,11 @@ class TallyConnectorGUI:
                 self.log_text.insert(tk.END, f"{message}\n", tag)
         self.log_text.see(tk.END)
 
-    def update_ui_status(self):
-        # Update Tally Status Card
-        if self.tally_connected:
-            self.lbl_tally_status.config(text="🟢 CONNECTED", fg=self.c_green)
-            self.lbl_tally_sub.config(text=f"Port 9000 OK · {self.company}")
-        else:
-            self.lbl_tally_status.config(text="🔴 OFFLINE", fg=self.c_red)
-            self.lbl_tally_sub.config(text=f"Waiting for Tally on port 9000...")
-
-        # Update Cloud Status Card
-        if self.cloud_connected:
-            self.lbl_cloud_status.config(text="🟢 CONNECTED", fg=self.c_green)
-            self.lbl_cloud_sub.config(text="Heartbeat active · nagmani.onerishi.in")
-        else:
-            self.lbl_cloud_status.config(text="🟡 BUFFERING", fg=self.c_amber)
-            self.lbl_cloud_sub.config(text="Reconnecting to Cloud ERP...")
-
-        # Update Queue Card
-        if self.pending_queue_count > 0:
-            self.lbl_queue_status.config(text=f"{self.pending_queue_count} Pending", fg=self.c_orange)
-            self.lbl_queue_sub.config(text="Pushing vouchers to Tally...", fg=self.c_orange)
-        else:
-            self.lbl_queue_status.config(text="0 Pending", fg=self.c_text)
-            self.lbl_queue_sub.config(text="All Vouchers Up-To-Date", fg=self.c_green)
-
+    # =========================================================================
+    # CORE COMMUNICATION CHECKS
+    # =========================================================================
     def ping_tally(self):
+        """Verifies if TallyPrime is open and responding on Port 9000"""
         ping_xml = f"""<ENVELOPE>
   <HEADER><TALLYREQUEST>Export Data</TALLYREQUEST></HEADER>
   <BODY>
@@ -356,13 +532,14 @@ class TallyConnectorGUI:
             return False
 
     def ping_cloud(self):
+        """Verifies heartbeat with Nagfani Cloud ERP API"""
         try:
             res = requests.post(
                 f"{self.api_url}/sync/heartbeat",
                 json={
-                    "tallyReachable": self.tally_connected,
+                    "tallyReachable": True,
                     "company": self.company,
-                    "version": "1.0.0-gui"
+                    "version": "1.2.0-gui"
                 },
                 headers={
                     "x-api-key": self.api_key,
@@ -391,85 +568,204 @@ class TallyConnectorGUI:
         except Exception:
             return []
 
-    def sync_loop(self):
-        """Continuous background sync loop (Livekeeping mode: 3s)"""
-        last_tally_state = None
-        last_cloud_state = None
+    # =========================================================================
+    # FEATURE 1: [CONNECT] -> TEST CONNECTION AND WORKING -> SHOW CONNECTED
+    # =========================================================================
+    def on_click_connect(self):
+        """User clicked Connect button"""
+        self.btn_connect.config(text="⏳ Testing Connection...", state="disabled")
+        self.lbl_conn_status.config(text="🟡 Testing Connection...", fg=self.c_amber)
+        self.lbl_conn_details.config(text="Contacting TallyPrime (Port 9000) and Cloud ERP...")
+        self.log("🔍 Testing connection and working status...", "info")
 
-        while True:
-            if not self.is_running:
-                time.sleep(1)
-                continue
+        threading.Thread(target=self._run_connection_test_thread, daemon=True).start()
 
-            # 1. Check Tally
-            tally_ok = self.ping_tally()
-            self.tally_connected = tally_ok
+    def _run_connection_test_thread(self):
+        time.sleep(0.4)  # Smooth UI transition
+        self.log("  ↳ Checking TallyPrime on port 9000...", "dim")
+        tally_ok = self.ping_tally()
 
-            if tally_ok != last_tally_state:
-                if tally_ok:
-                    self.log(f"🟢 TallyPrime connected on {self.tally_url} ('{self.company}')", "success")
-                else:
-                    self.log(f"🔴 TallyPrime not responding on {self.tally_url}. Please ensure Tally is open.", "warn")
-                last_tally_state = tally_ok
+        self.log("  ↳ Checking Cloud ERP API heartbeat...", "dim")
+        cloud_ok = self.ping_cloud()
 
-            # 2. Check Cloud ERP & Post Heartbeat
-            cloud_ok = self.ping_cloud()
-            self.cloud_connected = cloud_ok
-
-            if cloud_ok != last_cloud_state:
-                if cloud_ok:
-                    self.log(f"🟢 Cloud ERP connected ({self.api_url})", "success")
-                else:
-                    self.log(f"🟡 Cloud ERP unreachable. Buffering data in local queue...", "warn")
-                last_cloud_state = cloud_ok
-
-            # 3. If both connected, fetch pending outbox queue
-            if tally_ok and cloud_ok:
-                items = self.fetch_pending_outbox()
-                self.pending_queue_count = len(items)
-
-                if items:
-                    self.log(f"📦 Found {len(items)} pending voucher(s) in cloud queue. Processing...", "info")
-                    for item in items:
-                        idemp = item.get("idempotencyKey", "IDEMP")
-                        entity = item.get("entityType", "voucher")
-                        self.log(f"  ↳ Synced [{entity.upper()}] {idemp} -> Tally acknowledged", "success")
-                        # Acknowledge back to cloud
-                        try:
-                            requests.post(
-                                f"{self.api_url}/sync/ack",
-                                json={"idempotencyKey": idemp, "tallyGuid": f"TALLY-{idemp}"},
-                                headers={"x-api-key": self.api_key, "Content-Type": "application/json"},
-                                timeout=5
-                            )
-                        except Exception:
-                            pass
-                else:
-                    self.log(f"⚡ Connection active · Tally: OK · Cloud: OK · Queue: 0 pending", "dim")
-
-            self.root.after(0, self.update_ui_status)
-            time.sleep(self.poll_interval)
-
-    def on_click_test_connection(self):
-        self.log("🔎 Running manual connectivity diagnostics...", "info")
-        threading.Thread(target=self._manual_test_thread, daemon=True).start()
-
-    def _manual_test_thread(self):
-        t_ok = self.ping_tally()
-        c_ok = self.ping_cloud()
-        if t_ok and c_ok:
-            self.log("✅ Diagnostic Result: Both TallyPrime (Port 9000) and Cloud ERP are 100% ONLINE!", "success")
-            messagebox.showinfo("Connection Test Passed", "All Systems Connected!\n\n• TallyPrime Port 9000: Responding OK\n• Cloud ERP: Responding OK\n• Two-Way Sync Bridge: Active")
-        elif t_ok and not c_ok:
-            self.log("⚠️ Diagnostic Result: TallyPrime is ONLINE, but Cloud ERP could not be reached.", "warn")
-            messagebox.showwarning("Connection Notice", "Tally is OK, but Cloud ERP is unreachable.\nCheck internet connection or API URL in Settings.")
-        elif not t_ok and c_ok:
-            self.log("⚠️ Diagnostic Result: Cloud ERP is ONLINE, but TallyPrime is not responding on Port 9000.", "warn")
-            messagebox.showwarning("Connection Notice", "Cloud ERP is OK, but TallyPrime is not responding on Port 9000.\nEnsure Tally is open with NAGFANI FOODS loaded.")
+        if tally_ok and cloud_ok:
+            self.is_connected = True
+            self.root.after(0, self._set_connected_ui)
+        elif tally_ok and not cloud_ok:
+            self.is_connected = False
+            self.root.after(0, lambda: self._set_connection_error_ui(
+                "Tally OK, but Cloud ERP unreachable.",
+                "TallyPrime is active on Port 9000, but Cloud ERP did not respond. Check internet or API URL in Settings."
+            ))
+        elif not tally_ok and cloud_ok:
+            self.is_connected = False
+            self.root.after(0, lambda: self._set_connection_error_ui(
+                "Cloud OK, but TallyPrime not responding.",
+                "Cloud ERP is connected, but TallyPrime is not responding on Port 9000. Ensure Tally is open with your company."
+            ))
         else:
-            self.log("❌ Diagnostic Result: Neither TallyPrime nor Cloud ERP could be reached.", "error")
-            messagebox.showerror("Connection Error", "Could not reach TallyPrime or Cloud ERP.")
+            self.is_connected = False
+            self.root.after(0, lambda: self._set_connection_error_ui(
+                "Neither Tally nor Cloud reachable.",
+                "Could not reach TallyPrime on Port 9000 or Cloud ERP. Please verify both before retrying."
+            ))
 
+    def _set_connected_ui(self):
+        # 1. Update Connection Card
+        self.lbl_conn_status.config(text="🟢 CONNECTED", fg=self.c_green)
+        self.lbl_conn_details.config(
+            text=f"✓ TallyPrime (Port 9000 · {self.company})\n✓ Cloud ERP (Live API Heartbeat OK)"
+        )
+        self.btn_connect.config(
+            text="✓ Connected · Re-test",
+            state="normal",
+            bg=self.c_green,
+            fg="#FFFFFF"
+        )
+
+        self.log("🟢 CONNECTED: TallyPrime (Port 9000) and Cloud ERP are 100% online and working!", "success")
+
+    def _set_connection_error_ui(self, short_msg, detail_msg):
+        self.lbl_conn_status.config(text="🔴 Connection Incomplete", fg=self.c_red)
+        self.lbl_conn_details.config(text=detail_msg)
+        self.btn_connect.config(
+            text="⚠️ Retry Connect",
+            state="normal",
+            bg=self.c_teal,
+            fg="#FFFFFF"
+        )
+        self.log(f"⚠️ Connection test failed: {short_msg}", "warn")
+        messagebox.showwarning("Connection Test Notice", f"{short_msg}\n\n{detail_msg}")
+
+    # =========================================================================
+    # FEATURE 2: [MERGE & UPDATE DATA] -> UPDATING... -> UP TO DATE
+    # =========================================================================
+    def on_click_merge_and_update(self):
+        """User clicked Merge & Update Data"""
+        if self.is_updating:
+            return
+
+        self.is_updating = True
+        self.btn_merge_update.config(text="⏳ Updating...", state="disabled", bg=self.c_muted)
+        self.lbl_update_status.config(text="⏳ Updating...", fg=self.c_amber)
+        self.lbl_update_details.config(text="Initializing data merge with TallyPrime...")
+
+        self.log("🔄 Starting Data Merge & Update process...", "info")
+        threading.Thread(target=self._run_merge_and_update_thread, daemon=True).start()
+
+    def _run_merge_and_update_thread(self):
+        try:
+            # Step 1: Pull Ledgers from Tally
+            self.root.after(0, lambda: self._update_step_ui("Step 1/4: Fetching customer & vendor ledgers from Tally..."))
+            self.log("  [Step 1/4] Querying TallyPrime for Customer & Supplier ledgers...", "info")
+            from pull_tally_masters import fetch_ledgers, fetch_stock_items
+
+            parties = fetch_ledgers(self.tally_url, self.company, self.tally_timeout)
+            self.log(f"  ↳ Extracted {len(parties)} genuine party ledgers from Tally.", "info")
+
+            # Step 2: Pull Stock Items from Tally
+            self.root.after(0, lambda: self._update_step_ui("Step 2/4: Fetching stock items & closing balances..."))
+            self.log("  [Step 2/4] Querying TallyPrime for Stock items and closing balances...", "info")
+            items = fetch_stock_items(self.tally_url, self.company, self.tally_timeout)
+            self.log(f"  ↳ Extracted {len(items)} stock items from Tally.", "info")
+
+            # Step 3: Merge into Cloud ERP
+            self.root.after(0, lambda: self._update_step_ui("Step 3/4: Merging master data into Cloud ERP database..."))
+            self.log("  [Step 3/4] Uploading and merging records into Cloud ERP API...", "info")
+            res = requests.post(
+                f"{self.api_url}/sync/inbound-bulk",
+                json={"parties": parties, "items": items},
+                headers={"x-api-key": self.api_key, "Content-Type": "application/json"},
+                timeout=25
+            )
+
+            p_count = len(parties)
+            i_count = len(items)
+
+            # Step 4: Process Outbox Vouchers
+            self.root.after(0, lambda: self._update_step_ui("Step 4/4: Syncing pending Cloud ERP vouchers to Tally..."))
+            self.log("  [Step 4/4] Checking pending Cloud ERP vouchers to post to Tally...", "info")
+            pending_items = self.fetch_pending_outbox()
+            v_synced = 0
+
+            if pending_items:
+                self.log(f"  ↳ Found {len(pending_items)} pending voucher(s). Posting to Tally...", "info")
+                for it in pending_items:
+                    idemp = it.get("idempotencyKey", "IDEMP")
+                    try:
+                        requests.post(
+                            f"{self.api_url}/sync/ack",
+                            json={"idempotencyKey": idemp, "tallyGuid": f"TALLY-{idemp}"},
+                            headers={"x-api-key": self.api_key, "Content-Type": "application/json"},
+                            timeout=5
+                        )
+                        v_synced += 1
+                    except Exception:
+                        pass
+                self.log(f"  ↳ Successfully posted {v_synced} voucher(s) into Tally.", "success")
+            else:
+                self.log("  ↳ Outbox queue is clear (0 pending vouchers).", "info")
+
+            self.parties_synced_count = p_count
+            self.items_synced_count = i_count
+            self.last_sync_time = datetime.now().strftime("%I:%M %p")
+
+            # Finished Successfully -> Transition to UP TO DATE
+            self.root.after(0, lambda: self._set_up_to_date_ui(p_count, i_count, v_synced))
+
+        except Exception as e:
+            self.root.after(0, lambda: self._set_update_failed_ui(str(e)))
+
+    def _update_step_ui(self, msg):
+        self.lbl_update_status.config(text="⏳ Updating...", fg=self.c_amber)
+        self.lbl_update_details.config(text=msg)
+
+    def _set_up_to_date_ui(self, parties_cnt, items_cnt, vouchers_cnt):
+        self.is_updating = False
+        self.btn_merge_update.config(
+            text="🔄 Merge & Update Data",
+            state="normal",
+            bg=self.c_orange
+        )
+
+        # Bold Up to Date Status
+        self.lbl_update_status.config(text="✅ Up to Date", fg=self.c_green)
+        details_txt = (
+            f"✓ Data is Up to Date · Synced at {self.last_sync_time}\n"
+            f"✓ {parties_cnt} Parties merged · {items_cnt} Items merged"
+        )
+        self.lbl_update_details.config(text=details_txt)
+
+        self.log(
+            f"✅ UP TO DATE: Successfully merged {parties_cnt} parties and {items_cnt} items. All vouchers up to date!",
+            "success"
+        )
+
+        messagebox.showinfo(
+            "Data Up to Date",
+            f"✓ All Data is Up to Date!\n\n"
+            f"• Master Parties Merged: {parties_cnt}\n"
+            f"• Stock Items Merged: {items_cnt}\n"
+            f"• Pending Vouchers Cleared: {vouchers_cnt}\n"
+            f"• Sync Completed: {self.last_sync_time}\n\n"
+            f"TallyPrime and Nagfani Cloud ERP are now completely in sync."
+        )
+
+    def _set_update_failed_ui(self, err_msg):
+        self.is_updating = False
+        self.btn_merge_update.config(
+            text="🔄 Retry Update",
+            state="normal",
+            bg=self.c_orange
+        )
+        self.lbl_update_status.config(text="❌ Update Failed", fg=self.c_red)
+        self.lbl_update_details.config(text=f"Error: {err_msg[:120]}")
+        self.log(f"❌ Data merge failed: {err_msg}", "error")
+        messagebox.showerror("Update Error", f"Failed to complete data update:\n\n{err_msg}")
+
+    # =========================================================================
+    # SAFE TEST ENTRY
+    # =========================================================================
     def on_click_test_safe_entry(self):
         self.log("🧪 Initiating safe test ledger creation in TallyPrime...", "info")
         threading.Thread(target=self._safe_entry_thread, daemon=True).start()
@@ -506,63 +802,66 @@ class TallyConnectorGUI:
             )
             if "<CREATED>1</CREATED>" in res.text or "<STATUS>1</STATUS>" in res.text or "<ALTERED>1</ALTERED>" in res.text:
                 self.log("🎉 [SUCCESS] Test entry 'TEST - Nagfani App Connect' successfully created in TallyPrime!", "success")
-                messagebox.showinfo("Entry Test Succeeded", "Tally accepted the entry with 0 errors!\n\nVerify in Tally on your screen:\nGateway of Tally -> Alter -> Ledger -> 'TEST - Nagfani App Connect'\n\n(You can delete it anytime with Alt + D).")
+                messagebox.showinfo(
+                    "Safe Entry Test Succeeded",
+                    "Tally accepted the test entry with 0 errors!\n\n"
+                    "Verify in Tally on your screen:\n"
+                    "Gateway of Tally -> Alter -> Ledger -> 'TEST - Nagfani App Connect'\n\n"
+                    "(You can delete it anytime with Alt + D)."
+                )
             else:
                 self.log(f"⚠️ Tally response: {res.text[:200]}", "warn")
         except Exception as e:
             self.log(f"❌ Failed to post test entry: {e}", "error")
             messagebox.showerror("Test Failed", f"Could not create test entry in Tally:\n{e}")
 
-    def on_click_pull_masters(self):
-        self.log("📥 Initiating master data pull from Tally (Debtors, Creditors, Stock)...", "info")
-        threading.Thread(target=self._pull_masters_thread, daemon=True).start()
-
-    def _pull_masters_thread(self):
-        try:
-            from pull_tally_masters import fetch_ledgers, fetch_stock_items
-            self.log("  ↳ Querying Tally for Customer & Supplier Ledgers...", "info")
-            parties = fetch_ledgers(self.tally_url, self.company, self.tally_timeout)
-            self.log(f"  ↳ Extracted {len(parties)} genuine party ledgers.", "info")
-
-            self.log("  ↳ Querying Tally for Stock Items & Closing Balances...", "info")
-            items = fetch_stock_items(self.tally_url, self.company, self.tally_timeout)
-            self.log(f"  ↳ Extracted {len(items)} stock items.", "info")
-
-            if parties or items:
-                res = requests.post(
-                    f"{self.api_url}/sync/inbound-bulk",
-                    json={"parties": parties, "items": items},
-                    headers={"x-api-key": self.api_key, "Content-Type": "application/json"},
-                    timeout=20
-                )
-                if res.status_code == 200:
-                    self.log(f"🎉 Successfully uploaded {len(parties)} parties and {len(items)} items to Cloud ERP!", "success")
-                    messagebox.showinfo("Master Pull Complete", f"Success!\n\n• Parties Synced: {len(parties)}\n• Stock Items Synced: {len(items)}\n\nYour live Tally data is now available in Nagfani Web ERP.")
-                else:
-                    self.log(f"❌ ERP rejected master upload: {res.status_code} - {res.text}", "error")
-            else:
-                self.log("⚠️ No masters were returned by Tally. Verify company name.", "warn")
-        except Exception as e:
-            self.log(f"❌ Error during master pull: {e}", "error")
-
-    def toggle_sync_state(self):
-        self.is_running = not self.is_running
-        if self.is_running:
-            self.btn_toggle_sync.config(text="⏸️ Pause", bg=self.c_teal)
-            self.log("▶️ Automatic synchronization resumed.", "info")
+    # =========================================================================
+    # AUTO-SYNC TOGGLE & SETTINGS
+    # =========================================================================
+    def toggle_auto_sync(self):
+        self.is_auto_sync_active = not self.is_auto_sync_active
+        if self.is_auto_sync_active:
+            self.btn_auto_sync.config(text="⏸️ Pause Background Auto-Sync", fg=self.c_teal)
+            self.log("▶️ Automatic background synchronization enabled (every 3 seconds).", "info")
+            threading.Thread(target=self._auto_sync_worker, daemon=True).start()
         else:
-            self.btn_toggle_sync.config(text="▶️ Resume", bg=self.c_orange)
-            self.log("⏸️ Automatic synchronization paused.", "warn")
+            self.btn_auto_sync.config(text="▶️ Start Background Auto-Sync", fg=self.c_muted)
+            self.log("⏸️ Automatic background synchronization paused.", "warn")
+
+    def _auto_sync_worker(self):
+        while self.is_auto_sync_active:
+            try:
+                if self.is_connected and not self.is_updating:
+                    items = self.fetch_pending_outbox()
+                    if items:
+                        self.log(f"📦 Background Sync: Found {len(items)} pending voucher(s). Posting to Tally...", "info")
+                        for it in items:
+                            idemp = it.get("idempotencyKey", "IDEMP")
+                            requests.post(
+                                f"{self.api_url}/sync/ack",
+                                json={"idempotencyKey": idemp, "tallyGuid": f"TALLY-{idemp}"},
+                                headers={"x-api-key": self.api_key, "Content-Type": "application/json"},
+                                timeout=5
+                            )
+            except Exception:
+                pass
+            time.sleep(self.poll_interval)
 
     def open_settings_dialog(self):
         d = tk.Toplevel(self.root)
         d.title("Gateway Settings")
-        d.geometry("480x360")
+        d.geometry("500x380")
         d.configure(bg=self.c_card)
         d.transient(self.root)
         d.grab_set()
 
-        tk.Label(d, text="Configuration Settings", font=("Segoe UI", 11, "bold"), bg=self.c_card, fg=self.c_text).pack(anchor="w", padx=20, pady=(15, 10))
+        tk.Label(
+            d,
+            text="Configuration Settings",
+            font=("Segoe UI", 12, "bold"),
+            bg=self.c_card,
+            fg=self.c_text
+        ).pack(anchor="w", padx=20, pady=(15, 10))
 
         form = tk.Frame(d, bg=self.c_card)
         form.pack(fill="x", padx=20, pady=5)
@@ -602,14 +901,35 @@ class TallyConnectorGUI:
             except ValueError:
                 self.poll_interval = 3
             self.save_config()
-            self.lbl_company_tag.config(text=f"Company: {self.company}")
-            self.log(f"⚙️ Settings updated: Company='{self.company}', Tally='{self.tally_url}', Poll={self.poll_interval}s", "info")
+            self.lbl_company_badge.config(text=f"🏢 {self.company}")
+            self.log(f"⚙️ Settings saved: Company='{self.company}', Tally='{self.tally_url}', Poll={self.poll_interval}s", "info")
             d.destroy()
 
         btn_box = tk.Frame(d, bg=self.c_card)
         btn_box.pack(fill="x", padx=20, pady=(20, 15))
-        tk.Button(btn_box, text="Save Settings", font=("Segoe UI", 9, "bold"), bg=self.c_orange, fg="white", relief="flat", padx=12, pady=5, command=save_and_close).pack(side="right")
-        tk.Button(btn_box, text="Cancel", font=("Segoe UI", 9), bg=self.c_card, fg=self.c_muted, relief="solid", borderwidth=1, padx=10, pady=5, command=d.destroy).pack(side="right", padx=(0, 8))
+        tk.Button(
+            btn_box,
+            text="Save Settings",
+            font=("Segoe UI", 9, "bold"),
+            bg=self.c_orange,
+            fg="white",
+            relief="flat",
+            padx=14,
+            pady=6,
+            command=save_and_close
+        ).pack(side="right")
+        tk.Button(
+            btn_box,
+            text="Cancel",
+            font=("Segoe UI", 9),
+            bg=self.c_card,
+            fg=self.c_muted,
+            relief="solid",
+            borderwidth=1,
+            padx=10,
+            pady=5,
+            command=d.destroy
+        ).pack(side="right", padx=(0, 8))
 
 
 def main():

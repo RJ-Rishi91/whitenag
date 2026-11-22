@@ -64,6 +64,97 @@ class MockTallyHandler(BaseHTTPRequestHandler):
             self.wfile.write(response_xml.encode("utf-8"))
             return
 
+        # Check if query for LedgersCollection
+        if "LedgersCollection" in body:
+            response_xml = """<ENVELOPE>
+  <HEADER><STATUS>1</STATUS></HEADER>
+  <BODY>
+    <DATA>
+      <COLLECTION>
+        <LEDGER NAME="Shree Ram General Store">
+          <NAME>Shree Ram General Store</NAME>
+          <PARENT>Sundry Debtors</PARENT>
+          <CLOSINGBALANCE>-4520.00</CLOSINGBALANCE>
+          <LEDGERMOBILE>9829012345</LEDGERMOBILE>
+          <PARTYGSTIN>08AABCN1234F1Z5</PARTYGSTIN>
+          <ADDRESS>Bapu Bazar, Udaipur</ADDRESS>
+          <PINCODE>313001</PINCODE>
+          <GUID>TALLY-GUID-LEDGER-001</GUID>
+        </LEDGER>
+        <LEDGER NAME="Kailash Masala Traders">
+          <NAME>Kailash Masala Traders</NAME>
+          <PARENT>Sundry Creditors</PARENT>
+          <CLOSINGBALANCE>12500.00</CLOSINGBALANCE>
+          <LEDGERMOBILE>9414054321</LEDGERMOBILE>
+          <PARTYGSTIN>08AAECN5678F1Z9</PARTYGSTIN>
+          <ADDRESS>Krishi Mandi, Udaipur</ADDRESS>
+          <PINCODE>313001</PINCODE>
+          <GUID>TALLY-GUID-LEDGER-002</GUID>
+        </LEDGER>
+        <LEDGER NAME="Mewar Kirana Mart">
+          <NAME>Mewar Kirana Mart</NAME>
+          <PARENT>Sundry Debtors</PARENT>
+          <CLOSINGBALANCE>-1890.00</CLOSINGBALANCE>
+          <LEDGERMOBILE>9829198765</LEDGERMOBILE>
+          <PARTYGSTIN>08AABCM9988E1Z1</PARTYGSTIN>
+          <ADDRESS>Hiran Magri Sec 4, Udaipur</ADDRESS>
+          <PINCODE>313002</PINCODE>
+          <GUID>TALLY-GUID-LEDGER-003</GUID>
+        </LEDGER>
+      </COLLECTION>
+    </DATA>
+  </BODY>
+</ENVELOPE>"""
+            self.send_response(200)
+            self.send_header("Content-Type", "text/xml; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(response_xml.encode("utf-8"))
+            return
+
+        # Check if query for StockCollection
+        if "StockCollection" in body:
+            response_xml = """<ENVELOPE>
+  <HEADER><STATUS>1</STATUS></HEADER>
+  <BODY>
+    <DATA>
+      <COLLECTION>
+        <STOCKITEM NAME="Namkeen Sev 500g">
+          <NAME>Namkeen Sev 500g</NAME>
+          <PARENT>Finished Goods</PARENT>
+          <BASEUNITS>PKT</BASEUNITS>
+          <CLOSINGBALANCE>120 PKT</CLOSINGBALANCE>
+          <CLOSINGRATE>95.00/PKT</CLOSINGRATE>
+          <CLOSINGVALUE>11400.00</CLOSINGVALUE>
+          <GUID>TALLY-GUID-ITEM-001</GUID>
+        </STOCKITEM>
+        <STOCKITEM NAME="Chana Dal 250g">
+          <NAME>Chana Dal 250g</NAME>
+          <PARENT>Finished Goods</PARENT>
+          <BASEUNITS>PKT</BASEUNITS>
+          <CLOSINGBALANCE>85 PKT</CLOSINGBALANCE>
+          <CLOSINGRATE>65.00/PKT</CLOSINGRATE>
+          <CLOSINGVALUE>5525.00</CLOSINGVALUE>
+          <GUID>TALLY-GUID-ITEM-002</GUID>
+        </STOCKITEM>
+        <STOCKITEM NAME="Moong Dal Papad 400g">
+          <NAME>Moong Dal Papad 400g</NAME>
+          <PARENT>Finished Goods</PARENT>
+          <BASEUNITS>PKT</BASEUNITS>
+          <CLOSINGBALANCE>210 PKT</CLOSINGBALANCE>
+          <CLOSINGRATE>110.00/PKT</CLOSINGRATE>
+          <CLOSINGVALUE>23100.00</CLOSINGVALUE>
+          <GUID>TALLY-GUID-ITEM-003</GUID>
+        </STOCKITEM>
+      </COLLECTION>
+    </DATA>
+  </BODY>
+</ENVELOPE>"""
+            self.send_response(200)
+            self.send_header("Content-Type", "text/xml; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(response_xml.encode("utf-8"))
+            return
+
         # Check if simulate failure requested in body
         if "SIMULATE_FAIL" in body or "Unknown Party" in body:
             response_xml = """<RESPONSE>
