@@ -16,7 +16,31 @@ import time
 import queue
 import threading
 import configparser
-import requests
+
+# Self-healing dependency resolution for requests
+try:
+    import requests
+except ImportError:
+    import subprocess
+    try:
+        subprocess.check_call([
+            sys.executable, "-m", "pip", "install", "requests",
+            "--quiet", "--disable-pip-version-check"
+        ])
+        import requests
+    except Exception as _e:
+        import tkinter as tk
+        from tkinter import messagebox
+        _r = tk.Tk()
+        _r.withdraw()
+        messagebox.showerror(
+            "Missing Dependency",
+            f"The 'requests' library is required to connect to Cloud ERP.\n\n"
+            f"Auto-install failed:\n{_e}\n\n"
+            f"Please run 'Setup_Windows.bat' in this folder."
+        )
+        sys.exit(1)
+
 from datetime import datetime
 import tkinter as tk
 from tkinter import ttk, messagebox
@@ -1146,4 +1170,21 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as _ex:
+        import traceback
+        _tb = traceback.format_exc()
+        try:
+            with open("connector_error.log", "w") as _f:
+                _f.write(_tb)
+        except Exception:
+            pass
+        try:
+            import tkinter as _tk
+            from tkinter import messagebox as _mb
+            _root = _tk.Tk()
+            _root.withdraw()
+            _mb.showerror("Nagfani Gateway Error", f"An error occurred on startup:\n\n{_ex}\n\nDetails saved to connector_error.log.")
+        except Exception:
+            pass
