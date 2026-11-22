@@ -6,16 +6,74 @@ echo =====================================================================
 echo           NAGFANI FOODS ERP - TALLY GATEWAY SETUP
 echo =====================================================================
 echo.
-echo [1/3] Checking Python installation...
+echo [1/3] Searching for Python 3 installation on your PC...
 
-where python >nul 2>&1
-if %errorlevel% neq 0 (
-    echo [ERROR] Python was not found in your Windows PATH.
+set "PY_EXE="
+set "PYW_EXE="
+
+:: 1. Check LocalAppData Programs Python
+for /d %%D in ("%LOCALAPPDATA%\Programs\Python\Python3*") do (
+    if exist "%%D\python.exe" set "PY_EXE=%%D\python.exe"
+    if exist "%%D\pythonw.exe" set "PYW_EXE=%%D\pythonw.exe"
+)
+
+:: 2. Check if py launcher works
+if not defined PY_EXE (
+    py -3 -c "import sys" >nul 2>&1
+    if !errorlevel! equ 0 (
+        for /f "tokens=*" %%p in ('py -3 -c "import sys; print(sys.executable)" 2^>nul') do set "PY_EXE=%%p"
+    )
+)
+
+:: 3. Check if standard python command works
+if not defined PY_EXE (
+    python -c "import sys" >nul 2>&1
+    if !errorlevel! equ 0 (
+        for /f "tokens=*" %%p in ('where python 2^>nul') do (
+            if not defined PY_EXE set "PY_EXE=%%p"
+        )
+    )
+)
+
+:: 4. Check Program Files
+if not defined PY_EXE (
+    for /d %%D in ("%ProgramFiles%\Python3*" "%ProgramFiles(x86)%\Python3*" "C:\Python3*") do (
+        if exist "%%D\python.exe" set "PY_EXE=%%D\python.exe"
+        if exist "%%D\pythonw.exe" set "PYW_EXE=%%D\pythonw.exe"
+    )
+)
+
+:: If Python was NOT found, attempt automatic 1-click install via winget
+if not defined PY_EXE (
     echo.
-    echo To run the Nagfani Tally Connector, Python 3.10+ is required.
+    echo [!] Python was not detected on this Windows PC.
     echo.
-    echo 1. Download it from https://www.python.org/downloads/
-    echo 2. VERY IMPORTANT: During install, check the box:
+    where winget >nul 2>&1
+    if !errorlevel! equ 0 (
+        echo Windows Package Manager (winget) is available!
+        echo.
+        echo Attempting automatic installation of Python 3.12 (takes ~20 seconds)...
+        echo.
+        winget install Python.Python.3.12 -e --accept-package-agreements --accept-source-agreements --scope currentUser
+        
+        :: Re-check LocalAppData
+        for /d %%D in ("%LOCALAPPDATA%\Programs\Python\Python3*") do (
+            if exist "%%D\python.exe" set "PY_EXE=%%D\python.exe"
+            if exist "%%D\pythonw.exe" set "PYW_EXE=%%D\pythonw.exe"
+        )
+    )
+)
+
+:: If still not found, open download page
+if not defined PY_EXE (
+    echo.
+    echo =====================================================================
+    echo [ERROR] Python is required to run the Tally Connector.
+    echo =====================================================================
+    echo.
+    echo Please install Python 3:
+    echo 1. Download from https://www.python.org/downloads/
+    echo 2. IMPORTANT: During install, check the box:
     echo    "[X] Add python.exe to PATH"
     echo.
     echo Press any key to open the official Python download page in your browser...
@@ -24,30 +82,18 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-for /f "tokens=*" %%i in ('python --version 2^>^&1') do set PY_VER=%%i
-echo   Detected: %PY_VER%
+echo   Found Python: "!PY_EXE!"
+for /f "tokens=*" %%v in ('"!PY_EXE!" --version 2^>^&1') do echo   Version: %%v
 
 echo.
 echo [2/3] Installing lightweight dependencies (requests)...
-python -m pip install -r requirements.txt --quiet --disable-pip-version-check
-if %errorlevel% neq 0 (
-    echo   Installing requests via pip...
-    python -m pip install requests --quiet
-)
+"!PY_EXE!" -m pip install requests --quiet --disable-pip-version-check
 echo   Dependencies verified and ready.
 
 echo.
 echo [3/3] Creating Windows Desktop Shortcut...
 set "CURRENT_DIR=%~dp0"
 set "CURRENT_DIR=%CURRENT_DIR:~0,-1%"
-
-:: Create silent VBS launcher
-(
-echo Set WshShell = CreateObject^("WScript.Shell"^)
-echo WshShell.CurrentDirectory = "%CURRENT_DIR%"
-echo WshShell.Run "pythonw.exe """ ^& "%CURRENT_DIR%\connector_gui.py""" , 0, False
-echo Set WshShell = Nothing
-) > "%CURRENT_DIR%\Launch_Nagfani_Connector.vbs"
 
 :: Create Desktop Shortcut using PowerShell
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
