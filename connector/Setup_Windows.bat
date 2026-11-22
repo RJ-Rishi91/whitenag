@@ -95,9 +95,18 @@ echo [3/3] Creating Windows Desktop Shortcut...
 set "CURRENT_DIR=%~dp0"
 set "CURRENT_DIR=%CURRENT_DIR:~0,-1%"
 
-:: Create Desktop Shortcut using PowerShell
+:: Delete old/stale desktop shortcut if present
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-  "$ws = New-Object -ComObject WScript.Shell; $d = [Environment]::GetFolderPath('Desktop'); $s = $ws.CreateShortcut(\"$d\Nagfani Tally Connector.lnk\"); $s.TargetPath = 'wscript.exe'; $s.Arguments = '\"%CURRENT_DIR%\Launch_Nagfani_Connector.vbs\"'; $s.WorkingDirectory = '%CURRENT_DIR%'; $s.Description = 'Nagfani Foods ERP - Tally Gateway'; $s.Save();"
+  "$d = [Environment]::GetFolderPath('Desktop'); $p = \"$d\Nagfani Tally Connector.lnk\"; if (Test-Path $p) { Remove-Item -Force $p }"
+
+:: Create direct Desktop Shortcut pointing directly to PythonW (zero black console, no VBS dependency)
+if defined PYW_EXE (
+    powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+      "$ws = New-Object -ComObject WScript.Shell; $d = [Environment]::GetFolderPath('Desktop'); $s = $ws.CreateShortcut(\"$d\Nagfani Tally Connector.lnk\"); $s.TargetPath = '!PYW_EXE!'; $s.Arguments = '\"%CURRENT_DIR%\connector_gui.py\"'; $s.WorkingDirectory = '%CURRENT_DIR%'; $s.IconLocation = '\"%CURRENT_DIR%\app_icon.ico\"'; $s.Description = 'Nagfani Foods ERP - Tally Gateway'; $s.Save();"
+) else (
+    powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+      "$ws = New-Object -ComObject WScript.Shell; $d = [Environment]::GetFolderPath('Desktop'); $s = $ws.CreateShortcut(\"$d\Nagfani Tally Connector.lnk\"); $s.TargetPath = '!PY_EXE!'; $s.Arguments = '\"%CURRENT_DIR%\connector_gui.py\"'; $s.WorkingDirectory = '%CURRENT_DIR%'; $s.IconLocation = '\"%CURRENT_DIR%\app_icon.ico\"'; $s.Description = 'Nagfani Foods ERP - Tally Gateway'; $s.Save();"
+)
 
 echo   Created desktop shortcut: "Nagfani Tally Connector"
 echo.
@@ -112,6 +121,10 @@ echo  [2] Exit
 echo.
 set /p opt="Select an option (1 or 2): "
 if "%opt%"=="1" (
-    start "" wscript.exe "%CURRENT_DIR%\Launch_Nagfani_Connector.vbs"
+    if defined PYW_EXE (
+        start "" "!PYW_EXE!" "%CURRENT_DIR%\connector_gui.py"
+    ) else (
+        start "" "!PY_EXE!" "%CURRENT_DIR%\connector_gui.py"
+    )
 )
 exit /b 0
